@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.onlinetravelagent.ui.DashboardScreen
+import com.example.onlinetravelagent.ui.MainScreen
 import com.example.onlinetravelagent.ui.WelcomeScreen
 import com.example.onlinetravelagent.ui.theme.OnlineTravelAgentTheme
 
@@ -31,13 +32,13 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController = navController, startDestination = "welcome") {
                         composable("welcome") {
                             WelcomeScreen(onExploreClicked = {
-                                navController.navigate("dashboard") {
+                                navController.navigate("main") {
                                     popUpTo("welcome") { inclusive = true }
                                 }
                             })
                         }
-                        composable("dashboard") {
-                            DashboardScreen()
+                        composable("main") {
+                            MainScreen()
                         }
                     }
                 }

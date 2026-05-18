@@ -31,80 +31,21 @@ import androidx.compose.ui.unit.sp
 import com.example.onlinetravelagent.R
 import com.example.onlinetravelagent.ui.theme.OnlineTravelAgentTheme
 
-data class Destination(
-    val name: String,
-    val location: String,
-    val rating: String,
-    val duration: String,
-    val imageRes: Int,
-    val isFavorite: Boolean = false
-)
-
-val popularDestinations = listOf(
-    Destination("Đà Lạt", "Lâm Đồng, VN", "4.1", "4N/5D", R.drawable.dalat_image),
-    Destination("Đảo Phú Quốc", "Kiên Giang, VN", "4.5", "2N/3D", R.drawable.phuquoc_image),
-    Destination("Hội An", "Quảng Nam, VN", "4.8", "2N/1Đ", R.drawable.hoian_image)
-)
-
-val recommendedDestinations = listOf(
-    Destination("Hội An", "Quảng Nam, VN", "4.8", "2N/1Đ", R.drawable.hoian_image),
-    Destination("Đà Lạt", "Lâm Đồng, VN", "4.9", "2N/1Đ", R.drawable.dalat_image),
-    Destination("Đảo Phú Quốc", "Kiên Giang, VN", "4.5", "2N/3D", R.drawable.phuquoc_image)
-)
-
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(viewModel: TravelViewModel? = null) {
     var selectedCategory by remember { mutableStateOf("Location") }
     val categories = listOf("Location", "Hotels", "Food", "Adventure", "Activities")
-    
-    var selectedNavItem by remember { mutableIntStateOf(0) }
-    val navIcons = listOf(Icons.Default.Home, Icons.Default.ConfirmationNumber, Icons.Default.FavoriteBorder, Icons.Default.PersonOutline)
 
-    Scaffold(
-        bottomBar = {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                color = Color.White,
-                shadowElevation = 16.dp
-            ) {
-                NavigationBar(
-                    containerColor = Color.Transparent,
-                    tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .height(80.dp)
-                ) {
-                    navIcons.forEachIndexed { index, icon ->
-                        NavigationBarItem(
-                            icon = { 
-                                Icon(
-                                    icon, 
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (selectedNavItem == index) Color(0xFF176FF2) else Color.Gray.copy(alpha = 0.5f)
-                                ) 
-                            },
-                            selected = selectedNavItem == index,
-                            onClick = { selectedNavItem = index },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = Color.Transparent
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-        ) {
+    val destinations by viewModel?.destinations?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
+    val recommended by viewModel?.recommended?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp),
+    ) {
             Spacer(modifier = Modifier.height(24.dp))
             
             // Header: Greeting & Notification
@@ -212,8 +153,8 @@ fun DashboardScreen() {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                items(popularDestinations) { destination ->
-                    PopularDestinationCard(destination)
+                items(destinations) { destination ->
+                    PopularDestinationCard(destination, onFavoriteClick = { viewModel?.toggleFavorite(it.name) })
                 }
             }
 
@@ -232,18 +173,17 @@ fun DashboardScreen() {
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                items(recommendedDestinations) { destination ->
+                items(recommended) { destination ->
                     RecommendedDestinationCard(destination)
                 }
             }
             
             Spacer(modifier = Modifier.height(24.dp))
         }
-    }
 }
 
 @Composable
-fun PopularDestinationCard(destination: Destination) {
+fun PopularDestinationCard(destination: Destination, onFavoriteClick: (Destination) -> Unit) {
     Box(
         modifier = Modifier
             .width(188.dp)
@@ -274,7 +214,8 @@ fun PopularDestinationCard(destination: Destination) {
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(12.dp)
-                .size(32.dp),
+                .size(32.dp)
+                .clickable { onFavoriteClick(destination) },
             shape = CircleShape,
             color = Color.White,
             shadowElevation = 4.dp
