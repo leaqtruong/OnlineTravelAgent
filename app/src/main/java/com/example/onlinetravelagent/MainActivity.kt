@@ -26,16 +26,19 @@ class MainActivity : ComponentActivity() {
             OnlineTravelAgentTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val navController = rememberNavController()
-                    NavHost(navController = navController, startDestination = "welcome") {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "welcome",
+                    ) {
                         composable("welcome") {
-                            WelcomeScreen(onExploreClicked = {
+                            WelcomeScreen {
                                 navController.navigate("main") {
                                     popUpTo("welcome") { inclusive = true }
                                 }
-                            })
+                            }
                         }
                         composable("main") {
                             MainScreen()

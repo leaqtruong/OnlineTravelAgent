@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -28,7 +29,7 @@ import com.example.onlinetravelagent.R
 import com.example.onlinetravelagent.ui.theme.OnlineTravelAgentTheme
 
 @Composable
-fun FavoritesScreen(viewModel: TravelViewModel? = null) {
+fun FavoritesScreen(viewModel: TravelViewModel? = null, onDestinationClick: (Destination) -> Unit = {}) {
     val destinations by viewModel?.destinations?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
     val favoriteDestinations = destinations.filter { it.isFavorite }
 
@@ -57,7 +58,11 @@ fun FavoritesScreen(viewModel: TravelViewModel? = null) {
                 contentPadding = PaddingValues(bottom = 24.dp)
             ) {
                 items(favoriteDestinations) { destination ->
-                    FavoriteDestinationCard(destination, onFavoriteClick = { viewModel?.toggleFavorite(it.name) })
+                    FavoriteDestinationCard(
+                        destination,
+                        onFavoriteClick = { viewModel?.toggleFavorite(it.name) },
+                        onClick = { onDestinationClick(destination) }
+                    )
                 }
             }
         }
@@ -65,14 +70,16 @@ fun FavoritesScreen(viewModel: TravelViewModel? = null) {
 }
 
 @Composable
-fun FavoriteDestinationCard(destination: Destination, onFavoriteClick: (Destination) -> Unit) {
+fun FavoriteDestinationCard(destination: Destination, onFavoriteClick: (Destination) -> Unit, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .height(140.dp)
-            .clickable { /* Navigate to detail */ },
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .shadow(4.dp, RoundedCornerShape(24.dp))
+            .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3F8FE))
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Row(modifier = Modifier.fillMaxSize()) {
             Image(

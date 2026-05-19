@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -58,9 +59,11 @@ fun ProfileScreen() {
 
         // Profile Card
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(4.dp, RoundedCornerShape(24.dp)),
             shape = RoundedCornerShape(24.dp),
-            color = Color(0xFFF3F8FE)
+            color = Color.White
         ) {
             Row(
                 modifier = Modifier.padding(20.dp),

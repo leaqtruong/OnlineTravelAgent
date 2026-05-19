@@ -6,5 +6,8 @@ data class Destination(
     val rating: String,
     val duration: String,
     val imageRes: Int,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val description: String = "",
+    val price: String = "",
+    val reviewsCount: String = "0"
 )

@@ -32,9 +32,9 @@ import com.example.onlinetravelagent.R
 import com.example.onlinetravelagent.ui.theme.OnlineTravelAgentTheme
 
 @Composable
-fun DashboardScreen(viewModel: TravelViewModel? = null) {
-    var selectedCategory by remember { mutableStateOf("Location") }
-    val categories = listOf("Location", "Hotels", "Food", "Adventure", "Activities")
+fun DashboardScreen(viewModel: TravelViewModel? = null, onDestinationClick: (Destination) -> Unit = {}) {
+    var selectedCategory by remember { mutableStateOf("Địa điểm") }
+    val categories = listOf("Địa điểm", "Khách sạn", "Máy bay", "Ẩm thực")
 
     val destinations by viewModel?.destinations?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
     val recommended by viewModel?.recommended?.collectAsState() ?: remember { mutableStateOf(emptyList()) }
@@ -93,7 +93,7 @@ fun DashboardScreen(viewModel: TravelViewModel? = null) {
                     Icon(Icons.Default.Search, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Find things to do",
+                        text = "Tìm kiếm hoạt động",
                         color = Color.Gray.copy(alpha = 0.6f),
                         fontSize = 14.sp
                     )
@@ -141,7 +141,7 @@ fun DashboardScreen(viewModel: TravelViewModel? = null) {
                     color = Color.Black
                 )
                 Text(
-                    text = "See all",
+                    text = "Xem tất cả",
                     fontSize = 14.sp,
                     color = Color(0xFF176FF2),
                     fontWeight = FontWeight.Medium
@@ -154,7 +154,11 @@ fun DashboardScreen(viewModel: TravelViewModel? = null) {
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(destinations) { destination ->
-                    PopularDestinationCard(destination, onFavoriteClick = { viewModel?.toggleFavorite(it.name) })
+                    PopularDestinationCard(
+                        destination,
+                        onFavoriteClick = { viewModel?.toggleFavorite(it.name) },
+                        onClick = { onDestinationClick(destination) }
+                    )
                 }
             }
 
@@ -174,7 +178,10 @@ fun DashboardScreen(viewModel: TravelViewModel? = null) {
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 items(recommended) { destination ->
-                    RecommendedDestinationCard(destination)
+                    RecommendedDestinationCard(
+                        destination,
+                        onClick = { onDestinationClick(destination) }
+                    )
                 }
             }
             
@@ -183,12 +190,13 @@ fun DashboardScreen(viewModel: TravelViewModel? = null) {
 }
 
 @Composable
-fun PopularDestinationCard(destination: Destination, onFavoriteClick: (Destination) -> Unit) {
+fun PopularDestinationCard(destination: Destination, onFavoriteClick: (Destination) -> Unit, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .width(188.dp)
             .height(240.dp)
             .clip(RoundedCornerShape(24.dp))
+            .clickable { onClick() }
     ) {
         Image(
             painter = painterResource(id = destination.imageRes),
@@ -266,12 +274,13 @@ fun PopularDestinationCard(destination: Destination, onFavoriteClick: (Destinati
 }
 
 @Composable
-fun RecommendedDestinationCard(destination: Destination) {
+fun RecommendedDestinationCard(destination: Destination, onClick: () -> Unit) {
     Column(
         modifier = Modifier
             .width(174.dp)
             .shadow(2.dp, RoundedCornerShape(16.dp))
             .background(Color.White, RoundedCornerShape(16.dp))
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier
@@ -330,7 +339,7 @@ fun RecommendedDestinationCard(destination: Destination) {
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
-                text = "Special Deal",
+                text = "Ưu đãi đặc biệt",
                 fontSize = 12.sp,
                 color = Color(0xFF607D8B)
             )

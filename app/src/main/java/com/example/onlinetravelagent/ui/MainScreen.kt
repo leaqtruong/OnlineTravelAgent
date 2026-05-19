@@ -24,55 +24,67 @@ fun MainScreen(viewModel: TravelViewModel = viewModel()) {
         Icons.Default.PersonOutline
     )
 
+    val selectedDestination by viewModel.selectedDestination.collectAsState()
+
     Scaffold(
         bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
-                color = Color.White,
-                shadowElevation = 16.dp
-            ) {
-                NavigationBar(
-                    containerColor = Color.Transparent,
-                    tonalElevation = 0.dp,
-                    modifier = Modifier
-                        .navigationBarsPadding()
-                        .height(80.dp)
+            if (selectedDestination == null) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    color = Color.White,
+                    shadowElevation = 16.dp
                 ) {
-                    items.forEachIndexed { index, item ->
-                        NavigationBarItem(
-                            icon = {
-                                Icon(
-                                    icons[index],
-                                    contentDescription = item,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (selectedItem == index) Color(0xFF176FF2) else Color.Gray.copy(alpha = 0.5f)
+                    NavigationBar(
+                        containerColor = Color.Transparent,
+                        tonalElevation = 0.dp,
+                        modifier = Modifier
+                            .navigationBarsPadding()
+                            .height(80.dp)
+                    ) {
+                        items.forEachIndexed { index, item ->
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        icons[index],
+                                        contentDescription = item,
+                                        modifier = Modifier.size(24.dp),
+                                        tint = if (selectedItem == index) Color(0xFF176FF2) else Color.Gray.copy(alpha = 0.5f)
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item,
+                                        color = if (selectedItem == index) Color(0xFF176FF2) else Color.Gray.copy(alpha = 0.5f),
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                },
+                                selected = selectedItem == index,
+                                onClick = { selectedItem = index },
+                                colors = NavigationBarItemDefaults.colors(
+                                    indicatorColor = Color.Transparent
                                 )
-                            },
-                            label = {
-                                Text(
-                                    text = item,
-                                    color = if (selectedItem == index) Color(0xFF176FF2) else Color.Gray.copy(alpha = 0.5f),
-                                    style = MaterialTheme.typography.labelSmall
-                                )
-                            },
-                            selected = selectedItem == index,
-                            onClick = { selectedItem = index },
-                            colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = Color.Transparent
                             )
-                        )
+                        }
                     }
                 }
             }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedItem) {
-                0 -> DashboardScreen(viewModel)
-                1 -> MyTripsScreen()
-                2 -> FavoritesScreen(viewModel)
-                3 -> ProfileScreen()
+            if (selectedDestination != null) {
+                DestinationDetailScreen(
+                    destination = selectedDestination!!,
+                    onBackClick = { viewModel.selectDestination(null) },
+                    onFavoriteClick = { viewModel.toggleFavorite(selectedDestination!!.name) }
+                )
+            } else {
+                when (selectedItem) {
+                    0 -> DashboardScreen(viewModel, onDestinationClick = { viewModel.selectDestination(it) })
+                    1 -> MyTripsScreen()
+                    2 -> FavoritesScreen(viewModel, onDestinationClick = { viewModel.selectDestination(it) })
+                    3 -> ProfileScreen()
+                }
             }
         }
     }
