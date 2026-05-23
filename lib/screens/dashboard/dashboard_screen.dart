@@ -21,9 +21,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final travelProvider = Provider.of<TravelProvider>(context);
-    final destinations = travelProvider.destinations;
-    final recommended = travelProvider.recommended;
+    // Chỉ watch data cần hiển thị, dùng context.read() cho actions
+    final destinations = context.watch<TravelProvider>().destinations;
+    final recommended = context.watch<TravelProvider>().recommended;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -135,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   itemBuilder: (context, index) {
                     return PopularDestinationCard(
                       destination: destinations[index],
-                      onFavoriteClick: () => travelProvider.toggleFavorite(destinations[index].name),
+                      onFavoriteClick: () => context.read<TravelProvider>().toggleFavorite(destinations[index].name),
                       onClick: () => widget.onDestinationClick(destinations[index]),
                     );
                   },

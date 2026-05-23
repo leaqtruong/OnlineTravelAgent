@@ -26,13 +26,10 @@ class DestinationDetailScreen extends StatelessWidget {
             left: 0,
             right: 0,
             height: MediaQuery.of(context).size.height * 0.45,
-            child: RepaintBoundary(
-              child: Image.asset(
+            child: Image.asset(
                 destination.imagePath,
                 fit: BoxFit.cover,
-                cacheWidth: 1000, // Tối ưu: Giới hạn chiều rộng ảnh khi nạp vào bộ nhớ
               ),
-            ),
           ),
 
           // Back Button & Favorite

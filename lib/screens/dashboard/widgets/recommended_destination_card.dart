@@ -39,15 +39,12 @@ class RecommendedDestinationCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: RepaintBoundary(
-                      child: Image.asset(
+                    child: Image.asset(
                         destination.imagePath,
                         height: 96,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        cacheWidth: 350, // Tối ưu: Giới hạn chiều rộng ảnh khi nạp vào bộ nhớ
                       ),
-                    ),
                   ),
                   Positioned(
                     bottom: -8,

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'package:flutter/foundation.dart';
 import '../models/destination.dart';
 
@@ -70,9 +71,19 @@ class TravelProvider with ChangeNotifier {
 
   Destination? _selectedDestination;
 
-  List<Destination> get destinations => [..._destinations];
-  List<Destination> get recommended => [..._recommended];
-  List<Destination> get favorites => _destinations.where((d) => d.isFavorite).toList();
+  // Cache danh sách — tránh tạo list mới mỗi lần getter được gọi
+  late List<Destination> _unmodifiableDestinations = UnmodifiableListView(_destinations);
+  late List<Destination> _unmodifiableRecommended = UnmodifiableListView(_recommended);
+  List<Destination>? _cachedFavorites;
+
+  List<Destination> get destinations => _unmodifiableDestinations;
+  List<Destination> get recommended => _unmodifiableRecommended;
+  List<Destination> get favorites {
+    _cachedFavorites ??= UnmodifiableListView(
+      _destinations.where((d) => d.isFavorite),
+    );
+    return _cachedFavorites!;
+  }
   Destination? get selectedDestination => _selectedDestination;
 
   void selectDestination(Destination? destination) {
@@ -94,6 +105,12 @@ class TravelProvider with ChangeNotifier {
     if (_selectedDestination?.name == name) {
       _selectedDestination = _selectedDestination!.copyWith(isFavorite: !_selectedDestination!.isFavorite);
     }
+
+    // Invalidate caches khi data thay đổi
+    _unmodifiableDestinations = UnmodifiableListView(_destinations);
+    _unmodifiableRecommended = UnmodifiableListView(_recommended);
+    _cachedFavorites = null;
+
     notifyListeners();
   }
 }

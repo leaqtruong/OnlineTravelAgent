@@ -45,19 +45,19 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           // 1. Background Image Layer
           Positioned.fill(
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 1000),
-              child: Image.asset(
-                images[currentImageIndex],
-                key: ValueKey<int>(currentImageIndex),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                errorBuilder: (context, error, stackTrace) {
-                  debugPrint("Error loading image: $error");
-                  return Container(color: Colors.blueGrey);
-                },
+                duration: const Duration(milliseconds: 1000),
+                child: Image.asset(
+                  images[currentImageIndex],
+                  key: ValueKey<int>(currentImageIndex),
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint("Error loading image: $error");
+                    return Container(color: Colors.blueGrey);
+                  },
+                ),
               ),
-            ),
           ),
 
           // 2. Gradient Overlay Layer

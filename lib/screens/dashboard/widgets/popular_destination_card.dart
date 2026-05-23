@@ -26,15 +26,12 @@ class PopularDestinationCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            RepaintBoundary(
-              child: Image.asset(
+            Image.asset(
                 destination.imagePath,
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                cacheWidth: 400, // Tối ưu: Giới hạn chiều rộng ảnh khi nạp vào bộ nhớ
               ),
-            ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

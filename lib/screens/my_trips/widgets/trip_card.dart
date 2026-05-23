@@ -26,11 +26,14 @@ class TripCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(24),
-            child: Image.asset(
-              trip.imagePath,
-              width: 140,
-              height: double.infinity,
-              fit: BoxFit.cover,
+            child: RepaintBoundary(
+              child: Image.asset(
+                trip.imagePath,
+                width: 140,
+                height: double.infinity,
+                fit: BoxFit.cover,
+                cacheWidth: 300, // Tối ưu: Giới hạn chiều rộng ảnh khi decode
+              ),
             ),
           ),
           Expanded(
