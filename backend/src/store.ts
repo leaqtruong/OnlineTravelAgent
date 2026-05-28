@@ -1,4 +1,4 @@
-import { Destination, DocumentItem, Profile, Trip } from "./types.js";
+import { Destination, DocumentItem, Flight, Profile, Trip } from "./types.js";
 
 const categories = ["Tất cả", "Địa điểm", "Khách sạn", "Bãi biển", "Máy bay", "Ẩm thực"];
 
@@ -15,7 +15,9 @@ const destinations: Destination[] = [
     price: "199",
     reviewsCount: "355",
     category: "Địa điểm",
-    isFavorite: false
+    isFavorite: false,
+    latitude: 11.9404,
+    longitude: 108.4583
   },
   {
     id: "phuquoc",
@@ -29,7 +31,9 @@ const destinations: Destination[] = [
     price: "250",
     reviewsCount: "1.2k",
     category: "Bãi biển",
-    isFavorite: false
+    isFavorite: false,
+    latitude: 10.2270,
+    longitude: 103.9670
   },
   {
     id: "hoian",
@@ -43,7 +47,9 @@ const destinations: Destination[] = [
     price: "150",
     reviewsCount: "800",
     category: "Địa điểm",
-    isFavorite: false
+    isFavorite: false,
+    latitude: 15.8801,
+    longitude: 108.3380
   },
   {
     id: "vinpearl",
@@ -56,7 +62,9 @@ const destinations: Destination[] = [
     price: "500",
     reviewsCount: "2.5k",
     category: "Khách sạn",
-    isFavorite: false
+    isFavorite: false,
+    latitude: 12.2118,
+    longitude: 109.1592
   }
 ];
 
@@ -68,6 +76,7 @@ const trips: Trip[] = [
     destination: "Đảo Phú Quốc",
     location: "Kiên Giang, VN",
     date: "20/05/2026 - 23/05/2026",
+    guests: "2 Người lớn",
     status: "Sắp tới",
     imagePath: "assets/images/phuquoc_image.jpg",
     isUpcoming: true
@@ -77,6 +86,7 @@ const trips: Trip[] = [
     destination: "Hội An",
     location: "Quảng Nam, VN",
     date: "15/04/2026 - 17/04/2026",
+    guests: "1 Người lớn",
     status: "Đã đi",
     imagePath: "assets/images/hoian_image.webp",
     isUpcoming: false
@@ -86,6 +96,7 @@ const trips: Trip[] = [
     destination: "Đà Lạt",
     location: "Lâm Đồng, VN",
     date: "10/03/2026 - 14/03/2026",
+    guests: "2 Người lớn, 1 Trẻ em",
     status: "Đã đi",
     imagePath: "assets/images/dalat_image.jpg",
     isUpcoming: false
@@ -102,6 +113,130 @@ const documents: DocumentItem[] = [
   { id: "doc-2", title: "Visa", description: "Vietnam - Multiple Entry", icon: "assignment", color: "#4CAF50" },
   { id: "doc-3", title: "Bảo hiểm du lịch", description: "Bảo việt - Toàn cầu", icon: "verified_user", color: "#FF9800" },
   { id: "doc-4", title: "Vé máy bay", description: "Phú Quốc - Sài Gòn", icon: "flight_takeoff", color: "#E91E63" }
+];
+
+const mockFlights: Flight[] = [
+  {
+    id: "fl-1",
+    airline: "Vietnam Airlines",
+    airlineLogo: "assets/images/vna_logo.png",
+    departure: "SGN",
+    arrival: "HAN",
+    departureTime: "08:30",
+    arrivalTime: "10:45",
+    price: 120,
+    duration: "2h 15m"
+  },
+  {
+    id: "fl-2",
+    airline: "Vietjet Air",
+    airlineLogo: "assets/images/vj_logo.png",
+    departure: "SGN",
+    arrival: "HAN",
+    departureTime: "09:00",
+    arrivalTime: "11:10",
+    price: 85,
+    duration: "2h 10m"
+  },
+  {
+    id: "fl-3",
+    airline: "Bamboo Airways",
+    airlineLogo: "assets/images/bb_logo.png",
+    departure: "SGN",
+    arrival: "HAN",
+    departureTime: "14:00",
+    arrivalTime: "16:15",
+    price: 95,
+    duration: "2h 15m"
+  },
+  {
+    id: "fl-4",
+    airline: "Vietnam Airlines",
+    airlineLogo: "assets/images/vna_logo.png",
+    departure: "HAN",
+    arrival: "SGN",
+    departureTime: "12:15",
+    arrivalTime: "14:30",
+    price: 130,
+    duration: "2h 15m"
+  },
+  {
+    id: "fl-5",
+    airline: "Vietjet Air",
+    airlineLogo: "assets/images/vj_logo.png",
+    departure: "HAN",
+    arrival: "SGN",
+    departureTime: "18:00",
+    arrivalTime: "20:10",
+    price: 80,
+    duration: "2h 10m"
+  },
+  {
+    id: "fl-6",
+    airline: "Vietnam Airlines",
+    airlineLogo: "assets/images/vna_logo.png",
+    departure: "SGN",
+    arrival: "DLI",
+    departureTime: "07:00",
+    arrivalTime: "07:55",
+    price: 65,
+    duration: "0h 55m"
+  },
+  {
+    id: "fl-7",
+    airline: "Vietjet Air",
+    airlineLogo: "assets/images/vj_logo.png",
+    departure: "SGN",
+    arrival: "DLI",
+    departureTime: "11:30",
+    arrivalTime: "12:20",
+    price: 45,
+    duration: "0h 50m"
+  },
+  {
+    id: "fl-8",
+    airline: "Bamboo Airways",
+    airlineLogo: "assets/images/bb_logo.png",
+    departure: "SGN",
+    arrival: "PQC",
+    departureTime: "14:00",
+    arrivalTime: "15:00",
+    price: 95,
+    duration: "1h 00m"
+  },
+  {
+    id: "fl-9",
+    airline: "Vietnam Airlines",
+    airlineLogo: "assets/images/vna_logo.png",
+    departure: "HAN",
+    arrival: "DLI",
+    departureTime: "06:15",
+    arrivalTime: "08:10",
+    price: 150,
+    duration: "1h 55m"
+  },
+  {
+    id: "fl-10",
+    airline: "Vietnam Airlines",
+    airlineLogo: "assets/images/vna_logo.png",
+    departure: "SGN",
+    arrival: "DAD",
+    departureTime: "10:30",
+    arrivalTime: "11:55",
+    price: 110,
+    duration: "1h 25m"
+  },
+  {
+    id: "fl-11",
+    airline: "Vietjet Air",
+    airlineLogo: "assets/images/vj_logo.png",
+    departure: "HAN",
+    arrival: "DAD",
+    departureTime: "16:00",
+    arrivalTime: "17:20",
+    price: 75,
+    duration: "1h 20m"
+  }
 ];
 
 function getDestinationById(id: string): Destination | undefined {
@@ -124,7 +259,7 @@ function durationToDays(duration: string): number {
   return Number.isNaN(days) ? 2 : Math.max(days, 1);
 }
 
-function generateTripFromDestination(destination: Destination): Trip {
+function generateTripFromDestination(destination: Destination, customDate?: string, customGuests?: string): Trip {
   const now = new Date();
   const start = new Date(now);
   start.setDate(start.getDate() + 7);
@@ -137,7 +272,8 @@ function generateTripFromDestination(destination: Destination): Trip {
     id,
     destination: destination.name,
     location: destination.location,
-    date: `${formatDate(start)} - ${formatDate(end)}`,
+    date: customDate ?? `${formatDate(start)} - ${formatDate(end)}`,
+    guests: customGuests ?? "1 Người lớn",
     status: "Sắp tới",
     imagePath: destination.imagePath,
     isUpcoming: true
@@ -162,12 +298,37 @@ function toggleFavorite(destinationId: string): Destination | null {
   return destination;
 }
 
-function bookTrip(destinationId: string): Trip | null {
+function bookTrip(destinationId: string, customDate?: string, customGuests?: string): Trip | null {
   const destination = getDestinationById(destinationId);
   if (!destination) {
     return null;
   }
-  const trip = generateTripFromDestination(destination);
+  const trip = generateTripFromDestination(destination, customDate, customGuests);
+  trips.unshift(trip);
+  return trip;
+}
+
+function searchFlights(departure?: string, arrival?: string): Flight[] {
+  return mockFlights.filter(f => {
+    const matchDep = !departure || f.departure.toLowerCase() === departure.toLowerCase();
+    const matchArr = !arrival || f.arrival.toLowerCase() === arrival.toLowerCase();
+    return matchDep && matchArr;
+  });
+}
+
+function bookFlightTrip(flightId: string, date: string, guests: string): Trip | null {
+  const flight = mockFlights.find(f => f.id === flightId);
+  if (!flight) return null;
+  const trip: Trip = {
+    id: `trip-fl-${Date.now()}`,
+    destination: `${flight.departure} ✈ ${flight.arrival}`,
+    location: flight.airline,
+    date: date,
+    guests: guests,
+    status: "Sắp tới",
+    imagePath: flight.airlineLogo,
+    isUpcoming: true
+  };
   trips.unshift(trip);
   return trip;
 }
@@ -204,9 +365,11 @@ export const store = {
     }
     return toggleFavorite(destinationId);
   },
-  createTrip(destinationId: string) {
-    return bookTrip(destinationId);
+  createTrip(destinationId: string, date?: string, guests?: string) {
+    return bookTrip(destinationId, date, guests);
   },
+  searchFlights,
+  bookFlightTrip,
   getTrips(type?: string) {
     if (type === "upcoming") {
       return trips.filter((t) => t.isUpcoming);

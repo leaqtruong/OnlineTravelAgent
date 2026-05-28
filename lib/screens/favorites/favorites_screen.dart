@@ -11,8 +11,7 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final travelProvider = Provider.of<TravelProvider>(context);
-    final favorites = travelProvider.favorites;
+    final favorites = context.select<TravelProvider, List<Destination>>((p) => p.favorites);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -38,12 +37,12 @@ class FavoritesScreen extends StatelessWidget {
                   : Expanded(
                       child: ListView.separated(
                         itemCount: favorites.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        separatorBuilder: (_, _) => const SizedBox(height: 16),
                         padding: const EdgeInsets.only(bottom: 24),
                         itemBuilder: (context, index) {
                           return FavoriteDestinationCard(
                             destination: favorites[index],
-                            onFavoriteClick: () => travelProvider
+                            onFavoriteClick: () => context.read<TravelProvider>()
                                 .toggleFavorite(favorites[index].id),
                             onClick: () => onDestinationClick(favorites[index]),
                           );

@@ -2,6 +2,8 @@ export type Destination = {
   id: string;
   name: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   rating: string;
   duration: string;
   imagePath: string;
@@ -17,9 +19,22 @@ export type Trip = {
   destination: string;
   location: string;
   date: string;
+  guests?: string;
   status: string;
   imagePath: string;
   isUpcoming: boolean;
+};
+
+export type Flight = {
+  id: string;
+  airline: string;
+  airlineLogo: string;
+  departure: string;
+  arrival: string;
+  departureTime: string;
+  arrivalTime: string;
+  price: number;
+  duration: string;
 };
 
 export type Profile = {

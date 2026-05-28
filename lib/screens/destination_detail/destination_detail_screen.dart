@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../checkout/checkout_screen.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class DestinationDetailScreen extends StatelessWidget {
   final Destination destination;
@@ -17,90 +18,11 @@ class DestinationDetailScreen extends StatelessWidget {
     required this.onFavoriteClick,
   });
 
-  Future<void> _bookTrip(BuildContext context) async {
-    final ok = await context.read<TravelProvider>().bookSelectedDestination();
-    if (!context.mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ok
-              ? "Đã đặt chuyến đi đến ${destination.name} thành công!"
-              : "Đặt chuyến thất bại. Vui lòng thử lại.",
-        ),
-        backgroundColor: ok ? Colors.green : Colors.red,
-      ),
-    );
-  }
-
-  void _showBookingConfirmation(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      builder: (sheetContext) => Container(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 60,
-              height: 6,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Icon(Icons.check_circle, color: Colors.green, size: 80),
-            const SizedBox(height: 24),
-            const Text(
-              "Xác nhận đặt chỗ",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Bạn có muốn đặt chuyến đi đến ${destination.name} với giá \$${destination.price} không?",
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-            const SizedBox(height: 32),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(sheetContext),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: const Text("Hủy"),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(sheetContext);
-                      await _bookTrip(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16)),
-                    ),
-                    child: const Text("Xác nhận",
-                        style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+  void _navigateToCheckout(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CheckoutScreen(destination: destination),
       ),
     );
   }
@@ -217,19 +139,6 @@ class DestinationDetailScreen extends StatelessWidget {
                             ],
                           ),
                         ),
-                        TextButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text("Tính năng bản đồ sẽ sớm cập nhật")),
-                            );
-                          },
-                          icon: const Icon(Icons.map_outlined, size: 18),
-                          label: const Text("Bản đồ"),
-                          style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.primaryBlue),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
@@ -282,6 +191,66 @@ class DestinationDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 32),
                     const Text(
+                      "Vị trí trên bản đồ",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    if (destination.latitude != 0.0 && destination.longitude != 0.0)
+                      Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: LatLng(
+                                  destination.latitude, destination.longitude),
+                              initialZoom: 13,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                              ),
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.example.onlinetravelagent',
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: LatLng(destination.latitude,
+                                        destination.longitude),
+                                    width: 40,
+                                    height: 40,
+                                    child: const Icon(
+                                      Icons.location_on,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        height: 200,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Text("Chưa có thông tin toạ độ", style: TextStyle(color: Colors.grey)),
+                      ),
+                    const SizedBox(height: 32),
+                    const Text(
                       "Hình ảnh",
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
@@ -292,7 +261,7 @@ class DestinationDetailScreen extends StatelessWidget {
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         itemCount: 4,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) => ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: Image.asset(
@@ -350,7 +319,7 @@ class DestinationDetailScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () => _showBookingConfirmation(context),
+                        onPressed: () => _navigateToCheckout(context),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBlue,
                           shape: RoundedRectangleBorder(

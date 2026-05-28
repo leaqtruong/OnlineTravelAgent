@@ -242,14 +242,28 @@ class TravelProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> bookSelectedDestination() async {
+  Future<bool> bookSelectedDestination({String? date, String? guests}) async {
     final destination = _selectedDestination;
     if (destination == null) {
       return false;
     }
 
     try {
-      final trip = await _api.bookTrip(destination.id);
+      final trip = await _api.bookTrip(
+          destinationId: destination.id, date: date, guests: guests);
+      _trips.insert(0, trip);
+      _syncBaseViews();
+      _invalidateDerivedCaches(includeTrips: true);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> bookFlight({required String flightId, required String date, required String guests}) async {
+    try {
+      final trip = await _api.bookFlight(flightId: flightId, date: date, guests: guests);
       _trips.insert(0, trip);
       _syncBaseViews();
       _invalidateDerivedCaches(includeTrips: true);
@@ -332,6 +346,8 @@ class TravelProvider with ChangeNotifier {
             price: '199',
             reviewsCount: '355',
             category: 'Địa điểm',
+            latitude: 11.9404,
+            longitude: 108.4583,
           ),
           Destination(
             id: 'phuquoc',
@@ -345,6 +361,8 @@ class TravelProvider with ChangeNotifier {
             price: '250',
             reviewsCount: '1.2k',
             category: 'Bãi biển',
+            latitude: 10.2270,
+            longitude: 103.9670,
           ),
           Destination(
             id: 'hoian',
@@ -358,6 +376,8 @@ class TravelProvider with ChangeNotifier {
             price: '150',
             reviewsCount: '800',
             category: 'Địa điểm',
+            latitude: 15.8801,
+            longitude: 108.3380,
           ),
         ],
       );
@@ -380,6 +400,7 @@ class TravelProvider with ChangeNotifier {
             destination: 'Đảo Phú Quốc',
             location: 'Kiên Giang, VN',
             date: '20/05/2026 - 23/05/2026',
+            guests: '2 Người lớn',
             status: 'Sắp tới',
             imagePath: 'assets/images/phuquoc_image.jpg',
             isUpcoming: true,

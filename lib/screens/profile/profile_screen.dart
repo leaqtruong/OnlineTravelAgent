@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../models/document_item.dart';
+import '../../models/user_profile.dart';
 import '../../providers/travel_provider.dart';
 import 'widgets/document_card.dart';
 
@@ -138,9 +140,8 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TravelProvider>();
-    final profile = provider.profile;
-    final documents = provider.documents;
+    final profile = context.select<TravelProvider, UserProfile>((p) => p.profile);
+    final documents = context.select<TravelProvider, List<DocumentItem>>((p) => p.documents);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -238,7 +239,7 @@ class ProfileScreen extends StatelessWidget {
                       )
                     : ListView.separated(
                         itemCount: documents.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
+                        separatorBuilder: (_, _) => const SizedBox(height: 16),
                         padding: const EdgeInsets.only(bottom: 24),
                         itemBuilder: (context, index) {
                           return DocumentCard(doc: documents[index]);

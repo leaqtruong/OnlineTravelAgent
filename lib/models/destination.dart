@@ -10,6 +10,8 @@ class Destination {
   final String price;
   final String reviewsCount;
   final String category;
+  final double latitude;
+  final double longitude;
 
   Destination({
     required this.id,
@@ -23,6 +25,8 @@ class Destination {
     this.price = "",
     this.reviewsCount = "0",
     this.category = "Địa điểm",
+    this.latitude = 0.0,
+    this.longitude = 0.0,
   });
 
   Destination copyWith({
@@ -37,6 +41,8 @@ class Destination {
     String? price,
     String? reviewsCount,
     String? category,
+    double? latitude,
+    double? longitude,
   }) {
     return Destination(
       id: id ?? this.id,
@@ -50,6 +56,8 @@ class Destination {
       price: price ?? this.price,
       reviewsCount: reviewsCount ?? this.reviewsCount,
       category: category ?? this.category,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
   }
 
@@ -66,6 +74,8 @@ class Destination {
       price: json['price']?.toString() ?? '',
       reviewsCount: json['reviewsCount']?.toString() ?? '0',
       category: json['category']?.toString() ?? 'Địa điểm',
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
@@ -82,6 +92,8 @@ class Destination {
       'price': price,
       'reviewsCount': reviewsCount,
       'category': category,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 }

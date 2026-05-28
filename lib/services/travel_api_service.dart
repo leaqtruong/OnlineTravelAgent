@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/destination.dart';
 import '../models/document_item.dart';
+import '../models/flight.dart';
 import '../models/trip.dart';
 import '../models/user_profile.dart';
 
@@ -72,11 +73,46 @@ class TravelApiService {
     return Destination.fromJson(data);
   }
 
-  Future<Trip> bookTrip(String destinationId) async {
+  Future<Trip> bookTrip({required String destinationId, String? date, String? guests}) async {
     final response = await http.post(
       _uri('/api/trips/book'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'destinationId': destinationId}),
+      body: jsonEncode({
+        'destinationId': destinationId,
+        'date': date,
+        'guests': guests,
+      }),
+    );
+    _throwIfError(response);
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return Trip.fromJson(data);
+  }
+
+  Future<List<Flight>> searchFlights(String? departure, String? arrival) async {
+    String query = '';
+    if (departure != null && arrival != null) {
+      query = '?departure=$departure&arrival=$arrival';
+    } else if (departure != null) {
+      query = '?departure=$departure';
+    } else if (arrival != null) {
+      query = '?arrival=$arrival';
+    }
+    
+    final response = await http.get(_uri('/api/flights/search$query'));
+    _throwIfError(response);
+    final List<dynamic> raw = jsonDecode(response.body);
+    return raw.map((e) => Flight.fromJson(e)).toList();
+  }
+
+  Future<Trip> bookFlight({required String flightId, required String date, required String guests}) async {
+    final response = await http.post(
+      _uri('/api/trips/book-flight'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'flightId': flightId,
+        'date': date,
+        'guests': guests,
+      }),
     );
     _throwIfError(response);
     final data = jsonDecode(response.body) as Map<String, dynamic>;

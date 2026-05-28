@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
 import '../../providers/travel_provider.dart';
+import 'trip_detail_screen.dart';
 import 'widgets/trip_card.dart';
 
 class MyTripsScreen extends StatefulWidget {
@@ -31,9 +32,8 @@ class _MyTripsScreenState extends State<MyTripsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<TravelProvider>();
-    final upcoming = provider.upcomingTrips;
-    final history = provider.historyTrips;
+    final upcoming = context.select<TravelProvider, List<Trip>>((p) => p.upcomingTrips);
+    final history = context.select<TravelProvider, List<Trip>>((p) => p.historyTrips);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -93,10 +93,21 @@ class _MyTripsScreenState extends State<MyTripsScreen>
 
     return ListView.separated(
       itemCount: filteredTrips.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 16),
+      separatorBuilder: (_, _) => const SizedBox(height: 16),
       padding: const EdgeInsets.only(bottom: 24),
       itemBuilder: (context, index) {
-        return TripCard(trip: filteredTrips[index]);
+        final trip = filteredTrips[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TripDetailScreen(trip: trip),
+              ),
+            );
+          },
+          child: TripCard(trip: trip),
+        );
       },
     );
   }

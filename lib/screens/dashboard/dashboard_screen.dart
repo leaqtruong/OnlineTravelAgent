@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
-import '../../models/trip.dart';
+
 import '../../providers/travel_provider.dart';
 import 'widgets/popular_destination_card.dart';
-import 'widgets/promo_banner.dart';
 import 'widgets/recommended_destination_card.dart';
+import '../flights/flight_search_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(Destination) onDestinationClick;
@@ -20,7 +20,6 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _showPromoBanner = true;
 
   @override
   void dispose() {
@@ -30,23 +29,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories =
-        context.select<TravelProvider, List<String>>((p) => p.categories);
-    final visibleCategories =
-        categories.where((category) => category != 'Máy bay').toList();
-
-    final favoriteCount =
-        context.select<TravelProvider, int>((p) => p.favorites.length);
-    final upcomingCount =
-        context.select<TravelProvider, int>((p) => p.upcomingTrips.length);
-    final destinationCount =
-        context.select<TravelProvider, int>((p) => p.destinations.length);
-    final upcomingTrip = context.select<TravelProvider, Trip?>((p) {
-      if (p.upcomingTrips.isEmpty) {
-        return null;
-      }
-      return p.upcomingTrips.first;
-    });
+    final categories = context.read<TravelProvider>().categories;
+    final visibleCategories = categories.where((category) => category != 'Máy bay').toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -146,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
                       itemCount: visibleCategories.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      separatorBuilder: (_, _) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {
                         final category = visibleCategories[index];
                         final isSelected = selectedCategory == category;
@@ -186,109 +170,175 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   },
                 ),
               ),
-              if (_showPromoBanner) const SizedBox(height: 24),
-              if (_showPromoBanner)
-                PromoBanner(
+              const SizedBox(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: GestureDetector(
                   onTap: () {
-                    context
-                        .read<TravelProvider>()
-                        .setSelectedCategory('Bãi biển');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Đã lọc ưu đãi theo danh mục Bãi biển'),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FlightSearchScreen(),
                       ),
                     );
                   },
-                  onClose: () {
-                    setState(() {
-                      _showPromoBanner = false;
-                    });
-                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF176FF2), Color(0xFF196EEE)],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF176FF2).withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.flight_takeoff,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Đặt vé máy bay',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Tìm chuyến bay giá rẻ nhất',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              if (_showPromoBanner) const SizedBox(height: 24),
+              ),
+              const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _statCard(
-                        title: 'Điểm đến',
-                        value: destinationCount.toString(),
-                        icon: Icons.place_outlined,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _statCard(
-                        title: 'Yêu thích',
-                        value: favoriteCount.toString(),
-                        icon: Icons.favorite_border,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _statCard(
-                        title: 'Sắp tới',
-                        value: upcomingCount.toString(),
-                        icon: Icons.flight_takeoff,
-                      ),
-                    ),
-                  ],
+                child: Consumer<TravelProvider>(
+                  builder: (context, provider, _) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _statCard(
+                            title: 'Điểm đến',
+                            value: provider.destinations.length.toString(),
+                            icon: Icons.place_outlined,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _statCard(
+                            title: 'Yêu thích',
+                            value: provider.favorites.length.toString(),
+                            icon: Icons.favorite_border,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _statCard(
+                            title: 'Sắp tới',
+                            value: provider.upcomingTrips.length.toString(),
+                            icon: Icons.flight_takeoff,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
+                child: Consumer<TravelProvider>(
+                  builder: (context, provider, _) {
+                    final upcomingTrip = provider.upcomingTrips.isNotEmpty ? provider.upcomingTrips.first : null;
+                    return Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: upcomingTrip == null
-                      ? const Text(
-                          'Bạn chưa có chuyến đi sắp tới. Hãy đặt ngay một hành trình mới.',
-                          style: TextStyle(color: Colors.grey, fontSize: 13),
-                        )
-                      : Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_month,
-                              color: AppTheme.primaryBlue,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Kế hoạch gần nhất: ${upcomingTrip.destination}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
+                      child: upcomingTrip == null
+                          ? const Text(
+                              'Bạn chưa có chuyến đi sắp tới. Hãy đặt ngay một hành trình mới.',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            )
+                          : Row(
+                              children: [
+                                const Icon(
+                                  Icons.calendar_month,
+                                  color: AppTheme.primaryBlue,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Kế hoạch gần nhất: ${upcomingTrip.destination}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        upcomingTrip.date,
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    upcomingTrip.date,
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 20),
@@ -437,7 +487,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
                       itemCount: destinations.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 20),
+                      separatorBuilder: (_, _) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
                         if (index >= destinations.length) {
                           return const SizedBox.shrink();
@@ -481,7 +531,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
                       itemCount: recommended.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 20),
+                      separatorBuilder: (_, _) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
                         if (index >= recommended.length) {
                           return const SizedBox.shrink();

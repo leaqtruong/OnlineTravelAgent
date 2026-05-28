@@ -38,14 +38,41 @@ app.get("/api/trips", (req, res) => {
 
 app.post("/api/trips/book", (req, res) => {
   const destinationId = req.body?.destinationId;
+  const date = req.body?.date;
+  const guests = req.body?.guests;
+
   if (typeof destinationId !== "string" || destinationId.trim().length === 0) {
     res.status(400).json({ message: "destinationId is required" });
     return;
   }
 
-  const trip = store.createTrip(destinationId);
+  const trip = store.createTrip(destinationId, date, guests);
   if (!trip) {
     res.status(404).json({ message: "Destination not found" });
+    return;
+  }
+  res.status(201).json(trip);
+});
+
+app.get("/api/flights/search", (req, res) => {
+  const departure = typeof req.query.departure === "string" ? req.query.departure : undefined;
+  const arrival = typeof req.query.arrival === "string" ? req.query.arrival : undefined;
+  res.json(store.searchFlights(departure, arrival));
+});
+
+app.post("/api/trips/book-flight", (req, res) => {
+  const flightId = req.body?.flightId;
+  const date = req.body?.date;
+  const guests = req.body?.guests;
+
+  if (typeof flightId !== "string" || flightId.trim().length === 0) {
+    res.status(400).json({ message: "flightId is required" });
+    return;
+  }
+
+  const trip = store.bookFlightTrip(flightId, date || "", guests || "");
+  if (!trip) {
+    res.status(404).json({ message: "Flight not found" });
     return;
   }
   res.status(201).json(trip);
