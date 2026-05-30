@@ -223,9 +223,11 @@ class TripCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: trip.isUpcoming
-                              ? AppTheme.primaryBlue.withValues(alpha: 0.08)
-                              : Colors.grey.withValues(alpha: 0.1),
+                          color: trip.status.toLowerCase() == 'đang diễn ra' || trip.status.toLowerCase() == 'ongoing'
+                              ? const Color(0xFFFF9800).withValues(alpha: 0.1)
+                              : trip.isUpcoming
+                                  ? AppTheme.primaryBlue.withValues(alpha: 0.08)
+                                  : Colors.grey.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -233,7 +235,11 @@ class TripCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 9,
                             fontWeight: FontWeight.bold,
-                            color: trip.isUpcoming ? AppTheme.primaryBlue : Colors.grey[600],
+                            color: trip.status.toLowerCase() == 'đang diễn ra' || trip.status.toLowerCase() == 'ongoing'
+                                ? const Color(0xFFFF9800)
+                                : trip.isUpcoming
+                                    ? AppTheme.primaryBlue
+                                    : Colors.grey[600],
                           ),
                         ),
                       ),

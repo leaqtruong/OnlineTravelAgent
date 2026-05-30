@@ -21,7 +21,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -37,6 +37,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
       body: SafeArea(
         child: Consumer<TravelProvider>(
           builder: (context, provider, child) {
+            final ongoing = provider.ongoingTrips;
             final upcoming = provider.upcomingTrips;
             final history = provider.historyTrips;
 
@@ -149,6 +150,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
                       tabs: const [
+                        Tab(text: "Đang diễn ra"),
                         Tab(text: "Sắp tới"),
                         Tab(text: "Lịch sử"),
                       ],
@@ -161,6 +163,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     child: TabBarView(
                       controller: _tabController,
                       children: [
+                        _tripList(ongoing),
                         _tripList(upcoming),
                         _tripList(history),
                       ],
