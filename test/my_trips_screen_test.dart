@@ -24,14 +24,13 @@ void main() {
     expect(find.text('Chuyến đi của tôi'), findsOneWidget);
 
     // Verify Tab items are loaded
-    expect(find.text('Đang diễn ra'), findsAtLeastNWidgets(1));
-    expect(find.text('Sắp tới'), findsAtLeastNWidgets(1));
-    expect(find.text('Lịch sử'), findsAtLeastNWidgets(1));
+    expect(find.text('Tất cả'), findsAtLeastNWidgets(1));
+    expect(find.text('Gói Tour'), findsAtLeastNWidgets(1));
+    expect(find.text('Khách sạn'), findsAtLeastNWidgets(1));
+    expect(find.text('Vé máy bay'), findsAtLeastNWidgets(1));
 
     // Dynamically check whether empty state or list cards are loaded based on provider data
-    if (travelProvider.ongoingTrips.isEmpty &&
-        travelProvider.upcomingTrips.isEmpty &&
-        travelProvider.historyTrips.isEmpty) {
+    if (travelProvider.trips.isEmpty) {
       expect(find.text('Bắt đầu hành trình mới'), findsOneWidget);
       expect(find.text('Khám phá ngay'), findsOneWidget);
     } else {

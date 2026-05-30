@@ -21,7 +21,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -37,9 +37,10 @@ class _MyTripsScreenState extends State<MyTripsScreen>
       body: SafeArea(
         child: Consumer<TravelProvider>(
           builder: (context, provider, child) {
-            final ongoing = provider.ongoingTrips;
-            final upcoming = provider.upcomingTrips;
-            final history = provider.historyTrips;
+            final allTrips = provider.trips;
+            final tours = provider.trips.where((t) => t.flightId == null && t.hotelId == null).toList();
+            final hotels = provider.trips.where((t) => t.hotelId != null).toList();
+            final flights = provider.trips.where((t) => t.flightId != null).toList();
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -77,6 +78,8 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     ),
                     child: TabBar(
                       controller: _tabController,
+                      isScrollable: true,
+                      tabAlignment: TabAlignment.start,
                       indicator: BoxDecoration(
                         color: AppTheme.primaryBlue,
                         borderRadius: BorderRadius.circular(12),
@@ -95,9 +98,10 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
                       tabs: const [
-                        Tab(text: "Đang diễn ra"),
-                        Tab(text: "Sắp tới"),
-                        Tab(text: "Lịch sử"),
+                        Tab(text: "Tất cả"),
+                        Tab(text: "Gói Tour"),
+                        Tab(text: "Khách sạn"),
+                        Tab(text: "Vé máy bay"),
                       ],
                     ),
                   ),
@@ -108,9 +112,10 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        _tripList(ongoing),
-                        _tripList(upcoming),
-                        _tripList(history),
+                        _tripList(allTrips),
+                        _tripList(tours),
+                        _tripList(hotels),
+                        _tripList(flights),
                       ],
                     ),
                   ),
