@@ -50,6 +50,10 @@ class TripDetailScreen extends StatelessWidget {
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
+                              // Prevent overly long destination strings from forcing
+                              // horizontal overflow by capping lines and ellipsizing.
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -60,11 +64,17 @@ class TripDetailScreen extends StatelessWidget {
                                   color: AppTheme.primaryBlue,
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  trip.location,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.primaryBlue,
+                                // Constrain the location text so it wraps/truncates
+                                // instead of causing a Row overflow.
+                                Expanded(
+                                  child: Text(
+                                    trip.location,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: AppTheme.primaryBlue,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

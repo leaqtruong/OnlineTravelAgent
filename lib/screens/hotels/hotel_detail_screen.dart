@@ -1,0 +1,310 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../models/hotel.dart';
+import '../../models/room.dart';
+import '../../providers/travel_provider.dart';
+import '../checkout/payment_method_screen.dart';
+
+class HotelDetailScreen extends StatefulWidget {
+  final Hotel hotel;
+
+  const HotelDetailScreen({super.key, required this.hotel});
+
+  @override
+  State<HotelDetailScreen> createState() => _HotelDetailScreenState();
+}
+
+class _HotelDetailScreenState extends State<HotelDetailScreen> {
+  Room? _selectedRoom;
+  final String _checkInDate = '20/05/2026';
+  final String _checkOutDate = '23/05/2026';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 250,
+            pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Hero(
+                  // Use hotel id in hero tag to avoid collisions when names are identical
+                  tag: 'hotel_image_${widget.hotel.id}',
+                  child: Image.asset(
+                    widget.hotel.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey[300],
+                      child: const Icon(Icons.image, size: 50, color: Colors.grey),
+                    ),
+                  ),
+                ),
+              ),
+            leading: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CircleAvatar(
+                backgroundColor: Colors.white.withValues(alpha: 0.8),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.black),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.hotel.name,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 20),
+                          const SizedBox(width: 4),
+                          Text(
+                            widget.hotel.rating,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.grey, size: 16),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          widget.hotel.address,
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Tiện nghi',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: widget.hotel.amenities.map((amenity) {
+                      return Chip(
+                        label: Text(amenity, style: const TextStyle(fontSize: 12)),
+                        backgroundColor: AppTheme.backgroundGray,
+                        side: BorderSide.none,
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Mô tả',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.hotel.description,
+                    style: const TextStyle(color: Colors.grey, height: 1.5),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Chọn phòng',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  if (widget.hotel.rooms.isEmpty)
+                    const Text('Hiện không có phòng nào trống.')
+                  else
+                    ...widget.hotel.rooms.map((room) => _buildRoomCard(room)),
+                  const SizedBox(height: 80),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      bottomSheet: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Tổng cộng',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  Text(
+                    _selectedRoom == null
+                        ? 'Chưa chọn phòng'
+                        : '\$${_selectedRoom!.price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryBlue,
+                    ),
+                  ),
+                ],
+              ),
+              ElevatedButton(
+                onPressed: _selectedRoom == null ? null : _bookHotel,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Đặt Ngay',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoomCard(Room room) {
+    final isSelected = _selectedRoom?.id == room.id;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedRoom = room;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
+          border: Border.all(
+            color: isSelected ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.2),
+            width: isSelected ? 2 : 1,
+          ),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                room.imagePath,
+                width: 80,
+                height: 80,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 80,
+                  height: 80,
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.king_bed, color: Colors.grey),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    room.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tối đa ${room.capacity} khách',
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '\$${room.price.toStringAsFixed(0)} / đêm',
+                    style: const TextStyle(
+                      color: AppTheme.primaryBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              color: isSelected ? AppTheme.primaryBlue : Colors.grey,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _bookHotel() {
+    if (_selectedRoom == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodScreen(
+          totalPrice: _selectedRoom!.price,
+          onPaymentSuccess: () async {
+            if (!mounted) return false;
+            final success = await context.read<TravelProvider>().bookHotel(
+                  roomId: _selectedRoom!.id,
+                  checkIn: _checkInDate,
+                  checkOut: _checkOutDate,
+                  guests: '${_selectedRoom!.capacity} Người',
+                );
+            return success;
+          },
+        ),
+      ),
+    );
+  }
+}

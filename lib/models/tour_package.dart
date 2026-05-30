@@ -1,0 +1,49 @@
+class TourPackage {
+  final String id;
+  final String name;
+  final String description;
+  final String imagePath;
+  final String duration;
+  final double price;
+  final double? originalPrice;
+  final List<String> destinations;
+  final List<String> includes;
+  final String departure;
+  final bool isPopular;
+  final bool includesGuide;
+  final double guideFee;
+
+  const TourPackage({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.imagePath,
+    required this.duration,
+    required this.price,
+    this.originalPrice,
+    required this.destinations,
+    required this.includes,
+    required this.departure,
+    this.isPopular = false,
+    this.includesGuide = true,
+    this.guideFee = 50.0,
+  });
+
+  factory TourPackage.fromJson(Map<String, dynamic> json) {
+    return TourPackage(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      imagePath: json['imagePath']?.toString() ?? '',
+      duration: json['duration']?.toString() ?? '',
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      originalPrice: (json['originalPrice'] as num?)?.toDouble(),
+      destinations: (json['destinations'] as List?)?.cast<String>() ?? [],
+      includes: (json['includes'] as List?)?.cast<String>() ?? [],
+      departure: json['departure']?.toString() ?? '',
+      isPopular: json['isPopular'] == true,
+      includesGuide: json['includesGuide'] != false,
+      guideFee: (json['guideFee'] as num?)?.toDouble() ?? 50.0,
+    );
+  }
+}

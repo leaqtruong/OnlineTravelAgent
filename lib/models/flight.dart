@@ -9,7 +9,7 @@ class Flight {
   final int price;
   final String duration;
 
-  Flight({
+  const Flight({
     required this.id,
     required this.airline,
     required this.airlineLogo,

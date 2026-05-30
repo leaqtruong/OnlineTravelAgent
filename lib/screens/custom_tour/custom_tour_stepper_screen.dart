@@ -31,7 +31,6 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
   
   DateTime _selectedDate = DateTime(2026, 12, 15);
   int _guests = 2;
-  String _selectedPaymentMethod = 'mastercard';
   // Custom tours always include a guide (fixed fee per tour)
   static const double _guideFee = 50.0;
 
@@ -1083,19 +1082,6 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-
-        // E. Payment Method selector
-        const Text(
-          'Phương thức thanh toán',
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textBlack,
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildPaymentMethodSelector(),
         const SizedBox(height: 20),
       ],
     );
@@ -1143,220 +1129,6 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  // --- Payment Method Selector builders ---
-  Widget _buildPaymentMethodSelector() {
-    final List<Map<String, dynamic>> methods = [
-      {
-        'id': 'mastercard',
-        'name': 'Master Card (••• 4242)',
-        'logo': _buildMasterCardLogoMini(),
-      },
-      {
-        'id': 'visa',
-        'name': 'Visa Card (••• 9876)',
-        'logo': _buildVisaLogoMini(),
-      },
-      {
-        'id': 'paypal',
-        'name': 'PayPal Account',
-        'logo': _buildPayPalLogoMini(),
-      },
-      {
-        'id': 'applepay',
-        'name': 'Apple Pay',
-        'logo': _buildApplePayLogoMini(),
-      },
-      {
-        'id': 'cash',
-        'name': 'Thanh toán tiền mặt',
-        'logo': _buildCashLogoMini(),
-      },
-    ];
-
-    return Column(
-      children: methods.map((m) {
-        final isSelected = _selectedPaymentMethod == m['id'];
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              _selectedPaymentMethod = m['id'] as String;
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.1),
-                width: isSelected ? 1.8 : 1.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isSelected 
-                      ? AppTheme.primaryBlue.withValues(alpha: 0.05)
-                      : Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                )
-              ],
-            ),
-            child: Row(
-              children: [
-                m['logo'] as Widget,
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Text(
-                    m['name'] as String,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppTheme.textBlack,
-                    ),
-                  ),
-                ),
-                Icon(
-                  isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                  color: isSelected ? AppTheme.primaryBlue : Colors.grey,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildMasterCardLogoMini() {
-    return SizedBox(
-      width: 32,
-      height: 20,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            left: 2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: const BoxDecoration(
-                color: Color(0xFFEB001B),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            right: 2,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF79E1B).withValues(alpha: 0.85),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVisaLogoMini() {
-    return Container(
-      width: 32,
-      height: 20,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF5F7FA),
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      alignment: Alignment.center,
-      child: const Text(
-        'VISA',
-        style: TextStyle(
-          color: Color(0xFF1A1F71),
-          fontWeight: FontWeight.bold,
-          fontStyle: FontStyle.italic,
-          fontSize: 8,
-          letterSpacing: 0.2,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPayPalLogoMini() {
-    return Container(
-      width: 32,
-      height: 20,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F0FE),
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFFD2E3FC)),
-      ),
-      alignment: Alignment.center,
-      child: RichText(
-        text: const TextSpan(
-          style: TextStyle(
-            fontSize: 7,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
-          children: [
-            TextSpan(text: 'Pay', style: TextStyle(color: Color(0xFF003087))),
-            TextSpan(text: 'Pal', style: TextStyle(color: Color(0xFF0079C1))),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildApplePayLogoMini() {
-    return Container(
-      width: 32,
-      height: 20,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(3),
-      ),
-      alignment: Alignment.center,
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.apple, color: Colors.white, size: 10),
-          Text(
-            'Pay',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCashLogoMini() {
-    return Container(
-      width: 32,
-      height: 20,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFFC8E6C9)),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(
-        Icons.payments_rounded,
-        color: Color(0xFF4CAF50),
-        size: 12,
-      ),
     );
   }
 
@@ -1489,7 +1261,6 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
       MaterialPageRoute(
         builder: (context) => PaymentMethodScreen(
           totalPrice: _totalPrice,
-          initialMethodId: _selectedPaymentMethod,
           onPaymentSuccess: () async {
             if (!mounted) return false;
 

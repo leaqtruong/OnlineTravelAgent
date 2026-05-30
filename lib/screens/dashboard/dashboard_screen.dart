@@ -6,8 +6,15 @@ import '../../models/destination.dart';
 
 import '../../providers/travel_provider.dart';
 import 'widgets/popular_destination_card.dart';
-import 'widgets/recommended_destination_card.dart';
 import '../flights/flight_search_screen.dart';
+import '../tours/tours_screen.dart';
+import '../custom_tour/custom_tour_stepper_screen.dart';
+import '../notifications/notifications_screen.dart';
+import '../destinations/destinations_screen.dart';
+import '../food/food_screen.dart';
+import '../hotels/hotels_screen.dart';
+import '../tours/tour_detail_screen.dart';
+import '../../models/tour_package.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(Destination) onDestinationClick;
@@ -30,7 +37,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final categories = context.read<TravelProvider>().categories;
-    final visibleCategories = categories.where((category) => category != 'Máy bay').toList();
+    final visibleCategories = categories
+        .where((category) => category != 'Máy bay')
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -57,19 +66,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         Text(
                           'Bạn muốn đi đâu?',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleLarge
-                              ?.copyWith(fontSize: 32),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge?.copyWith(fontSize: 32),
                         ),
                       ],
                     ),
-                    const Padding(
-                      padding: EdgeInsets.only(right: 12),
-                      child: Icon(
-                        Icons.notifications_none,
-                        color: AppTheme.primaryBlue,
-                        size: 30,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.notifications_none,
+                          color: AppTheme.primaryBlue,
+                          size: 30,
+                        ),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
@@ -135,9 +153,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         final category = visibleCategories[index];
                         final isSelected = selectedCategory == category;
                         return GestureDetector(
-                          onTap: () => context
-                              .read<TravelProvider>()
-                              .setSelectedCategory(category),
+                          onTap: () {
+                            if (category == 'Khách sạn') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HotelsScreen(),
+                                ),
+                              );
+} else if (category == 'Địa điểm') {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => DestinationsScreen(
+        initialCategory: category,
+      ),
+    ),
+  );
+} else if (category == 'Ẩm thực') {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => const FoodScreen(),
+    ),
+  );
+                            } else {
+                              context
+                                  .read<TravelProvider>()
+                                  .setSelectedCategory(category);
+                            }
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
@@ -286,7 +331,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Consumer<TravelProvider>(
                   builder: (context, provider, _) {
-                    final upcomingTrip = provider.upcomingTrips.isNotEmpty ? provider.upcomingTrips.first : null;
+                    final upcomingTrip = provider.upcomingTrips.isNotEmpty
+                        ? provider.upcomingTrips.first
+                        : null;
                     return Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -304,7 +351,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       child: upcomingTrip == null
                           ? const Text(
                               'Bạn chưa có chuyến đi sắp tới. Hãy đặt ngay một hành trình mới.',
-                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 13,
+                              ),
                             )
                           : Row(
                               children: [
@@ -315,7 +365,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Kế hoạch gần nhất: ${upcomingTrip.destination}',
@@ -407,35 +458,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Checklist nhanh',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 46,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  scrollDirection: Axis.horizontal,
-                  children: const [
-                    _ChecklistChip(
-                        icon: Icons.badge_outlined, label: 'CCCD/Hộ chiếu'),
-                    SizedBox(width: 10),
-                    _ChecklistChip(
-                        icon: Icons.credit_card, label: 'Thẻ thanh toán'),
-                    SizedBox(width: 10),
-                    _ChecklistChip(
-                        icon: Icons.local_hospital_outlined,
-                        label: 'Thuốc cơ bản'),
-                    SizedBox(width: 10),
-                    _ChecklistChip(
-                        icon: Icons.wb_sunny_outlined, label: 'Kem chống nắng'),
-                  ],
-                ),
-              ),
+              // Checklist section removed per request
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -443,7 +466,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Phổ biến',
+                      'Địa điểm phổ biến',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -451,11 +474,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        _searchController.clear();
-                        context.read<TravelProvider>().setSearchQuery('');
-                        context.read<TravelProvider>().setSelectedCategory(
-                              'Tất cả',
-                            );
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DestinationsScreen(
+                              initialCategory: 'Địa điểm',
+                            ),
+                          ),
+                        );
                       },
                       child: const Text(
                         'Xem tất cả',
@@ -481,24 +507,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   }
+                  final displayList = destinations.take(5).toList();
                   return SizedBox(
                     height: 240,
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
-                      itemCount: destinations.length,
+                      itemCount: displayList.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
-                        if (index >= destinations.length) {
+                        if (index >= displayList.length) {
                           return const SizedBox.shrink();
                         }
                         return PopularDestinationCard(
-                          destination: destinations[index],
+                          destination: displayList[index],
                           onFavoriteClick: () => context
                               .read<TravelProvider>()
-                              .toggleFavorite(destinations[index].id),
+                              .toggleFavorite(displayList[index].id),
                           onClick: () =>
-                              widget.onDestinationClick(destinations[index]),
+                              widget.onDestinationClick(displayList[index]),
                         );
                       },
                     ),
@@ -506,40 +533,75 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               const SizedBox(height: 32),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Đề xuất',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Đề xuất tour',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ToursScreen(),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Xem tất cả',
+                        style: TextStyle(
+                          color: AppTheme.primaryBlue,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
-              Selector<TravelProvider, List<Destination>>(
-                selector: (_, provider) => provider.filteredRecommended,
-                builder: (context, recommended, child) {
-                  if (recommended.isEmpty) {
+              Selector<TravelProvider, List<TourPackage>>(
+                selector: (_, provider) => provider.tourPackages,
+                builder: (context, tours, child) {
+                  if (tours.isEmpty) {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(20.0),
-                        child: Text('Không tìm thấy đề xuất phù hợp'),
+                        child: Text('Không có đề xuất tour nào'),
                       ),
                     );
                   }
+                  final displayList = tours.take(5).toList();
                   return SizedBox(
-                    height: 180,
+                    height: 200,
                     child: ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
-                      itemCount: recommended.length,
+                      itemCount: displayList.length,
                       separatorBuilder: (_, _) => const SizedBox(width: 20),
                       itemBuilder: (context, index) {
-                        if (index >= recommended.length) {
+                        if (index >= displayList.length) {
                           return const SizedBox.shrink();
                         }
-                        return RecommendedDestinationCard(
-                          destination: recommended[index],
-                          onClick: () =>
-                              widget.onDestinationClick(recommended[index]),
+                        final tour = displayList[index];
+                        return _RecommendedTourCard(
+                          tour: tour,
+                          onClick: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    TourDetailScreen(tour: tour),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
@@ -547,8 +609,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               const SizedBox(height: 32),
+              _buildTravelStoriesSection(),
+              const SizedBox(height: 32),
+              const SizedBox(height: 32),
             ],
           ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CustomTourStepperScreen(),
+            ),
+          );
+        },
+        backgroundColor: AppTheme.primaryBlue,
+        icon: const Icon(Icons.add_location_alt, color: Colors.white),
+        label: const Text(
+          'Tự Tạo Tour',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -582,10 +663,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
+          Text(title, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         ],
       ),
     );
@@ -627,35 +705,348 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  Widget _buildTravelStoriesSection() {
+    final stories = [
+      {
+        'name': 'Hồng Nhung',
+        'avatar':
+            'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&fit=crop',
+        'location': 'Sa Pa, VN',
+        'comment':
+            'Bản Cát Cát thật yên bình, mây mù phủ kín thung lũng mộng mơ vào sáng sớm!',
+        'rating': '5.0',
+        'image': 'assets/images/sapa_image.png',
+      },
+      {
+        'name': 'Quốc Anh',
+        'avatar':
+            'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
+        'location': 'Vịnh Hạ Long, VN',
+        'comment':
+            'Chèo thuyền kayak vượt qua Hang Luồn hoang sơ là một trải nghiệm không thể quên!',
+        'rating': '4.9',
+        'image': 'assets/images/halong_image.png',
+      },
+      {
+        'name': 'Minh Huy',
+        'avatar':
+            'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop',
+        'location': 'Đà Nẵng, VN',
+        'comment':
+            'Hoàng hôn trên Cầu Vàng rất hùng vĩ, mây núi hòa quyện say đắm lòng người.',
+        'rating': '4.8',
+        'image': 'assets/images/danang_image.png',
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            'Cảm hứng du lịch',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 190,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            scrollDirection: Axis.horizontal,
+            itemCount: stories.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 16),
+            itemBuilder: (context, index) {
+              final story = stories[index];
+              return Container(
+                width: 280,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.grey.withValues(alpha: 0.08),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: Image.asset(
+                        story['image']!,
+                        width: 90,
+                        height: 166,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: 90,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image, color: Colors.grey),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundImage: NetworkImage(story['avatar']!),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  story['name']!,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                size: 10,
+                                color: AppTheme.primaryBlue,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                story['location']!,
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Expanded(
+                            child: Text(
+                              story['comment']!,
+                              style: TextStyle(
+                                color: Colors.grey[800],
+                                fontSize: 11,
+                                height: 1.4,
+                              ),
+                              maxLines: 4,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                size: 12,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                story['rating']!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
 }
 
-class _ChecklistChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
+class _RecommendedTourCard extends StatelessWidget {
+  final TourPackage tour;
+  final VoidCallback onClick;
 
-  const _ChecklistChip({
-    required this.icon,
-    required this.label,
-  });
+  const _RecommendedTourCard({required this.tour, required this.onClick});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE1E7F0)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: AppTheme.primaryBlue),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-          ),
-        ],
+    final cacheWidth = (166 * MediaQuery.devicePixelRatioOf(context)).round();
+
+    return GestureDetector(
+      onTap: onClick,
+      child: Container(
+        width: 174,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      tour.imagePath,
+                      height: 96,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      cacheWidth: cacheWidth,
+                      filterQuality: FilterQuality.low,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 96,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.image, color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  if (tour.includesGuide)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue,
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Có HDV',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    bottom: -8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.darkGray,
+                        shape: BoxShape.rectangle,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Text(
+                        tour.duration,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                tour.name,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textBlack,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.flight_takeoff,
+                    color: Colors.blueAccent,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      'Từ ${tour.departure}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.blueGrey,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '\$${tour.price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryBlue,
+                    ),
+                  ),
+                  if (tour.originalPrice != null)
+                    Text(
+                      '\$${tour.originalPrice!.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

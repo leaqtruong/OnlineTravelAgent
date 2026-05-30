@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:online_travel_agent/models/trip.dart';
 import 'package:online_travel_agent/providers/travel_provider.dart';
 import 'package:online_travel_agent/screens/my_trips/my_trips_screen.dart';
 import 'package:online_travel_agent/screens/my_trips/widgets/trip_card.dart';

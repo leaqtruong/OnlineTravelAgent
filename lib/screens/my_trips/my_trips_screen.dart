@@ -4,7 +4,8 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
 import '../../providers/travel_provider.dart';
-import 'trip_detail_screen.dart';
+import 'place_trip_detail_screen.dart';
+import 'tour_trip_detail_screen.dart';
 import 'widgets/trip_card.dart';
 
 class MyTripsScreen extends StatefulWidget {
@@ -223,10 +224,16 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     final trip = finalTrips[index];
                     return GestureDetector(
                       onTap: () {
+                        final isTour = trip.isCustom ||
+                            trip.id.startsWith('trip_tour_') ||
+                            trip.id.startsWith('trip_custom_') ||
+                            trip.id.toLowerCase().contains('tour');
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => TripDetailScreen(trip: trip),
+                            builder: (context) => isTour
+                                ? TourTripDetailScreen(trip: trip)
+                                : PlaceTripDetailScreen(trip: trip),
                           ),
                         );
                       },

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
 import '../../providers/travel_provider.dart';
+import '../checkout/payment_method_screen.dart';
 
 class FlightCheckoutScreen extends StatefulWidget {
   final Flight flight;
@@ -24,7 +25,6 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
   int _children = 0;
   bool _isBusinessClass = false;
   int _extraBaggage = 0; // 0, 15, 20 kg
-  bool _isProcessing = false;
 
   double get _totalPrice {
     final basePrice = widget.flight.price.toDouble();
@@ -39,75 +39,25 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
     return (adultPrice + childPrice) * classMultiplier + baggagePrice;
   }
 
-  Future<void> _handlePayment() async {
-    setState(() {
-      _isProcessing = true;
-    });
-
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
+  void _navigateToPayment() {
     final String guestsStr = '$_adults Người lớn, $_children Trẻ em'
         '${_isBusinessClass ? ' (Thương gia)' : ' (Phổ thông)'}';
 
-    final success = await context.read<TravelProvider>().bookFlight(
-      flightId: widget.flight.id,
-      date: widget.date,
-      guests: guestsStr,
-    );
-
-    setState(() {
-      _isProcessing = false;
-    });
-
-    if (success && mounted) {
-      _showSuccessDialog();
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Có lỗi xảy ra khi đặt vé!')),
-      );
-    }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Column(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green, size: 60),
-            SizedBox(height: 16),
-            Text('Đặt vé thành công!'),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodScreen(
+          totalPrice: _totalPrice,
+          onPaymentSuccess: () async {
+            if (!mounted) return false;
+            final provider = context.read<TravelProvider>();
+            return await provider.bookFlight(
+              flightId: widget.flight.id,
+              date: widget.date,
+              guests: guestsStr,
+            );
+          },
         ),
-        content: const Text(
-          'Chuyến bay của bạn đã được thêm vào mục "Chuyến đi". Chúc bạn có một hành trình bay vui vẻ!',
-          textAlign: TextAlign.center,
-        ),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () {
-                // Go back to Home
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-              child: const Text('Về Trang Chủ'),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -121,32 +71,21 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildFlightSummary(),
-                const SizedBox(height: 24),
-                _buildPassengerSection(),
-                const SizedBox(height: 24),
-                _buildClassOptions(),
-                const SizedBox(height: 24),
-                _buildBaggageOptions(),
-                const SizedBox(height: 100), // Space for bottom bar
-              ],
-            ),
-          ),
-          if (_isProcessing)
-            Container(
-              color: Colors.black.withValues(alpha: 0.3),
-              child: const Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFlightSummary(),
+            const SizedBox(height: 24),
+            _buildPassengerSection(),
+            const SizedBox(height: 24),
+            _buildClassOptions(),
+            const SizedBox(height: 24),
+            _buildBaggageOptions(),
+            const SizedBox(height: 100), // Space for bottom bar
+          ],
+        ),
       ),
       bottomSheet: _buildBottomBar(),
     );
@@ -427,7 +366,7 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
               ],
             ),
             ElevatedButton(
-              onPressed: _isProcessing ? null : _handlePayment,
+              onPressed: _navigateToPayment,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,
                 foregroundColor: Colors.white,
@@ -437,16 +376,10 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
                 ),
                 elevation: 0,
               ),
-              child: _isProcessing
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text(
-                      'Thanh toán',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+              child: const Text(
+                'Thanh toán',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),

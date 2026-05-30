@@ -115,26 +115,28 @@ class _MainScreenState extends State<MainScreen> {
         child: MediaQuery.removePadding(
           context: context,
           removeBottom: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                  _visitedTabs.add(index);
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              backgroundColor: Colors.white,
-              selectedItemColor: AppTheme.primaryBlue,
-              unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
-              showSelectedLabels: true,
-              showUnselectedLabels: true,
-              iconSize: 26,
-              selectedLabelStyle: const TextStyle(fontSize: 12),
-              unselectedLabelStyle: const TextStyle(fontSize: 12),
-              elevation: 0,
+          child: Transform.translate(
+            offset: const Offset(0, 0),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  setState(() {
+                    _selectedIndex = index;
+                    _visitedTabs.add(index);
+                  });
+                },
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.white,
+                selectedItemColor: AppTheme.primaryBlue,
+                unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
+                showSelectedLabels: true,
+                showUnselectedLabels: true,
+                iconSize: 30,
+                selectedLabelStyle: const TextStyle(fontSize: 14),
+                unselectedLabelStyle: const TextStyle(fontSize: 14),
+                elevation: 0,
               items: List.generate(
                 _titles.length,
                 (index) => BottomNavigationBarItem(
@@ -142,6 +144,7 @@ class _MainScreenState extends State<MainScreen> {
                   label: _titles[index],
                 ),
               ),
+            ),
             ),
           ),
         ),

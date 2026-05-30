@@ -9,7 +9,7 @@ class DocumentItem {
   final String iconName;
   final String colorHex;
 
-  DocumentItem({
+  const DocumentItem({
     required this.id,
     required this.title,
     required this.description,
@@ -35,27 +35,18 @@ class DocumentItem {
 
   static IconData _iconFromName(String name) {
     switch (name) {
-      case 'assignment':
-        return Icons.assignment;
-      case 'verified_user':
-        return Icons.verified_user;
-      case 'flight_takeoff':
-        return Icons.flight_takeoff;
-      case 'description':
-      default:
-        return Icons.description;
+      case 'assignment': return Icons.assignment;
+      case 'verified_user': return Icons.verified_user;
+      case 'flight_takeoff': return Icons.flight_takeoff;
+      default: return Icons.description;
     }
   }
 
   static Color _colorFromHex(String hex) {
     final normalized = hex.replaceFirst('#', '');
     final value = int.tryParse(normalized, radix: 16);
-    if (value == null) {
-      return const Color(0xFF176FF2);
-    }
-    if (normalized.length <= 6) {
-      return Color(0xFF000000 | value);
-    }
+    if (value == null) return const Color(0xFF176FF2);
+    if (normalized.length <= 6) return Color(0xFF000000 | value);
     return Color(value);
   }
 }

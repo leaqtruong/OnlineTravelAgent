@@ -23,6 +23,9 @@ void main() {
   );
 
   testWidgets('TourDetailScreen UI elements and interactions', (WidgetTester tester) async {
+    // Set viewport size so all interactive elements are visible
+    await tester.binding.setSurfaceSize(const Size(800, 1200));
+
     final travelProvider = TravelProvider();
 
     await tester.pumpWidget(
