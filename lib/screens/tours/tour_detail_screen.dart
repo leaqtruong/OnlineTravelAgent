@@ -96,8 +96,8 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
     return Icons.check_circle_rounded;
   }
 
-  // Smart itinerary description generator based on destinations
-  List<Map<String, String>> _generateItinerary() {
+  // Smart itinerary description generator based on destinations including hour milestones
+  List<Map<String, dynamic>> _generateItinerary() {
     final destinations = widget.tour.destinations;
     if (destinations.isEmpty) {
       return [
@@ -105,24 +105,44 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
           'day': 'Ngày 1',
           'title': 'Khởi hành & Khám phá hành trình',
           'desc': 'Bắt đầu chuyến du lịch đầy hứa hẹn. Xe và hướng dẫn viên đón Quý khách tại điểm hẹn, khởi hành tham quan các địa danh danh tiếng và làm thủ tục nhận phòng khách sạn nghỉ ngơi.',
+          'milestones': [
+            {'time': '08:00', 'event': 'Xe và HDV đón khách tại điểm hẹn, khởi hành.'},
+            {'time': '12:00', 'event': 'Ăn trưa tại nhà hàng ẩm thực bản địa.'},
+            {'time': '14:00', 'event': 'Làm thủ tục nhận phòng khách sạn & nghỉ ngơi.'},
+            {'time': '18:00', 'event': 'Ăn tối ấm cúng và tự do khám phá.'},
+          ]
         }
       ];
     }
 
-    final List<Map<String, String>> itinerary = [];
+    final List<Map<String, dynamic>> itinerary = [];
     for (int i = 0; i < destinations.length; i++) {
       final dest = destinations[i];
       if (i == 0) {
         itinerary.add({
           'day': 'Ngày 1',
           'title': 'Chào đón & Trải nghiệm $dest',
-          'desc': 'Chào đón Quý khách tại điểm tập trung. Xe đưa Quý khách tham quan các thắng cảnh biểu tượng của $dest, tìm hiểu nét đẹp lịch sử văn hóa địa phương và thưởng thức bữa tối ẩm thực đặc sản.',
+          'desc': 'Chào đón Quý khách tại điểm tập trung. Xe đưa Quý khách tham quan các thắng cảnh biểu tượng của $dest, tìm hiểu nét đẹp lịch sử văn hóa địa phương.',
+          'milestones': [
+            {'time': '08:30', 'event': 'Đón khách tại điểm hẹn, di chuyển đến điểm tham quan đầu tiên.'},
+            {'time': '10:00', 'event': 'Khám phá danh lam thắng cảnh nổi bật tại $dest.'},
+            {'time': '12:00', 'event': 'Thưởng thức bữa trưa đặc sản vùng miền.'},
+            {'time': '14:30', 'event': 'Nhận phòng khách sạn, nghỉ ngơi tự do.'},
+            {'time': '18:00', 'event': 'Bữa tối ngon miệng và dạo chơi phố phường về đêm.'},
+          ]
         });
       } else {
         itinerary.add({
           'day': 'Ngày ${i + 1}',
           'title': 'Hành trình di sản tại $dest',
-          'desc': 'Di chuyển khám phá mảnh đất $dest đầy quyến rũ. Trải nghiệm những hoạt động vui chơi giải trí tuyệt đỉnh, chiêm ngưỡng cảnh sắc thiên nhiên kỳ vĩ và dạo chơi về đêm.',
+          'desc': 'Di chuyển khám phá mảnh đất $dest đầy quyến rũ và giàu bản sắc văn hóa.',
+          'milestones': [
+            {'time': '07:30', 'event': 'Dùng điểm tâm sáng buffet tại khách sạn.'},
+            {'time': '09:00', 'event': 'Khởi hành hành trình khám phá chiều sâu $dest.'},
+            {'time': '12:30', 'event': 'Nghỉ ngơi và dùng cơm trưa tại nhà hàng đặc sản.'},
+            {'time': '15:00', 'event': 'Tham gia các hoạt động vui chơi giải trí địa phương.'},
+            {'time': '18:30', 'event': 'Dùng bữa tối hải sản thịnh soạn, tự do tham quan phố đêm.'},
+          ]
         });
       }
     }
@@ -131,7 +151,14 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
     itinerary.add({
       'day': 'Ngày ${destinations.length + 1}',
       'title': 'Mua sắm đặc sản & Kết thúc hành trình',
-      'desc': 'Quý khách tự do thư giãn nghỉ ngơi, thưởng thức cà phê buổi sáng hoặc mua sắm các món quà lưu niệm ý nghĩa dành tặng gia đình. Xe tiễn khách ra sân bay/nhà ga, kết thúc chuyến đi tốt đẹp.',
+      'desc': 'Thư giãn nghỉ ngơi, chuẩn bị hành lý trở về.',
+      'milestones': [
+        {'time': '07:30', 'event': 'Ăn sáng, dạo phố nhâm nhi cà phê sáng bình yên.'},
+        {'time': '10:00', 'event': 'Tự do mua sắm các món quà lưu niệm ý nghĩa.'},
+        {'time': '11:30', 'event': 'Làm thủ tục trả phòng khách sạn.'},
+        {'time': '12:30', 'event': 'Bữa trưa nhẹ nhàng ấm cúng.'},
+        {'time': '14:30', 'event': 'Xe tiễn đoàn ra sân bay/nhà ga, kết thúc tour tốt đẹp.'},
+      ]
     });
 
     return itinerary;
@@ -667,6 +694,7 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
                             itemBuilder: (context, index) {
                               final step = itinerary[index];
                               final isLast = index == itinerary.length - 1;
+                              final milestones = step['milestones'] as List<Map<String, String>>;
 
                               return IntrinsicHeight(
                                 child: Row(
@@ -753,6 +781,47 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
                                                 height: 1.5,
                                               ),
                                             ),
+                                            const SizedBox(height: 12),
+                                            const Divider(height: 1, color: AppTheme.backgroundGray),
+                                            const SizedBox(height: 12),
+                                            // Render detailed hourly milestones
+                                            ...milestones.map((m) => Padding(
+                                              padding: const EdgeInsets.only(bottom: 10),
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                                                      borderRadius: BorderRadius.circular(8),
+                                                    ),
+                                                    child: Text(
+                                                      m['time']!,
+                                                      style: const TextStyle(
+                                                        color: AppTheme.primaryBlue,
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 10,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.only(top: 2),
+                                                      child: Text(
+                                                        m['event']!,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey.shade800,
+                                                          height: 1.4,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )),
                                           ],
                                         ),
                                       ),
