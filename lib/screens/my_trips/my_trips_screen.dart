@@ -128,11 +128,21 @@ class _MyTripsScreenState extends State<MyTripsScreen>
     if (_activeProductFilter == 'all') {
       return trips;
     } else if (_activeProductFilter == 'tour') {
-      return trips.where((t) => t.flightId == null && t.hotelId == null).toList();
+      return trips.where((t) => t.isCustom || t.id.startsWith('trip_tour_') || t.id.startsWith('trip_custom_')).toList();
+    } else if (_activeProductFilter == 'place') {
+      return trips.where((t) => 
+        !t.isCustom && 
+        !t.id.startsWith('trip_tour_') && 
+        !t.id.startsWith('trip_custom_') && 
+        t.hotelId == null && 
+        !t.id.startsWith('trip-hotel-') && 
+        t.flightId == null && 
+        !t.id.startsWith('trip-fl-')
+      ).toList();
     } else if (_activeProductFilter == 'hotel') {
-      return trips.where((t) => t.hotelId != null).toList();
+      return trips.where((t) => t.hotelId != null || t.id.startsWith('trip-hotel-')).toList();
     } else if (_activeProductFilter == 'flight') {
-      return trips.where((t) => t.flightId != null).toList();
+      return trips.where((t) => t.flightId != null || t.id.startsWith('trip-fl-')).toList();
     }
     return trips;
   }
@@ -141,6 +151,7 @@ class _MyTripsScreenState extends State<MyTripsScreen>
     final filters = [
       {'id': 'all', 'label': 'Tất cả'},
       {'id': 'tour', 'label': 'Gói Tour'},
+      {'id': 'place', 'label': 'Địa điểm'},
       {'id': 'hotel', 'label': 'Khách sạn'},
       {'id': 'flight', 'label': 'Vé máy bay'},
     ];

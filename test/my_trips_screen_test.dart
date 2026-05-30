@@ -28,6 +28,13 @@ void main() {
     expect(find.text('Sắp tới'), findsAtLeastNWidgets(1));
     expect(find.text('Lịch sử'), findsAtLeastNWidgets(1));
 
+    // Verify filter chips are loaded
+    expect(find.text('Tất cả'), findsAtLeastNWidgets(1));
+    expect(find.text('Gói Tour'), findsAtLeastNWidgets(1));
+    expect(find.text('Địa điểm'), findsAtLeastNWidgets(1));
+    expect(find.text('Khách sạn'), findsAtLeastNWidgets(1));
+    expect(find.text('Vé máy bay'), findsAtLeastNWidgets(1));
+
     // Dynamically check whether empty state or list cards are loaded based on provider data
     if (travelProvider.ongoingTrips.isEmpty &&
         travelProvider.upcomingTrips.isEmpty &&
