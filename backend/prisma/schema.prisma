@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id   String @id @default(cuid())
+  name String @unique
+
+  @@map("categories")
+}
+
+model Destination {
+  id            String  @id
+  name          String
+  location      String
+  latitude      Float?
+  longitude     Float?
+  rating        String
+  duration      String
+  imagePath     String  @map("image_path")
+  description   String
+  price         String
+  reviewsCount  String  @map("reviews_count")
+  category      String
+  isFavorite    Boolean @default(false) @map("is_favorite")
+  isRecommended Boolean @default(false) @map("is_recommended")
+
+  @@index([category])
+  @@index([isRecommended])
+  @@map("destinations")
+}
+
+model Trip {
+  id          String   @id
+  destination String
+  location    String
+  date        String
+  guests      String
+  status      String
+  imagePath   String   @map("image_path")
+  isUpcoming  Boolean  @default(true) @map("is_upcoming")
+  
+  flightId    String?  @map("flight_id")
+  hotelId     String?  @map("hotel_id")
+  roomId      String?  @map("room_id")
+  totalPrice  Float?   @map("total_price")
+  isCustom    Boolean  @default(false) @map("is_custom")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([isUpcoming])
+  @@index([createdAt])
+  @@map("trips")
+}
+
+model Flight {
+  id            String @id
+  airline       String
+  airlineLogo   String @map("airline_logo")
+  departure     String
+  arrival       String
+  departureTime String @map("departure_time")
+  arrivalTime   String @map("arrival_time")
+  price         Float
+  duration      String
+
+  @@map("flights")
+}
+
+model Profile {
+  id    String @id @default(cuid())
+  name  String
+  email String
+
+  @@map("profiles")
+}
+
+model DocumentItem {
+  id          String @id
+  title       String
+  description String
+  icon        String
+  color       String
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("document_items")
+}
+
+model Hotel {
+  id          String  @id
+  name        String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  rating      String
+  imagePath   String  @map("image_path")
+  description String
+  priceFrom   Float   @map("price_from")
+  address     String
+  amenities   String[]
+  
+  rooms       Room[]
+  
+  @@index([location])
+  @@map("hotels")
+}
+
+model Room {
+  id          String @id
+  hotelId     String @map("hotel_id")
+  name        String
+  description String
+  price       Float
+  capacity    Int
+  imagePath   String @map("image_path")
+  amenities   String[]
+  
+  hotel       Hotel  @relation(fields: [hotelId], references: [id])
+  
+  @@index([hotelId])
+  @@map("rooms")
+}
+
+model TourPackage {
+  id            String   @id
+  name          String
+  description   String
+  imagePath     String   @map("image_path")
+  duration      String
+  price         Float
+  originalPrice Float?   @map("original_price")
+  destinations  String[]
+  includes      String[]
+  departure     String
+  isPopular     Boolean  @default(false) @map("is_popular")
+  includesGuide Boolean  @default(true) @map("includes_guide")
+  guideFee      Float    @default(50.0) @map("guide_fee")
+  
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  @@index([createdAt])
+  @@map("tour_packages")
+}

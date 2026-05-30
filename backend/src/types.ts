@@ -20,6 +20,7 @@ export type Trip = {
   location: string;
   date: string;
   guests?: string;
+  totalPrice?: number;
   status: string;
   imagePath: string;
   isUpcoming: boolean;
