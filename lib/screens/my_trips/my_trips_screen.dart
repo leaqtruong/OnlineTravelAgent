@@ -17,11 +17,12 @@ class MyTripsScreen extends StatefulWidget {
 class _MyTripsScreenState extends State<MyTripsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  String _activeProductFilter = 'all';
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -37,10 +38,9 @@ class _MyTripsScreenState extends State<MyTripsScreen>
       body: SafeArea(
         child: Consumer<TravelProvider>(
           builder: (context, provider, child) {
-            final allTrips = provider.trips;
-            final tours = provider.trips.where((t) => t.flightId == null && t.hotelId == null).toList();
-            final hotels = provider.trips.where((t) => t.hotelId != null).toList();
-            final flights = provider.trips.where((t) => t.flightId != null).toList();
+            final ongoing = provider.ongoingTrips;
+            final upcoming = provider.upcomingTrips;
+            final history = provider.historyTrips;
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -78,8 +78,6 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     ),
                     child: TabBar(
                       controller: _tabController,
-                      isScrollable: true,
-                      tabAlignment: TabAlignment.start,
                       indicator: BoxDecoration(
                         color: AppTheme.primaryBlue,
                         borderRadius: BorderRadius.circular(12),
@@ -98,10 +96,9 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                       indicatorSize: TabBarIndicatorSize.tab,
                       dividerColor: Colors.transparent,
                       tabs: const [
-                        Tab(text: "Tất cả"),
-                        Tab(text: "Gói Tour"),
-                        Tab(text: "Khách sạn"),
-                        Tab(text: "Vé máy bay"),
+                        Tab(text: "Đang diễn ra"),
+                        Tab(text: "Sắp tới"),
+                        Tab(text: "Lịch sử"),
                       ],
                     ),
                   ),
@@ -112,10 +109,9 @@ class _MyTripsScreenState extends State<MyTripsScreen>
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        _tripList(allTrips),
-                        _tripList(tours),
-                        _tripList(hotels),
-                        _tripList(flights),
+                        _tripList(ongoing),
+                        _tripList(upcoming),
+                        _tripList(history),
                       ],
                     ),
                   ),
@@ -128,30 +124,107 @@ class _MyTripsScreenState extends State<MyTripsScreen>
     );
   }
 
-  Widget _tripList(List<Trip> filteredTrips) {
-    if (filteredTrips.isEmpty) {
-      return _buildEmptyState();
+  List<Trip> _filterTripsByProduct(List<Trip> trips) {
+    if (_activeProductFilter == 'all') {
+      return trips;
+    } else if (_activeProductFilter == 'tour') {
+      return trips.where((t) => t.flightId == null && t.hotelId == null).toList();
+    } else if (_activeProductFilter == 'hotel') {
+      return trips.where((t) => t.hotelId != null).toList();
+    } else if (_activeProductFilter == 'flight') {
+      return trips.where((t) => t.flightId != null).toList();
     }
+    return trips;
+  }
 
-    return ListView.separated(
-      itemCount: filteredTrips.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
-      padding: const EdgeInsets.only(bottom: 24, top: 4),
+  Widget _buildFilterChips() {
+    final filters = [
+      {'id': 'all', 'label': 'Tất cả'},
+      {'id': 'tour', 'label': 'Gói Tour'},
+      {'id': 'hotel', 'label': 'Khách sạn'},
+      {'id': 'flight', 'label': 'Vé máy bay'},
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
-      itemBuilder: (context, index) {
-        final trip = filteredTrips[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => TripDetailScreen(trip: trip),
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: filters.map((f) {
+          final isSelected = _activeProductFilter == f['id'];
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _activeProductFilter = f['id']!;
+                });
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppTheme.primaryBlue.withValues(alpha: 0.08)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected 
+                        ? AppTheme.primaryBlue
+                        : Colors.grey.withValues(alpha: 0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  f['label']!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    color: isSelected ? AppTheme.primaryBlue : Colors.grey[600],
+                  ),
+                ),
               ),
-            );
-          },
-          child: TripCard(trip: trip),
-        );
-      },
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _tripList(List<Trip> filteredTrips) {
+    final finalTrips = _filterTripsByProduct(filteredTrips);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildFilterChips(),
+        const SizedBox(height: 4),
+        Expanded(
+          child: finalTrips.isEmpty
+              ? _buildEmptyState()
+              : ListView.separated(
+                  itemCount: finalTrips.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  padding: const EdgeInsets.only(bottom: 24, top: 4),
+                  physics: const BouncingScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    final trip = finalTrips[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => TripDetailScreen(trip: trip),
+                          ),
+                        );
+                      },
+                      child: TripCard(trip: trip),
+                    );
+                  },
+                ),
+        ),
+      ],
     );
   }
 
