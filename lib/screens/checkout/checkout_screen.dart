@@ -5,8 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
 import '../../providers/travel_provider.dart';
-import '../../widgets/guest_counter.dart';
-import 'payment_method_screen.dart';
+import 'vnpay_payment_dialog.dart';
 
 class CheckoutScreen extends StatefulWidget {
   final Destination destination;
@@ -22,10 +21,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   int _adults = 1;
   int _children = 0;
   bool _isVip = false;
-  // For single-destination booking, guide is optional
-  bool _includeGuide = false;
-  static const double _guideFee = 50.0;
   String _selectedTransport = 'Tự túc';
+  bool _isProcessing = false;
 
   final Map<String, int> _transportPrices = {
     'Tự túc': 0,
@@ -61,7 +58,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     double sub = adultPrice + childPrice;
     if (_isVip) sub += 50 * _totalGuests;
     sub += _transportPrices[_selectedTransport]! * _totalGuests;
-    if (_includeGuide) sub += _guideFee; // fixed guide fee for single-destination bookings
     return sub;
   }
 
@@ -69,7 +65,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   double get _total => _subtotal + _tax;
 
-  void _onConfirm() {
+  static const double _usdToVnd = 25000;
+
+  void _onConfirm() async {
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng chọn ngày khởi hành')),
@@ -77,35 +75,128 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    // Calculate end date based on duration (simple logic)
-    int days = 2;
+    setState(() => _isProcessing = true);
+
+    final provider = context.read<TravelProvider>();
+
     final match = RegExp(r'^(\d+)N').firstMatch(widget.destination.duration);
-    if (match != null) {
-      days = int.tryParse(match.group(1) ?? '2') ?? 2;
-    }
+    final days = match != null ? int.tryParse(match.group(1) ?? '2') ?? 2 : 2;
     final endDate = _selectedDate!.add(Duration(days: days));
 
     final dateString = '${_dateFormat.format(_selectedDate!)} - ${_dateFormat.format(endDate)}';
-    
-    List<String> guestParts = [];
+
+    final guestParts = <String>[];
     if (_adults > 0) guestParts.add('$_adults Người lớn');
     if (_children > 0) guestParts.add('$_children Trẻ em');
     final guestString = '${guestParts.join(', ')} ($_selectedTransport)';
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentMethodScreen(
-          totalPrice: _total,
-          onPaymentSuccess: () async {
-            if (!mounted) return false;
-            final provider = context.read<TravelProvider>();
-            return await provider.bookSelectedDestination(
-              date: dateString,
-              guests: guestString,
-              totalPrice: _includeGuide ? _total : null,
-            );
-          },
+    final totalUsd = _total;
+    final amountVnd = totalUsd * _usdToVnd;
+
+    final success = await provider.bookSelectedDestination(
+      date: dateString,
+      guests: guestString,
+      totalAmount: totalUsd,
+      currency: 'USD',
+    );
+
+    if (!success || !mounted) {
+      setState(() => _isProcessing = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Có lỗi xảy ra, vui lòng thử lại')),
+        );
+      }
+      return;
+    }
+
+    final tripId = provider.trips.isNotEmpty ? provider.trips.first.id : null;
+    final orderInfo = 'Thanh toan tour ${widget.destination.name}';
+
+    final paymentData = await provider.createVNPayPayment(
+      amountVnd: amountVnd,
+      orderInfo: orderInfo,
+      tripId: tripId,
+    );
+
+    setState(() => _isProcessing = false);
+
+    if (paymentData != null && mounted) {
+      _showVNPayQRCode(paymentData);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Có lỗi khi tạo thanh toán VNPAY')),
+      );
+    }
+  }
+
+  void _showVNPayQRCode(Map<String, dynamic> paymentData) {
+    final paymentUrl = paymentData['paymentUrl'] as String;
+    final txnRef = paymentData['txnRef'] as String;
+    final amount = (paymentData['amount'] as num).toDouble();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => VNPayPaymentDialog(
+        paymentUrl: paymentUrl,
+        txnRef: txnRef,
+        amountVnd: amount,
+        onCheckPayment: () => _checkPayment(ctx),
+      ),
+    );
+  }
+
+  void _checkPayment(BuildContext dialogContext) {
+    Navigator.of(dialogContext).pop();
+    setState(() => _isProcessing = true);
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      _showSuccessDialog();
+    });
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 80),
+            const SizedBox(height: 24),
+            const Text(
+              "Thanh toán thành công!",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              "Chuyến đi của bạn đã được ghi nhận. Chúc bạn một kỳ nghỉ vui vẻ!",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text("Trở về trang chủ",
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -125,26 +216,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         title: const Text('Thanh toán', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _buildDestinationCard(),
-          const SizedBox(height: 24),
-          _buildDateSelection(),
-          const SizedBox(height: 24),
-          _buildGuestSelection(),
-          const SizedBox(height: 24),
-          _buildRoomSelection(),
-           const SizedBox(height: 24),
-           _buildTransportSelection(),
-           const SizedBox(height: 16),
-           _buildGuideOption(),
-           const SizedBox(height: 24),
-           _buildSummaryCard(),
-          const SizedBox(height: 32),
-          _buildConfirmButton(),
-        ],
-      ),
+      body: _isProcessing
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _buildDestinationCard(),
+                const SizedBox(height: 24),
+                _buildDateSelection(),
+                const SizedBox(height: 24),
+                _buildGuestSelection(),
+                const SizedBox(height: 24),
+                _buildRoomSelection(),
+                const SizedBox(height: 24),
+                _buildTransportSelection(),
+                const SizedBox(height: 32),
+                _buildSummaryCard(),
+                const SizedBox(height: 32),
+                _buildConfirmButton(),
+              ],
+            ),
     );
   }
 
@@ -271,11 +362,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           child: Column(
             children: [
-              _buildGuestRow('Người lớn', 'Từ 12 tuổi', _adults, 1, (val) {
+              _buildGuestRow('Người lớn', 'Từ 12 tuổi', _adults, (val) {
                 if (val >= 1) setState(() => _adults = val);
               }),
               const Divider(height: 32),
-              _buildGuestRow('Trẻ em', 'Dưới 12 tuổi', _children, 0, (val) {
+              _buildGuestRow('Trẻ em', 'Dưới 12 tuổi', _children, (val) {
                 if (val >= 0) setState(() => _children = val);
               }),
             ],
@@ -285,7 +376,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  Widget _buildGuestRow(String title, String subtitle, int count, int min, Function(int) onChanged) {
+  Widget _buildGuestRow(String title, String subtitle, int count, Function(int) onChanged) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -296,7 +387,22 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 13)),
           ],
         ),
-        GuestCounter(value: count, min: min, onChanged: onChanged),
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => onChanged(count - 1),
+              icon: Icon(Icons.remove_circle_outline, color: count > 0 ? AppTheme.primaryBlue : Colors.grey),
+            ),
+            SizedBox(
+              width: 30,
+              child: Text('$count', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+            IconButton(
+              onPressed: () => onChanged(count + 1),
+              icon: const Icon(Icons.add_circle_outline, color: AppTheme.primaryBlue),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -359,38 +465,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _buildTransportOption('Tàu hoả', Icons.train, 35),
         const SizedBox(height: 8),
         _buildTransportOption('Máy bay', Icons.flight, 100),
-      ],
-    );
-  }
-
-  Widget _buildGuideOption() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Hướng dẫn viên', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: const Text('Bao gồm hướng dẫn viên (phí cố định)', style: TextStyle(fontSize: 14)),
-              ),
-              Switch(
-                value: _includeGuide,
-                onChanged: (v) => setState(() => _includeGuide = v),
-                activeThumbColor: AppTheme.primaryBlue,
-              ),
-              const SizedBox(width: 8),
-              Text('\$${_guideFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
-            ],
-          ),
-        ),
       ],
     );
   }

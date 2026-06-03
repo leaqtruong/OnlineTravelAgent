@@ -2,18 +2,15 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 
-import '../data/fallback_data.dart';
 import '../models/destination.dart';
 import '../models/document_item.dart';
 import '../models/trip.dart';
 import '../models/user_profile.dart';
-import '../models/hotel.dart';
-import '../models/tour_package.dart';
 import '../services/travel_api_service.dart';
 
 class TravelProvider with ChangeNotifier {
   TravelProvider({TravelApiService? apiService})
-    : _api = apiService ?? TravelApiService() {
+      : _api = apiService ?? TravelApiService() {
     initialize();
   }
 
@@ -23,20 +20,14 @@ class TravelProvider with ChangeNotifier {
   final List<Destination> _recommended = [];
   final List<Trip> _trips = [];
   final List<DocumentItem> _documents = [];
-  final List<Hotel> _hotels = [];
-  final List<TourPackage> _tourPackages = [];
-
-  static const List<String> _defaultCategories = [
+  List<String> _categories = const [
     'Tất cả',
     'Địa điểm',
     'Khách sạn',
+    'Bãi biển',
     'Máy bay',
     'Ẩm thực',
   ];
-
-  static const Set<String> _hiddenCategories = {'Bãi biển'};
-
-  List<String> _categories = _defaultCategories;
 
   Destination? _selectedDestination;
   UserProfile _profile = const UserProfile(name: 'User', email: '');
@@ -46,18 +37,12 @@ class TravelProvider with ChangeNotifier {
   bool _isLoading = true;
   bool _isBusy = false;
 
-  late List<Destination> _destinationsView = UnmodifiableListView(
-    _destinations,
-  );
+  late List<Destination> _destinationsView =
+      UnmodifiableListView(_destinations);
   late List<Destination> _recommendedView = UnmodifiableListView(_recommended);
   late List<Trip> _tripsView = UnmodifiableListView(_trips);
   late List<DocumentItem> _documentsView = UnmodifiableListView(_documents);
-  late List<Hotel> _hotelsView = UnmodifiableListView(_hotels);
-  late List<TourPackage> _tourPackagesView = UnmodifiableListView(
-    _tourPackages,
-  );
 
-  List<Trip>? _ongoingTripsCache;
   List<Trip>? _upcomingTripsCache;
   List<Trip>? _historyTripsCache;
   List<Destination>? _favoritesCache;
@@ -80,41 +65,17 @@ class TravelProvider with ChangeNotifier {
   List<Destination> get destinations => _destinationsView;
   List<Destination> get recommended => _recommendedView;
   List<Trip> get trips => _tripsView;
-  List<Hotel> get hotels => _hotelsView;
-  List<TourPackage> get tourPackages => _tourPackagesView;
-
-  static List<String> _orderedCategories(List<String> categories) {
-    if (categories.isEmpty) {
-      return _defaultCategories;
-    }
-
-    final remaining = LinkedHashSet<String>.of(
-      categories.where((category) => !_hiddenCategories.contains(category)),
-    );
-    return [
-      for (final category in _defaultCategories)
-        if (remaining.remove(category)) category,
-      ...remaining,
-    ];
-  }
-
-  List<Trip> get ongoingTrips {
-    _ongoingTripsCache ??= UnmodifiableListView(
-      _trips.where((t) => t.status.toLowerCase() == 'đang diễn ra' || t.status.toLowerCase() == 'ongoing').toList(growable: false),
-    );
-    return _ongoingTripsCache!;
-  }
 
   List<Trip> get upcomingTrips {
     _upcomingTripsCache ??= UnmodifiableListView(
-      _trips.where((t) => t.isUpcoming && t.status.toLowerCase() != 'đang diễn ra' && t.status.toLowerCase() != 'ongoing').toList(growable: false),
+      _trips.where((t) => t.isUpcoming).toList(growable: false),
     );
     return _upcomingTripsCache!;
   }
 
   List<Trip> get historyTrips {
     _historyTripsCache ??= UnmodifiableListView(
-      _trips.where((t) => !t.isUpcoming && t.status.toLowerCase() != 'đang diễn ra' && t.status.toLowerCase() != 'ongoing').toList(growable: false),
+      _trips.where((t) => !t.isUpcoming).toList(growable: false),
     );
     return _historyTripsCache!;
   }
@@ -124,12 +85,6 @@ class TravelProvider with ChangeNotifier {
       _destinations.where((d) => d.isFavorite).toList(growable: false),
     );
     return _favoritesCache!;
-  }
-
-  List<Destination> get foodDestinations {
-    return UnmodifiableListView(
-      _destinations.where((d) => d.category == 'Ẩm thực').toList(growable: false),
-    );
   }
 
   List<Destination> get filteredDestinations {
@@ -150,8 +105,7 @@ class TravelProvider with ChangeNotifier {
 
   bool _destinationMatchesFilters(Destination d) {
     final query = _lastFilterQuery;
-    final matchesSearch =
-        query.isEmpty ||
+    final matchesSearch = query.isEmpty ||
         d.name.toLowerCase().contains(query) ||
         d.location.toLowerCase().contains(query);
     final matchesCategory =
@@ -176,8 +130,6 @@ class TravelProvider with ChangeNotifier {
     _recommendedView = UnmodifiableListView(_recommended);
     _tripsView = UnmodifiableListView(_trips);
     _documentsView = UnmodifiableListView(_documents);
-    _hotelsView = UnmodifiableListView(_hotels);
-    _tourPackagesView = UnmodifiableListView(_tourPackages);
   }
 
   void _invalidateDerivedCaches({bool includeTrips = false}) {
@@ -185,7 +137,6 @@ class TravelProvider with ChangeNotifier {
     _filteredDestinationsCache = null;
     _filteredRecommendedCache = null;
     if (includeTrips) {
-      _ongoingTripsCache = null;
       _upcomingTripsCache = null;
       _historyTripsCache = null;
     }
@@ -222,20 +173,17 @@ class TravelProvider with ChangeNotifier {
       _documents
         ..clear()
         ..addAll(bootstrap.documents);
-      _hotels
-        ..clear()
-        ..addAll(bootstrap.hotels);
-      _tourPackages
-        ..clear()
-        ..addAll(bootstrap.tourPackages);
-      _categories = _orderedCategories(bootstrap.categories);
+      _categories =
+          bootstrap.categories.isEmpty ? _categories : bootstrap.categories;
       _profile = bootstrap.profile;
 
       _syncBaseViews();
       _invalidateDerivedCaches(includeTrips: true);
     } catch (e) {
       _errorMessage = 'Không kết nối được backend. Đang dùng dữ liệu local.';
-      _loadFallbackData();
+      if (_destinations.isEmpty) {
+        _loadFallbackData();
+      }
       debugPrint('initialize error: $e');
     } finally {
       _isBusy = false;
@@ -271,9 +219,8 @@ class TravelProvider with ChangeNotifier {
   }
 
   Future<void> toggleFavorite(String destinationId) async {
-    final destinationIndex = _destinations.indexWhere(
-      (d) => d.id == destinationId,
-    );
+    final destinationIndex =
+        _destinations.indexWhere((d) => d.id == destinationId);
     if (destinationIndex == -1) {
       return;
     }
@@ -295,7 +242,7 @@ class TravelProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> bookSelectedDestination({String? date, String? guests, double? totalPrice}) async {
+  Future<bool> bookSelectedDestination({String? date, String? guests, double? totalAmount, String? currency}) async {
     final destination = _selectedDestination;
     if (destination == null) {
       return false;
@@ -303,11 +250,7 @@ class TravelProvider with ChangeNotifier {
 
     try {
       final trip = await _api.bookTrip(
-        destinationId: destination.id,
-        date: date,
-        guests: guests,
-        totalPrice: totalPrice,
-      );
+          destinationId: destination.id, date: date, guests: guests, totalAmount: totalAmount, currency: currency);
       _trips.insert(0, trip);
       _syncBaseViews();
       _invalidateDerivedCaches(includeTrips: true);
@@ -318,40 +261,39 @@ class TravelProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> bookFlight({
-    required String flightId,
-    required String date,
-    required String guests,
+  Future<bool> cancelTrip(String tripId) async {
+    try {
+      await _api.cancelTrip(tripId);
+      _trips.removeWhere((t) => t.id == tripId);
+      _syncBaseViews();
+      _invalidateDerivedCaches(includeTrips: true);
+      notifyListeners();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> createVNPayPayment({
+    required double amountVnd,
+    required String orderInfo,
+    String? tripId,
   }) async {
     try {
-      final trip = await _api.bookFlight(
-        flightId: flightId,
-        date: date,
-        guests: guests,
+      final result = await _api.createVNPayPayment(
+        amountVnd: amountVnd,
+        orderInfo: orderInfo,
+        tripId: tripId,
       );
-      _trips.insert(0, trip);
-      _syncBaseViews();
-      _invalidateDerivedCaches(includeTrips: true);
-      notifyListeners();
-      return true;
+      return result['data'] as Map<String, dynamic>?;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  Future<bool> bookHotel({
-    required String roomId,
-    required String checkIn,
-    required String checkOut,
-    required String guests,
-  }) async {
+  Future<bool> bookFlight({required String flightId, required String date, required String guests, double? totalAmount, String? currency}) async {
     try {
-      final trip = await _api.bookHotel(
-        roomId: roomId,
-        checkIn: checkIn,
-        checkOut: checkOut,
-        guests: guests,
-      );
+      final trip = await _api.bookFlight(flightId: flightId, date: date, guests: guests, totalAmount: totalAmount, currency: currency);
       _trips.insert(0, trip);
       _syncBaseViews();
       _invalidateDerivedCaches(includeTrips: true);
@@ -362,66 +304,8 @@ class TravelProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> bookTour({
-    required String tourId,
-    required String date,
-    required String guests,
-    double? totalPrice,
-  }) async {
-    try {
-      final trip = await _api.bookTour(
-        tourId: tourId,
-        date: date,
-        guests: guests,
-        totalPrice: totalPrice,
-      );
-      _trips.insert(0, trip);
-      _syncBaseViews();
-      _invalidateDerivedCaches(includeTrips: true);
-      notifyListeners();
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> createCustomTour({
-    required String destination,
-    required String location,
-    required String date,
-    required String guests,
-    required String imagePath,
-    List<String>? flightIds,
-    List<String>? hotelIds,
-    String? roomId,
-    double? totalPrice,
-  }) async {
-    try {
-      final trip = await _api.createCustomTour(
-        destination: destination,
-        location: location,
-        date: date,
-        guests: guests,
-        imagePath: imagePath,
-        flightIds: flightIds,
-        hotelIds: hotelIds,
-        roomId: roomId,
-        totalPrice: totalPrice,
-      );
-      _trips.insert(0, trip);
-      _syncBaseViews();
-      _invalidateDerivedCaches(includeTrips: true);
-      notifyListeners();
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
-
-  Future<bool> updateProfile({
-    required String name,
-    required String email,
-  }) async {
+  Future<bool> updateProfile(
+      {required String name, required String email}) async {
     try {
       final updated = await _api.updateProfile(name: name, email: email);
       _profile = updated;
@@ -455,50 +339,127 @@ class TravelProvider with ChangeNotifier {
   }
 
   void _setFavoriteLocal(String destinationId, bool isFavorite) {
-    final destinationIndex = _destinations.indexWhere(
-      (d) => d.id == destinationId,
-    );
+    final destinationIndex =
+        _destinations.indexWhere((d) => d.id == destinationId);
     if (destinationIndex != -1) {
-      _destinations[destinationIndex] = _destinations[destinationIndex]
-          .copyWith(isFavorite: isFavorite);
+      _destinations[destinationIndex] =
+          _destinations[destinationIndex].copyWith(isFavorite: isFavorite);
     }
 
-    final recommendedIndex = _recommended.indexWhere(
-      (d) => d.id == destinationId,
-    );
+    final recommendedIndex =
+        _recommended.indexWhere((d) => d.id == destinationId);
     if (recommendedIndex != -1) {
-      _recommended[recommendedIndex] = _recommended[recommendedIndex].copyWith(
-        isFavorite: isFavorite,
-      );
+      _recommended[recommendedIndex] =
+          _recommended[recommendedIndex].copyWith(isFavorite: isFavorite);
     }
 
     if (_selectedDestination?.id == destinationId) {
-      _selectedDestination = _selectedDestination!.copyWith(
-        isFavorite: isFavorite,
-      );
+      _selectedDestination =
+          _selectedDestination!.copyWith(isFavorite: isFavorite);
     }
   }
 
   void _loadFallbackData() {
     _destinations
       ..clear()
-      ..addAll(FallbackData.destinations());
+      ..addAll(
+        [
+          Destination(
+            id: 'dalat',
+            name: 'Đà Lạt',
+            location: 'Lâm Đồng, VN',
+            rating: '4.1',
+            duration: '4N/5D',
+            imagePath: 'assets/images/dalat_image.jpg',
+            description:
+                'Đà Lạt là thành phố ngàn hoa với khí hậu mát mẻ quanh năm. Đây là địa điểm lý tưởng cho các cặp đôi và gia đình muốn tìm kiếm sự yên bình.',
+            price: '199',
+            reviewsCount: '355',
+            category: 'Địa điểm',
+            latitude: 11.9404,
+            longitude: 108.4583,
+          ),
+          Destination(
+            id: 'phuquoc',
+            name: 'Đảo Phú Quốc',
+            location: 'Kiên Giang, VN',
+            rating: '4.5',
+            duration: '2N/3D',
+            imagePath: 'assets/images/phuquoc_image.jpg',
+            description:
+                'Phú Quốc nổi tiếng với những bãi biển xanh ngắt và cát trắng mịn. Du khách có thể thưởng thức hải sản tươi ngon và tham gia các hoạt động lặn ngắm san hô.',
+            price: '250',
+            reviewsCount: '1.2k',
+            category: 'Bãi biển',
+            latitude: 10.2270,
+            longitude: 103.9670,
+          ),
+          Destination(
+            id: 'hoian',
+            name: 'Hội An',
+            location: 'Quảng Nam, VN',
+            rating: '4.8',
+            duration: '2N/1Đ',
+            imagePath: 'assets/images/hoian_image.webp',
+            description:
+                'Phố cổ Hội An là di sản văn hóa thế giới với những con phố đèn lồng lung linh.',
+            price: '150',
+            reviewsCount: '800',
+            category: 'Địa điểm',
+            latitude: 15.8801,
+            longitude: 108.3380,
+          ),
+        ],
+      );
+
     _recommended
       ..clear()
-      ..addAll(FallbackData.recommended());
+      ..addAll(
+        [
+          _destinations[2],
+          _destinations[0],
+        ],
+      );
+
     _trips
       ..clear()
-      ..addAll(FallbackData.trips());
+      ..addAll(
+        [
+          Trip(
+            id: 'local-trip-1',
+            destination: 'Đảo Phú Quốc',
+            location: 'Kiên Giang, VN',
+            date: '20/05/2026 - 23/05/2026',
+            guests: '2 Người lớn',
+            status: 'Sắp tới',
+            imagePath: 'assets/images/phuquoc_image.jpg',
+            isUpcoming: true,
+            totalAmount: 250.0,
+            currency: 'USD',
+          ),
+        ],
+      );
+
     _documents
       ..clear()
-      ..addAll(FallbackData.documents());
-    _profile = FallbackData.profile();
-    _hotels
-      ..clear()
-      ..addAll(FallbackData.hotels());
-    _tourPackages
-      ..clear()
-      ..addAll(FallbackData.tourPackages());
+      ..addAll(
+        [
+          DocumentItem(
+            id: 'local-doc-1',
+            title: 'Hộ chiếu',
+            description: 'Hết hạn: 12/2030',
+            icon: Icons.description,
+            color: const Color(0xFF176FF2),
+            iconName: 'description',
+            colorHex: '#176FF2',
+          ),
+        ],
+      );
+
+    _profile = const UserProfile(
+      name: 'Nguyễn Văn A',
+      email: 'vanya.traveler@email.com',
+    );
 
     _syncBaseViews();
     _invalidateDerivedCaches(includeTrips: true);

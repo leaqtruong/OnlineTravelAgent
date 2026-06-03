@@ -13,7 +13,7 @@ class Destination {
   final double latitude;
   final double longitude;
 
-  const Destination({
+  Destination({
     required this.id,
     required this.name,
     required this.location,
@@ -21,31 +21,42 @@ class Destination {
     required this.duration,
     required this.imagePath,
     this.isFavorite = false,
-    this.description = '',
-    this.price = '',
-    this.reviewsCount = '0',
-    this.category = 'Địa điểm',
+    this.description = "",
+    this.price = "",
+    this.reviewsCount = "0",
+    this.category = "Địa điểm",
     this.latitude = 0.0,
     this.longitude = 0.0,
   });
 
-  static String _normalizeCategory(String category) {
-    return category == 'Bãi biển' ? 'Địa điểm' : category;
-  }
-
   Destination copyWith({
-    String? id, String? name, String? location, String? rating,
-    String? duration, String? imagePath, bool? isFavorite,
-    String? description, String? price, String? reviewsCount,
-    String? category, double? latitude, double? longitude,
+    String? id,
+    String? name,
+    String? location,
+    String? rating,
+    String? duration,
+    String? imagePath,
+    bool? isFavorite,
+    String? description,
+    String? price,
+    String? reviewsCount,
+    String? category,
+    double? latitude,
+    double? longitude,
   }) {
     return Destination(
-      id: id ?? this.id, name: name ?? this.name,
-      location: location ?? this.location, rating: rating ?? this.rating,
-      duration: duration ?? this.duration, imagePath: imagePath ?? this.imagePath,
-      isFavorite: isFavorite ?? this.isFavorite, description: description ?? this.description,
-      price: price ?? this.price, reviewsCount: reviewsCount ?? this.reviewsCount,
-      category: category ?? this.category, latitude: latitude ?? this.latitude,
+      id: id ?? this.id,
+      name: name ?? this.name,
+      location: location ?? this.location,
+      rating: rating ?? this.rating,
+      duration: duration ?? this.duration,
+      imagePath: imagePath ?? this.imagePath,
+      isFavorite: isFavorite ?? this.isFavorite,
+      description: description ?? this.description,
+      price: price ?? this.price,
+      reviewsCount: reviewsCount ?? this.reviewsCount,
+      category: category ?? this.category,
+      latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
     );
   }
@@ -62,17 +73,27 @@ class Destination {
       description: json['description']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       reviewsCount: json['reviewsCount']?.toString() ?? '0',
-      category: _normalizeCategory(json['category']?.toString() ?? 'Địa điểm'),
+      category: json['category']?.toString() ?? 'Địa điểm',
       latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
       longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
     );
   }
 
-  Map<String, dynamic> toJson() => {
-    'id': id, 'name': name, 'location': location,
-    'rating': rating, 'duration': duration, 'imagePath': imagePath,
-    'isFavorite': isFavorite, 'description': description, 'price': price,
-    'reviewsCount': reviewsCount, 'category': category,
-    'latitude': latitude, 'longitude': longitude,
-  };
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'location': location,
+      'rating': rating,
+      'duration': duration,
+      'imagePath': imagePath,
+      'isFavorite': isFavorite,
+      'description': description,
+      'price': price,
+      'reviewsCount': reviewsCount,
+      'category': category,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+  }
 }
