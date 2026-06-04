@@ -180,10 +180,7 @@ class TravelProvider with ChangeNotifier {
       _syncBaseViews();
       _invalidateDerivedCaches(includeTrips: true);
     } catch (e) {
-      _errorMessage = 'Không kết nối được backend. Đang dùng dữ liệu local.';
-      if (_destinations.isEmpty) {
-        _loadFallbackData();
-      }
+      _errorMessage = 'Không kết nối được với máy chủ cơ sở dữ liệu. Vui lòng kiểm tra lại mạng.';
       debugPrint('initialize error: $e');
     } finally {
       _isBusy = false;

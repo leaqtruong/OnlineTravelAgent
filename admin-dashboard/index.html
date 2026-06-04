@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OTA Admin Dashboard - Quản trị App Du lịch</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons logo-icon">travel_explore</span>
+        <h2>OTA Admin</h2>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="tab-overview">
+          <span class="material-icons">dashboard</span>
+          <span>Tổng quan</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-destinations">
+          <span class="material-icons">map</span>
+          <span>Điểm đến</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-trips">
+          <span class="material-icons">card_travel</span>
+          <span>Đặt chỗ (Trips)</span>
+        </button>
+        <button class="nav-btn" data-tab="tab-flights">
+          <span class="material-icons">flight</span>
+          <span>Chuyến bay</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="admin-profile">
+          <div class="avatar">AD</div>
+          <div class="info">
+            <span class="name">Quản trị viên</span>
+            <span class="role">Administrator</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Topbar Header -->
+      <header class="topbar">
+        <div class="topbar-search">
+          <span class="material-icons search-icon">search</span>
+          <input type="text" placeholder="Tìm kiếm nhanh...">
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" id="btn-theme-toggle">
+            <span class="material-icons">dark_mode</span>
+          </button>
+          <div class="divider"></div>
+          <div class="status-indicator">
+            <span class="dot pulse-dot"></span>
+            <span class="status-text">Backend Connected</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-body">
+        <!-- ─── TAB OVERVIEW ─── -->
+        <section id="tab-overview" class="tab-pane active">
+          <div class="page-title">
+            <h1>Bảng điều khiển</h1>
+            <p>Thông tin tổng quan và hoạt động đặt chỗ của OTA.</p>
+          </div>
+
+          <!-- Stats Cards Grid -->
+          <div class="stats-grid">
+            <div class="stats-card card-gradient-blue">
+              <div class="card-info">
+                <span class="card-title">Tổng Doanh thu</span>
+                <h2 id="stat-revenue">$0</h2>
+                <span class="card-desc">Từ hành trình đã đặt</span>
+              </div>
+              <div class="card-icon-wrapper">
+                <span class="material-icons">monetization_on</span>
+              </div>
+            </div>
+
+            <div class="stats-card card-gradient-purple">
+              <div class="card-info">
+                <span class="card-title">Tổng Đặt chỗ</span>
+                <h2 id="stat-bookings">0</h2>
+                <span class="card-desc">Chuyến đi & vé máy bay</span>
+              </div>
+              <div class="card-icon-wrapper">
+                <span class="material-icons">shopping_bag</span>
+              </div>
+            </div>
+
+            <div class="stats-card card-gradient-emerald">
+              <div class="card-info">
+                <span class="card-title">Điểm đến</span>
+                <h2 id="stat-destinations">0</h2>
+                <span class="card-desc">Đang được hiển thị</span>
+              </div>
+              <div class="card-icon-wrapper">
+                <span class="material-icons">place</span>
+              </div>
+            </div>
+
+            <div class="stats-card card-gradient-orange">
+              <div class="card-info">
+                <span class="card-title">Chuyến bay</span>
+                <h2 id="stat-flights">0</h2>
+                <span class="card-desc">Đường bay khả dụng</span>
+              </div>
+              <div class="card-icon-wrapper">
+                <span class="material-icons">airlines</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts & Recent Activity Grid -->
+          <div class="dashboard-grid">
+            <div class="chart-container grid-col-2">
+              <div class="container-header">
+                <h3>Thống kê doanh thu theo Điểm đến</h3>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-destinations"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-container">
+              <div class="container-header">
+                <h3>Tỷ lệ trạng thái đặt chỗ</h3>
+              </div>
+              <div class="chart-wrapper">
+                <canvas id="chart-statuses"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ─── TAB DESTINATIONS ─── -->
+        <section id="tab-destinations" class="tab-pane">
+          <div class="page-title-row">
+            <div class="page-title">
+              <h1>Quản lý Điểm đến</h1>
+              <p>Quản lý danh sách điểm du lịch, khách sạn và bãi biển trên ứng dụng.</p>
+            </div>
+            <button class="primary-btn" id="btn-add-destination">
+              <span class="material-icons">add</span>
+              <span>Thêm điểm đến</span>
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table" id="table-destinations">
+              <thead>
+                <tr>
+                  <th>Hình ảnh</th>
+                  <th>ID / Tên</th>
+                  <th>Địa điểm</th>
+                  <th>Phân loại</th>
+                  <th>Thời gian</th>
+                  <th>Giá tiền</th>
+                  <th>Đánh giá</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Load dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── TAB TRIPS ─── -->
+        <section id="tab-trips" class="tab-pane">
+          <div class="page-title-row">
+            <div class="page-title">
+              <h1>Danh sách đơn đặt chỗ (Trips)</h1>
+              <p>Danh sách các hành trình và vé máy bay do người dùng đặt trên ứng dụng di động.</p>
+            </div>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table" id="table-trips">
+              <thead>
+                <tr>
+                  <th>Mã đặt chỗ</th>
+                  <th>Hành trình / Phương tiện</th>
+                  <th>Địa điểm / Hãng bay</th>
+                  <th>Thời gian</th>
+                  <th>Khách</th>
+                  <th>Thành tiền</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Load dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ─── TAB FLIGHTS ─── -->
+        <section id="tab-flights" class="tab-pane">
+          <div class="page-title-row">
+            <div class="page-title">
+              <h1>Quản lý Chuyến bay</h1>
+              <p>Danh sách các chuyến bay cung cấp cho khách hàng tìm kiếm và đặt chỗ.</p>
+            </div>
+            <button class="primary-btn" id="btn-add-flight">
+              <span class="material-icons">add</span>
+              <span>Thêm chuyến bay</span>
+            </button>
+          </div>
+
+          <div class="data-table-container">
+            <table class="data-table" id="table-flights">
+              <thead>
+                <tr>
+                  <th>Hãng bay</th>
+                  <th>Số hiệu</th>
+                  <th>Điểm đi (DEP)</th>
+                  <th>Điểm đến (ARR)</th>
+                  <th>Giờ khởi hành</th>
+                  <th>Giờ hạ cánh</th>
+                  <th>Thời gian bay</th>
+                  <th>Giá vé</th>
+                  <th>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Load dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- ─── MODAL: DESTINATION FORM ─── -->
+  <div class="modal" id="modal-destination">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-destination-title">Thêm điểm đến</h3>
+        <button class="close-btn" id="btn-close-dest-modal">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-destination">
+          <input type="hidden" id="dest-action" value="create">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dest-id">Mã ID (vd: dalat, hoian...)*</label>
+              <input type="text" id="dest-id" required placeholder="Viết liền không dấu">
+            </div>
+            <div class="form-group">
+              <label for="dest-name">Tên điểm đến*</label>
+              <input type="text" id="dest-name" required placeholder="Ví dụ: Vịnh Hạ Long">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dest-location">Địa điểm (Vị trí hiển thị)*</label>
+              <input type="text" id="dest-location" required placeholder="Ví dụ: Quảng Ninh, VN">
+            </div>
+            <div class="form-group">
+              <label for="dest-category">Phân loại*</label>
+              <select id="dest-category" required>
+                <option value="Địa điểm">Địa điểm</option>
+                <option value="Khách sạn">Khách sạn</option>
+                <option value="Bãi biển">Bãi biển</option>
+                <option value="Máy bay">Máy bay</option>
+                <option value="Ẩm thực">Ẩm thực</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dest-price">Giá vé hiển thị ($)*</label>
+              <input type="number" id="dest-price" required min="0" placeholder="Ví dụ: 120">
+            </div>
+            <div class="form-group">
+              <label for="dest-duration">Thời lượng chuyến đi</label>
+              <input type="text" id="dest-duration" placeholder="Ví dụ: 3N/2Đ, 4N/5D">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dest-rating">Điểm đánh giá (1-5)</label>
+              <input type="number" id="dest-rating" step="0.1" min="1" max="5" placeholder="4.5">
+            </div>
+            <div class="form-group">
+              <label for="dest-reviews">Số lượt review</label>
+              <input type="text" id="dest-reviews" placeholder="Ví dụ: 1.2k hoặc 250">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="dest-latitude">Vĩ độ (Latitude)</label>
+              <input type="number" id="dest-latitude" step="0.0001" placeholder="10.7769">
+            </div>
+            <div class="form-group">
+              <label for="dest-longitude">Kinh độ (Longitude)</label>
+              <input type="number" id="dest-longitude" step="0.0001" placeholder="106.7009">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="dest-image">Đường dẫn hình ảnh</label>
+            <input type="text" id="dest-image" placeholder="assets/images/... hoặc URL ảnh online">
+          </div>
+
+          <div class="form-group">
+            <label for="dest-description">Mô tả điểm đến</label>
+            <textarea id="dest-description" rows="3" placeholder="Nhập giới thiệu ngắn về điểm đến..."></textarea>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="secondary-btn" id="btn-cancel-dest">Hủy</button>
+            <button type="submit" class="primary-btn">Lưu lại</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── MODAL: FLIGHT FORM ─── -->
+  <div class="modal" id="modal-flight">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-flight-title">Thêm chuyến bay</h3>
+        <button class="close-btn" id="btn-close-flight-modal">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="form-flight">
+          <input type="hidden" id="flight-action" value="create">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="flight-id">Mã số hiệu chuyến bay (ID)*</label>
+              <input type="text" id="flight-id" required placeholder="Ví dụ: fl-12">
+            </div>
+            <div class="form-group">
+              <label for="flight-airline">Hãng hàng không*</label>
+              <input type="text" id="flight-airline" required placeholder="Ví dụ: Vietnam Airlines">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="flight-dep">Sân bay đi (DEP)*</label>
+              <input type="text" id="flight-dep" required placeholder="Ví dụ: SGN" maxlength="3">
+            </div>
+            <div class="form-group">
+              <label for="flight-arr">Sân bay đến (ARR)*</label>
+              <input type="text" id="flight-arr" required placeholder="Ví dụ: HAN" maxlength="3">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="flight-dep-time">Giờ khởi hành (HH:MM)</label>
+              <input type="text" id="flight-dep-time" placeholder="08:30">
+            </div>
+            <div class="form-group">
+              <label for="flight-arr-time">Giờ hạ cánh (HH:MM)</label>
+              <input type="text" id="flight-arr-time" placeholder="10:45">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="flight-price">Giá vé ($)*</label>
+              <input type="number" id="flight-price" required min="0" placeholder="120">
+            </div>
+            <div class="form-group">
+              <label for="flight-duration">Thời gian bay</label>
+              <input type="text" id="flight-duration" placeholder="Ví dụ: 2h 15m">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="flight-logo">Đường dẫn logo hãng bay</label>
+            <input type="text" id="flight-logo" placeholder="assets/images/vna_logo.png">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="secondary-btn" id="btn-cancel-flight">Hủy</button>
+            <button type="submit" class="primary-btn">Lưu lại</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript file -->
+  <script src="app.js"></script>
+</body>
+</html>

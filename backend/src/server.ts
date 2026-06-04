@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import cors from "cors";
 import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
 import { store } from "./store.js";
 
 const app = express();
@@ -9,45 +11,72 @@ const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 app.use(cors());
 app.use(express.json());
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/admin", express.static(path.join(__dirname, "../../admin-dashboard")));
+
 app.get("/health", (_, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/bootstrap", (_, res) => {
-  res.json(store.getBootstrap());
+app.get("/api/bootstrap", async (_, res) => {
+  try {
+    const data = await store.getBootstrap();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.get("/api/favorites", (_, res) => {
-  res.json(store.getFavorites());
+app.get("/api/favorites", async (_, res) => {
+  try {
+    const data = await store.getFavorites();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.patch("/api/destinations/:id/favorite", (req, res) => {
+app.patch("/api/destinations/:id/favorite", async (req, res) => {
   const id = req.params.id;
   const isFavorite = req.body?.isFavorite;
-  const updated = store.updateFavorite(id, isFavorite);
-  if (!updated) {
-    res.status(404).json({ message: "Destination not found" });
-    return;
+  try {
+    const updated = await store.updateFavorite(id, isFavorite);
+    if (!updated) {
+      res.status(404).json({ message: "Destination not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
-  res.json(updated);
 });
 
-app.delete("/api/trips/:id", (req, res) => {
+app.delete("/api/trips/:id", async (req, res) => {
   const id = req.params.id;
-  const deleted = store.deleteTrip(id);
-  if (!deleted) {
-    res.status(404).json({ message: "Trip not found" });
-    return;
+  try {
+    const deleted = await store.deleteTrip(id);
+    if (!deleted) {
+      res.status(404).json({ message: "Trip not found" });
+      return;
+    }
+    res.json({ message: "Cancelled" });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
-  res.json({ message: "Cancelled" });
 });
 
-app.get("/api/trips", (req, res) => {
+app.get("/api/trips", async (req, res) => {
   const type = typeof req.query.type === "string" ? req.query.type : undefined;
-  res.json(store.getTrips(type));
+  try {
+    const data = await store.getTrips(type);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.post("/api/trips/book", (req, res) => {
+app.post("/api/trips/book", async (req, res) => {
   const destinationId = req.body?.destinationId;
   const date = req.body?.date;
   const guests = req.body?.guests;
@@ -59,21 +88,30 @@ app.post("/api/trips/book", (req, res) => {
     return;
   }
 
-  const trip = store.createTrip(destinationId, date, guests, totalAmount, currency);
-  if (!trip) {
-    res.status(404).json({ message: "Destination not found" });
-    return;
+  try {
+    const trip = await store.createTrip(destinationId, date, guests, totalAmount, currency);
+    if (!trip) {
+      res.status(404).json({ message: "Destination not found" });
+      return;
+    }
+    res.status(201).json(trip);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
-  res.status(201).json(trip);
 });
 
-app.get("/api/flights/search", (req, res) => {
+app.get("/api/flights/search", async (req, res) => {
   const departure = typeof req.query.departure === "string" ? req.query.departure : undefined;
   const arrival = typeof req.query.arrival === "string" ? req.query.arrival : undefined;
-  res.json(store.searchFlights(departure, arrival));
+  try {
+    const data = await store.searchFlights(departure, arrival);
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.post("/api/trips/book-flight", (req, res) => {
+app.post("/api/trips/book-flight", async (req, res) => {
   const flightId = req.body?.flightId;
   const date = req.body?.date;
   const guests = req.body?.guests;
@@ -85,30 +123,48 @@ app.post("/api/trips/book-flight", (req, res) => {
     return;
   }
 
-  const trip = store.bookFlightTrip(flightId, date || "", guests || "", totalAmount, currency);
-  if (!trip) {
-    res.status(404).json({ message: "Flight not found" });
-    return;
+  try {
+    const trip = await store.bookFlightTrip(flightId, date || "", guests || "", totalAmount, currency);
+    if (!trip) {
+      res.status(404).json({ message: "Flight not found" });
+      return;
+    }
+    res.status(201).json(trip);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
   }
-  res.status(201).json(trip);
 });
 
-app.get("/api/profile", (_, res) => {
-  res.json(store.getProfile());
+app.get("/api/profile", async (_, res) => {
+  try {
+    const data = await store.getProfile();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.put("/api/profile", (req, res) => {
+app.put("/api/profile", async (req, res) => {
   const name = req.body?.name;
   const email = req.body?.email;
-  const profile = store.updateProfile(name, email);
-  res.json(profile);
+  try {
+    const profile = await store.updateProfile(name, email);
+    res.json(profile);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.get("/api/documents", (_, res) => {
-  res.json(store.getDocuments());
+app.get("/api/documents", async (_, res) => {
+  try {
+    const data = await store.getDocuments();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
-app.post("/api/documents", (req, res) => {
+app.post("/api/documents", async (req, res) => {
   const title = req.body?.title;
   const description = req.body?.description;
   const icon = req.body?.icon;
@@ -128,8 +184,160 @@ app.post("/api/documents", (req, res) => {
     return;
   }
 
-  const doc = store.createDocument(title, description, icon, color);
-  res.status(201).json(doc);
+  try {
+    const doc = await store.createDocument(title, description, icon, color);
+    res.status(201).json(doc);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ─── ADMIN API ENDPOINTS ───────────────────────────────────────────────────────
+
+// 1. Destinations CRUD
+app.get("/api/destinations", async (_, res) => {
+  try {
+    const data = await store.getDestinations();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/api/destinations", async (req, res) => {
+  const { id, name, location, latitude, longitude, rating, duration, imagePath, description, price, reviewsCount, category } = req.body;
+  if (!id || !name || !location || !price) {
+    res.status(400).json({ message: "id, name, location, and price are required" });
+    return;
+  }
+  const newDest = {
+    id,
+    name,
+    location,
+    latitude: typeof latitude === "number" ? latitude : undefined,
+    longitude: typeof longitude === "number" ? longitude : undefined,
+    rating: rating || "5.0",
+    duration: duration || "3N/2Đ",
+    imagePath: imagePath || "assets/images/dalat_image.jpg",
+    description: description || "",
+    price: String(price),
+    reviewsCount: reviewsCount || "0",
+    category: category || "Địa điểm",
+    isFavorite: false,
+    isRecommended: false
+  };
+  try {
+    const result = await store.addDestination(newDest);
+    res.status(201).json(result);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put("/api/destinations/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updated = await store.updateDestination(id, req.body);
+    if (!updated) {
+      res.status(404).json({ message: "Destination not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/api/destinations/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleted = await store.deleteDestination(id);
+    if (!deleted) {
+      res.status(404).json({ message: "Destination not found" });
+      return;
+    }
+    res.json({ message: "Destination deleted" });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 2. Flights CRUD
+app.get("/api/flights", async (_, res) => {
+  try {
+    const data = await store.getFlights();
+    res.json(data);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/api/flights", async (req, res) => {
+  const { id, airline, airlineLogo, departure, arrival, departureTime, arrivalTime, price, duration } = req.body;
+  if (!id || !airline || !departure || !arrival || typeof price !== "number") {
+    res.status(400).json({ message: "id, airline, departure, arrival, and numeric price are required" });
+    return;
+  }
+  const newFlight = {
+    id,
+    airline,
+    airlineLogo: airlineLogo || "assets/images/vna_logo.png",
+    departure,
+    arrival,
+    departureTime: departureTime || "00:00",
+    arrivalTime: arrivalTime || "00:00",
+    price,
+    duration: duration || "1h 00m",
+  };
+  try {
+    const result = await store.addFlight(newFlight);
+    res.status(201).json(result);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.put("/api/flights/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updated = await store.updateFlight(id, req.body);
+    if (!updated) {
+      res.status(404).json({ message: "Flight not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+app.delete("/api/flights/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const deleted = await store.deleteFlight(id);
+    if (!deleted) {
+      res.status(404).json({ message: "Flight not found" });
+      return;
+    }
+    res.json({ message: "Flight deleted" });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 3. Trips CRUD (updating status/details)
+app.put("/api/trips/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const updated = await store.updateTrip(id, req.body);
+    if (!updated) {
+      res.status(404).json({ message: "Trip not found" });
+      return;
+    }
+    res.json(updated);
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
 });
 
 // ─── VNPAY Configuration ───────────────────────────────────────────────────────
@@ -223,7 +431,7 @@ app.post("/api/payment/vnpay/create", (req, res) => {
   });
 });
 
-app.post("/api/payment/vnpay/ipn", (req, res) => {
+app.post("/api/payment/vnpay/ipn", async (req, res) => {
   const vnpParams: Record<string, string> = {};
   for (const [key, value] of Object.entries(req.body)) {
     vnpParams[key] = String(value);
@@ -246,9 +454,13 @@ app.post("/api/payment/vnpay/ipn", (req, res) => {
   const responseCode = vnpParams.vnp_ResponseCode;
 
   if (responseCode === "00") {
-    store.updateTripStatus(txnRef, "Đã thanh toán");
-    console.log(`Payment success for transaction ${txnRef}`);
-    res.json({ RspCode: "00", Message: "Success" });
+    try {
+      await store.updateTripStatus(txnRef, "Đã thanh toán");
+      console.log(`Payment success for transaction ${txnRef}`);
+      res.json({ RspCode: "00", Message: "Success" });
+    } catch (err) {
+      res.json({ RspCode: "99", Message: "Database error" });
+    }
   } else {
     console.log(`Payment failed for transaction ${txnRef}: ${responseCode}`);
     res.json({ RspCode: "00", Message: "Success" });
