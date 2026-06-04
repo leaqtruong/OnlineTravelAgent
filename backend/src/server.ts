@@ -1,13 +1,21 @@
 import cors from "cors";
 import express from "express";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
 import prisma from "./prisma.js";
 import { store } from "./store.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 const port = Number.parseInt(process.env.PORT ?? "3000", 10);
 
 app.use(cors());
 app.use(express.json());
+
+// Serve admin panel at root
+app.use(express.static(join(__dirname, "../admin")));
 
 app.get("/health", (_, res) => {
   res.json({ ok: true });
@@ -215,8 +223,230 @@ app.post("/api/trips/custom-tour", async (req, res) => {
   }
 });
 
-const server = app.listen(port, "0.0.0.0", () => {
-  console.log(`Backend running at http://0.0.0.0:${port}`);
+// ========== ADMIN ENDPOINTS ==========
+
+// --- Admin: Stats ---
+app.get("/api/admin/stats", async (_, res) => {
+  const [destinations, hotels, flights, tours, tripsUpcoming, tripsHistory] = await Promise.all([
+    prisma.destination.count(),
+    prisma.hotel.count(),
+    prisma.flight.count(),
+    prisma.tourPackage.count(),
+    prisma.trip.count({ where: { isUpcoming: true } }),
+    prisma.trip.count({ where: { isUpcoming: false } }),
+  ]);
+  res.json({ destinations, hotels, flights, tours, tripsUpcoming, tripsHistory });
+});
+
+// --- Admin: Destinations CRUD ---
+app.get("/api/admin/destinations", async (_, res) => {
+  const data = await prisma.destination.findMany({ orderBy: { name: "asc" } });
+  res.json(data);
+});
+
+app.post("/api/admin/destinations", async (req, res) => {
+  const { id, name, location, category, rating, duration, imagePath, description, price, reviewsCount, isFavorite, isRecommended, latitude, longitude } = req.body || {};
+  if (!name || !location) { res.status(400).json({ message: "name and location are required" }); return; }
+  const dest = await prisma.destination.create({
+    data: {
+      id: id || `dest-${Date.now()}`,
+      name, location,
+      category: category || "Địa điểm",
+      rating: rating || "4.0",
+      duration: duration || "2N/1Đ",
+      imagePath: imagePath || "",
+      description: description || "",
+      price: price || "0",
+      reviewsCount: reviewsCount || "0",
+      isFavorite: isFavorite ?? false,
+      isRecommended: isRecommended ?? false,
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+    },
+  });
+  res.status(201).json(dest);
+});
+
+app.put("/api/admin/destinations/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, location, category, rating, duration, imagePath, description, price, reviewsCount, isFavorite, isRecommended, latitude, longitude } = req.body || {};
+  const dest = await prisma.destination.update({
+    where: { id },
+    data: { name, location, category, rating, duration, imagePath, description, price, reviewsCount, isFavorite, isRecommended, latitude, longitude },
+  });
+  res.json(dest);
+});
+
+app.delete("/api/admin/destinations/:id", async (req, res) => {
+  await prisma.destination.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Admin: Hotels CRUD ---
+app.get("/api/admin/hotels", async (_, res) => {
+  const data = await prisma.hotel.findMany({ include: { rooms: true }, orderBy: { name: "asc" } });
+  res.json(data);
+});
+
+app.post("/api/admin/hotels", async (req, res) => {
+  const { id, name, location, address, rating, imagePath, description, priceFrom, amenities, latitude, longitude } = req.body || {};
+  if (!name || !location) { res.status(400).json({ message: "name and location are required" }); return; }
+  const hotel = await prisma.hotel.create({
+    data: {
+      id: id || `hotel-${Date.now()}`,
+      name, location,
+      address: address || "",
+      rating: rating || "4.0",
+      imagePath: imagePath || "",
+      description: description || "",
+      priceFrom: priceFrom || 0,
+      amenities: amenities || [],
+      latitude: latitude ?? null,
+      longitude: longitude ?? null,
+    },
+  });
+  res.status(201).json(hotel);
+});
+
+app.put("/api/admin/hotels/:id", async (req, res) => {
+  const { name, location, address, rating, imagePath, description, priceFrom, amenities, latitude, longitude } = req.body || {};
+  const hotel = await prisma.hotel.update({
+    where: { id: req.params.id },
+    data: { name, location, address, rating, imagePath, description, priceFrom, amenities, latitude, longitude },
+  });
+  res.json(hotel);
+});
+
+app.delete("/api/admin/hotels/:id", async (req, res) => {
+  await prisma.room.deleteMany({ where: { hotelId: req.params.id } });
+  await prisma.hotel.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Admin: Flights CRUD ---
+app.get("/api/admin/flights", async (_, res) => {
+  const data = await prisma.flight.findMany({ orderBy: { airline: "asc" } });
+  res.json(data);
+});
+
+app.post("/api/admin/flights", async (req, res) => {
+  const { id, airline, airlineLogo, departure, arrival, departureTime, arrivalTime, price, duration } = req.body || {};
+  if (!airline || !departure || !arrival) { res.status(400).json({ message: "airline, departure and arrival are required" }); return; }
+  const flight = await prisma.flight.create({
+    data: {
+      id: id || `fl-${Date.now()}`,
+      airline,
+      airlineLogo: airlineLogo || "",
+      departure,
+      arrival,
+      departureTime: departureTime || "",
+      arrivalTime: arrivalTime || "",
+      price: price || 0,
+      duration: duration || "",
+    },
+  });
+  res.status(201).json(flight);
+});
+
+app.put("/api/admin/flights/:id", async (req, res) => {
+  const { airline, airlineLogo, departure, arrival, departureTime, arrivalTime, price, duration } = req.body || {};
+  const flight = await prisma.flight.update({
+    where: { id: req.params.id },
+    data: { airline, airlineLogo, departure, arrival, departureTime, arrivalTime, price, duration },
+  });
+  res.json(flight);
+});
+
+app.delete("/api/admin/flights/:id", async (req, res) => {
+  await prisma.flight.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Admin: Tours CRUD ---
+app.get("/api/admin/tours", async (_, res) => {
+  const data = await prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(data);
+});
+
+app.post("/api/admin/tours", async (req, res) => {
+  const { id, name, description, imagePath, duration, price, originalPrice, destinations, includes, departure, isPopular, includesGuide, guideFee } = req.body || {};
+  if (!name) { res.status(400).json({ message: "name is required" }); return; }
+  const tour = await prisma.tourPackage.create({
+    data: {
+      id: id || `tour-${Date.now()}`,
+      name,
+      description: description || "",
+      imagePath: imagePath || "",
+      duration: duration || "",
+      price: price || 0,
+      originalPrice: originalPrice ?? null,
+      destinations: destinations || [],
+      includes: includes || [],
+      departure: departure || "",
+      isPopular: isPopular ?? false,
+      includesGuide: includesGuide ?? true,
+      guideFee: guideFee ?? 50,
+    },
+  });
+  res.status(201).json(tour);
+});
+
+app.put("/api/admin/tours/:id", async (req, res) => {
+  const { name, description, imagePath, duration, price, originalPrice, destinations, includes, departure, isPopular, includesGuide, guideFee } = req.body || {};
+  const tour = await prisma.tourPackage.update({
+    where: { id: req.params.id },
+    data: { name, description, imagePath, duration, price, originalPrice, destinations, includes, departure, isPopular, includesGuide, guideFee },
+  });
+  res.json(tour);
+});
+
+app.delete("/api/admin/tours/:id", async (req, res) => {
+  await prisma.tourPackage.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Admin: Trips ---
+app.get("/api/admin/trips", async (_, res) => {
+  const data = await prisma.trip.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(data);
+});
+
+app.put("/api/admin/trips/:id", async (req, res) => {
+  const { status, isUpcoming } = req.body || {};
+  const trip = await prisma.trip.update({
+    where: { id: req.params.id },
+    data: { status, isUpcoming },
+  });
+  res.json(trip);
+});
+
+app.delete("/api/admin/trips/:id", async (req, res) => {
+  await prisma.trip.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// --- Admin: Categories CRUD ---
+app.get("/api/admin/categories", async (_, res) => {
+  const data = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  res.json(data);
+});
+
+app.post("/api/admin/categories", async (req, res) => {
+  const { name } = req.body || {};
+  if (!name) { res.status(400).json({ message: "name is required" }); return; }
+  const cat = await prisma.category.create({ data: { name } });
+  res.status(201).json(cat);
+});
+
+app.delete("/api/admin/categories/:id", async (req, res) => {
+  await prisma.category.delete({ where: { id: req.params.id } });
+  res.json({ ok: true });
+});
+
+// ========================================
+
+const server = app.listen(port, () => {
+  console.log(`Backend running at http://localhost:${port}`);
 });
 
 // Graceful shutdown
