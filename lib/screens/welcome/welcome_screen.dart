@@ -52,9 +52,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cacheWidth = (MediaQuery.sizeOf(context).width *
-            MediaQuery.devicePixelRatioOf(context))
-        .round();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final devicePixelRatio = MediaQuery.devicePixelRatioOf(context);
+    final calculatedCacheWidth = (screenWidth * devicePixelRatio).round();
+    final cacheWidth = calculatedCacheWidth > 0 ? calculatedCacheWidth : null;
 
     return Scaffold(
       backgroundColor: Colors.black, // Dark background while loading images

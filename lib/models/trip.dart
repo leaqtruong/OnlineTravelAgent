@@ -7,43 +7,34 @@ class Trip {
   final String status;
   final String imagePath;
   final bool isUpcoming;
-  final String? flightId;
-  final String? hotelId;
-  final String? roomId;
-  final double? totalPrice;
-  final bool isCustom;
+  final double totalAmount;
+  final String currency;
 
-  const Trip({
+  Trip({
     required this.id,
     required this.destination,
     required this.location,
     required this.date,
-    required this.guests,
+    this.guests = "1 Người lớn",
     required this.status,
     required this.imagePath,
-    this.isUpcoming = true,
-    this.flightId,
-    this.hotelId,
-    this.roomId,
-    this.totalPrice,
-    this.isCustom = false,
+    required this.isUpcoming,
+    this.totalAmount = 0.0,
+    this.currency = 'USD',
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
     return Trip(
       id: json['id']?.toString() ?? '',
       destination: json['destination']?.toString() ?? '',
-      location: json['location']?.toString() ?? '',
+      location: json['location']?.toString() ?? 'Vietnam',
       date: json['date']?.toString() ?? '',
-      guests: json['guests']?.toString() ?? '',
+      guests: json['guests']?.toString() ?? '1 Người lớn',
       status: json['status']?.toString() ?? '',
       imagePath: json['imagePath']?.toString() ?? '',
       isUpcoming: json['isUpcoming'] == true,
-      flightId: json['flightId']?.toString(),
-      hotelId: json['hotelId']?.toString(),
-      roomId: json['roomId']?.toString(),
-      totalPrice: (json['totalPrice'] as num?)?.toDouble(),
-      isCustom: json['isCustom'] == true,
+      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
+      currency: json['currency']?.toString() ?? 'USD',
     );
   }
 }

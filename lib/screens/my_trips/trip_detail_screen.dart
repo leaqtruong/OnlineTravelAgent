@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
+import '../../providers/travel_provider.dart';
+import 'invoice_dialog.dart';
 
 class TripDetailScreen extends StatelessWidget {
   final Trip trip;
@@ -50,10 +53,6 @@ class TripDetailScreen extends StatelessWidget {
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                               ),
-                              // Prevent overly long destination strings from forcing
-                              // horizontal overflow by capping lines and ellipsizing.
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 8),
                             Row(
@@ -64,17 +63,11 @@ class TripDetailScreen extends StatelessWidget {
                                   color: AppTheme.primaryBlue,
                                 ),
                                 const SizedBox(width: 4),
-                                // Constrain the location text so it wraps/truncates
-                                // instead of causing a Row overflow.
-                                Expanded(
-                                  child: Text(
-                                    trip.location,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: AppTheme.primaryBlue,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  trip.location,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppTheme.primaryBlue,
                                   ),
                                 ),
                               ],
@@ -137,9 +130,24 @@ class TripDetailScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildActionBtn(context, Icons.support_agent, "Hỗ trợ"),
-                      _buildActionBtn(context, Icons.receipt_long, "Hóa đơn"),
-                      _buildActionBtn(context, Icons.cancel_outlined, "Hủy vé"),
+                      _buildActionBtn(
+                        context,
+                        Icons.support_agent,
+                        "Hỗ trợ",
+                        () => _showSupport(context),
+                      ),
+                      _buildActionBtn(
+                        context,
+                        Icons.receipt_long,
+                        "Hóa đơn",
+                        () => _showInvoice(context),
+                      ),
+                      _buildActionBtn(
+                        context,
+                        Icons.cancel_outlined,
+                        "Hủy vé",
+                        () => _showCancel(context),
+                      ),
                     ],
                   ),
                 ],
@@ -184,28 +192,93 @@ class TripDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionBtn(BuildContext context, IconData icon, String label) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F7FA),
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFEEEEEE)),
+  Widget _buildActionBtn(
+      BuildContext context, IconData icon, String label, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F7FA),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFEEEEEE)),
+            ),
+            child: Icon(icon, color: AppTheme.primaryBlue),
           ),
-          child: Icon(icon, color: AppTheme.primaryBlue),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF555555),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF555555),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  void _showInvoice(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => InvoiceDialog(trip: trip),
+    );
+  }
+
+  void _showSupport(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Liên hệ hỗ trợ: 1900xxxx')),
+    );
+  }
+
+  void _showCancel(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Xác nhận hủy vé'),
+        content: const Text('Bạn có chắc chắn muốn hủy chuyến đi này? Hành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Không', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _doCancel(context);
+            },
+            child: const Text('Có, hủy vé', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _doCancel(BuildContext context) {
+    final loadingCtx = context;
+    showDialog(
+      context: loadingCtx,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+
+    context.read<TravelProvider>().cancelTrip(trip.id).then((success) {
+      if (!loadingCtx.mounted) return;
+      Navigator.of(loadingCtx).pop();
+      if (success) {
+        ScaffoldMessenger.of(loadingCtx).showSnackBar(
+          const SnackBar(content: Text('Đã hủy chuyến đi thành công')),
+        );
+        Navigator.of(loadingCtx).pop();
+      } else {
+        ScaffoldMessenger.of(loadingCtx).showSnackBar(
+          const SnackBar(content: Text('Có lỗi xảy ra khi hủy chuyến')),
+        );
+      }
+    });
   }
 }

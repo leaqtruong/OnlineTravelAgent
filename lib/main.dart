@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/travel_provider.dart';
-import 'screens/welcome/welcome_screen.dart';
-import 'screens/main/main_screen.dart';
-import 'core/theme/app_theme.dart';
+
+import 'package:online_travel_agent/core/theme/app_theme.dart';
+import 'package:online_travel_agent/providers/travel_provider.dart';
+import 'package:online_travel_agent/screens/main/main_screen.dart';
+import 'package:online_travel_agent/screens/welcome/welcome_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,9 +24,8 @@ class OnlineTravelAgentApp extends StatelessWidget {
         title: 'Online Travel Agent',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
-        initialRoute: '/',
+        home: const WelcomeScreen(),
         routes: {
-          '/': (context) => const WelcomeScreen(),
           '/main': (context) => const MainScreen(),
         },
       ),

@@ -14,5 +14,10 @@ class UserProfile {
     );
   }
 
-  Map<String, dynamic> toJson() => {'name': name, 'email': email};
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+    };
+  }
 }

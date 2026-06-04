@@ -28,4 +28,3 @@
 # Backend (Express + TypeScript)
 /backend/node_modules/
 /backend/dist/
-/backend/.env
