@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_package.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/tour_provider.dart';
 import 'tour_detail_screen.dart';
 
-class ToursScreen extends StatelessWidget {
+class ToursScreen extends ConsumerWidget {
   const ToursScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
@@ -18,9 +18,9 @@ class ToursScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
       ),
-      body: Consumer<TravelProvider>(
-        builder: (context, provider, child) {
-          final tours = provider.tourPackages;
+      body: Consumer(
+        builder: (context, ref, child) {
+          final tours = ref.watch(toursProvider);
 
           if (tours.isEmpty) {
             return const Center(

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_package.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/trip_provider.dart';
 
-class TourDetailScreen extends StatefulWidget {
+class TourDetailScreen extends ConsumerStatefulWidget {
   final TourPackage tour;
 
   const TourDetailScreen({super.key, required this.tour});
 
   @override
-  State<TourDetailScreen> createState() => _TourDetailScreenState();
+  ConsumerState<TourDetailScreen> createState() => _TourDetailScreenState();
 }
 
-class _TourDetailScreenState extends State<TourDetailScreen> {
+class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   late DateTime _selectedDate;
   int _guestsCount = 1;
   late bool _guideToggle;
@@ -1071,7 +1071,7 @@ class _TourDetailScreenState extends State<TourDetailScreen> {
     final String formattedDate = DateFormat('dd/MM/yyyy').format(_selectedDate);
     final String guestsLabel = '$_guestsCount Người';
 
-    final success = await context.read<TravelProvider>().bookTour(
+    final success = await ref.read(tripsProvider.notifier).bookTour(
           tourId: widget.tour.id,
           date: formattedDate,
           guests: guestsLabel,

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/trip_provider.dart';
 import '../../widgets/guest_counter.dart';
 import 'payment_method_screen.dart';
 
-class CheckoutScreen extends StatefulWidget {
+class CheckoutScreen extends ConsumerStatefulWidget {
   final Destination destination;
 
   const CheckoutScreen({super.key, required this.destination});
 
   @override
-  State<CheckoutScreen> createState() => _CheckoutScreenState();
+  ConsumerState<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   DateTime? _selectedDate;
   int _adults = 1;
   int _children = 0;
@@ -99,8 +99,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           totalPrice: _total,
           onPaymentSuccess: () async {
             if (!mounted) return false;
-            final provider = context.read<TravelProvider>();
-            return await provider.bookSelectedDestination(
+            return await ref.read(tripsProvider.notifier).bookTrip(
+              destinationId: widget.destination.id,
               date: dateString,
               guests: guestString,
               totalPrice: _includeGuide ? _total : null,

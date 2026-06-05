@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/hotel.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/hotel_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import 'hotel_detail_screen.dart';
 
-class HotelsScreen extends StatefulWidget {
+class HotelsScreen extends ConsumerStatefulWidget {
   const HotelsScreen({super.key});
 
   @override
-  State<HotelsScreen> createState() => _HotelsScreenState();
+  ConsumerState<HotelsScreen> createState() => _HotelsScreenState();
 }
 
-class _HotelsScreenState extends State<HotelsScreen> {
+class _HotelsScreenState extends ConsumerState<HotelsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCity = 'Tất cả';
   String _sortBy = 'Popular'; // 'Popular', 'Rating', 'PriceAsc', 'PriceDesc'
@@ -97,7 +97,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
           onPressed: () {
-            context.read<TravelProvider>().setSearchQuery('');
+            ref.read(hotelSearchQueryProvider.notifier).update('');
             Navigator.pop(context);
           },
         ),
@@ -117,10 +117,10 @@ class _HotelsScreenState extends State<HotelsScreen> {
           ),
         ],
       ),
-      body: Consumer<TravelProvider>(
-        builder: (context, provider, _) {
-          final searchQuery = provider.searchQuery;
-          final finalHotels = _getFilteredAndSorted(provider.hotels, searchQuery);
+      body: Consumer(
+        builder: (context, ref, _) {
+          final searchQuery = ref.watch(hotelSearchQueryProvider);
+          final finalHotels = _getFilteredAndSorted(ref.watch(hotelsProvider), searchQuery);
           return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -135,7 +135,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
               ),
               child: TextField(
                 controller: _searchController,
-                onChanged: (text) => provider.setSearchQuery(text),
+                onChanged: (text) => ref.read(hotelSearchQueryProvider.notifier).update(text),
                 decoration: InputDecoration(
                   icon: const Icon(Icons.search, color: Colors.grey, size: 20),
                   hintText: 'Tìm khách sạn, địa điểm...',
@@ -149,7 +149,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
                           icon: const Icon(Icons.clear, size: 18),
                           onPressed: () {
                             _searchController.clear();
-                            provider.setSearchQuery('');
+                            ref.read(hotelSearchQueryProvider.notifier).update('');
                           },
                         )
                       : null,
@@ -473,7 +473,7 @@ class _HotelsScreenState extends State<HotelsScreen> {
             ElevatedButton(
               onPressed: () {
                 _searchController.clear();
-                context.read<TravelProvider>().setSearchQuery('');
+                ref.read(hotelSearchQueryProvider.notifier).update('');
                 setState(() {
                   _selectedCity = 'Tất cả';
                   _sortBy = 'Popular';

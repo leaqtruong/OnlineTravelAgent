@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import '../destination_detail/destination_detail_screen.dart';
 
-class DestinationsScreen extends StatefulWidget {
+class DestinationsScreen extends ConsumerStatefulWidget {
   final String? initialCategory;
 
   const DestinationsScreen({super.key, this.initialCategory});
 
   @override
-  State<DestinationsScreen> createState() => _DestinationsScreenState();
+  ConsumerState<DestinationsScreen> createState() => _DestinationsScreenState();
 }
 
-class _DestinationsScreenState extends State<DestinationsScreen> {
+class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _sortBy = 'Popular'; // 'Popular', 'PriceAsc', 'PriceDesc', 'Rating'
 
@@ -25,11 +25,11 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
     super.initState();
     // Initialize provider search/category from widget fields or keep synchronized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<TravelProvider>();
+
       if (widget.initialCategory != null) {
-        provider.setSelectedCategory(widget.initialCategory!);
+        ref.read(selectedCategoryProvider.notifier).update(widget.initialCategory!);
       }
-      _searchController.text = provider.searchQuery;
+      _searchController.text = ref.watch(searchQueryProvider);
     });
   }
 
@@ -101,9 +101,9 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
   }
 
   void _resetFiltersOnExit() {
-    final provider = context.read<TravelProvider>();
-    provider.setSearchQuery('');
-    provider.setSelectedCategory('Tất cả');
+
+    ref.read(searchQueryProvider.notifier).update('');
+    ref.read(selectedCategoryProvider.notifier).update('Tất cả');
   }
 
   @override
@@ -146,9 +146,9 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
             ),
           ],
         ),
-        body: Consumer<TravelProvider>(
-          builder: (context, provider, _) {
-            final sortedList = _getSortedAndFiltered(provider.filteredDestinations);
+        body: Consumer(
+          builder: (context, ref, _) {
+            final sortedList = _getSortedAndFiltered(ref.watch(filteredDestinationsProvider));
             return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -163,7 +163,7 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
                 ),
                 child: TextField(
                   controller: _searchController,
-                  onChanged: (text) => provider.setSearchQuery(text),
+                  onChanged: (text) => ref.read(searchQueryProvider.notifier).update(text),
                   decoration: InputDecoration(
                     icon: const Icon(
                       Icons.search,
@@ -181,7 +181,7 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
                             icon: const Icon(Icons.clear, size: 18),
                             onPressed: () {
                               _searchController.clear();
-                              provider.setSearchQuery('');
+                              ref.read(searchQueryProvider.notifier).update('');
                             },
                           )
                         : null,
@@ -265,7 +265,7 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
               destination: destination,
               onBackClick: () => Navigator.pop(context),
               onFavoriteClick: () =>
-                  context.read<TravelProvider>().toggleFavorite(destination.id),
+                  ref.read(destinationsProvider.notifier).toggleFavorite(destination.id),
             ),
           ),
         );
@@ -347,7 +347,7 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
                     right: 12,
                     child: GestureDetector(
                       onTap: () {
-                        context.read<TravelProvider>().toggleFavorite(
+                        ref.read(destinationsProvider.notifier).toggleFavorite(
                           destination.id,
                         );
                       },
@@ -491,8 +491,8 @@ class _DestinationsScreenState extends State<DestinationsScreen> {
             ElevatedButton(
               onPressed: () {
                 _searchController.clear();
-                context.read<TravelProvider>().setSearchQuery('');
-                context.read<TravelProvider>().setSelectedCategory('Tất cả');
+                ref.read(searchQueryProvider.notifier).update('');
+                ref.read(selectedCategoryProvider.notifier).update('Tất cả');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,

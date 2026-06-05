@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
 import '../../models/hotel.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
+import '../../providers/hotel_provider.dart';
+import '../../providers/trip_provider.dart';
 import '../checkout/payment_method_screen.dart';
 
-class CustomTourStepperScreen extends StatefulWidget {
+class CustomTourStepperScreen extends ConsumerStatefulWidget {
   const CustomTourStepperScreen({super.key});
 
   @override
-  State<CustomTourStepperScreen> createState() =>
+  ConsumerState<CustomTourStepperScreen> createState() =>
       _CustomTourStepperScreenState();
 }
 
-class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
+class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScreen> {
   int _currentStep = 0;
 
   // Form State
@@ -320,9 +322,9 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
 
   // --- Step 1: Destination Selection ---
   Widget _buildDestinationStep() {
-    return Consumer<TravelProvider>(
-      builder: (context, provider, _) {
-        final destList = provider.destinations;
+    return Consumer(
+      builder: (context, ref, _) {
+        final destList = ref.watch(destinationsProvider);
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,9 +702,9 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
 
   // --- Step 3: Horizontal Hotel List View ---
   Widget _buildHotelStep() {
-    return Consumer<TravelProvider>(
-      builder: (context, provider, _) {
-        final hotels = provider.hotels;
+    return Consumer(
+      builder: (context, ref, _) {
+        final hotels = ref.watch(hotelsProvider);
 
         if (_selectedDestinations.isEmpty) {
           return Column(
@@ -1276,7 +1278,7 @@ class _CustomTourStepperScreenState extends State<CustomTourStepperScreen> {
                 .map((h) => h!.id)
                 .toList();
 
-            final success = await context.read<TravelProvider>().createCustomTour(
+            final success = await ref.read(tripsProvider.notifier).createCustomTour(
                   destination: _selectedDestinations.map((d) => d.name).join(', '),
                   location: _selectedDestinations.map((d) => d.location).toSet().join(', '),
                   date: _formattedDate,

@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
 import '../../models/tour_package.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
+import '../../providers/tour_provider.dart';
 import 'widgets/booking_info_card.dart';
 import 'widgets/booking_status_timeline.dart';
 import 'widgets/trip_action_buttons.dart';
 import 'widgets/trip_section_header.dart';
 
-class TourTripDetailScreen extends StatefulWidget {
+class TourTripDetailScreen extends ConsumerStatefulWidget {
   final Trip trip;
 
   const TourTripDetailScreen({super.key, required this.trip});
 
   @override
-  State<TourTripDetailScreen> createState() => _TourTripDetailScreenState();
+  ConsumerState<TourTripDetailScreen> createState() => _TourTripDetailScreenState();
 }
 
-class _TourTripDetailScreenState extends State<TourTripDetailScreen> {
+class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
   int _selectedDayIndex = 0;
   
   // Custom Time simulation for testing
@@ -29,11 +30,11 @@ class _TourTripDetailScreenState extends State<TourTripDetailScreen> {
   int? _simulatedMinute;
   bool _showSimulatePanel = false;
 
-  TourPackage? _findTourPackage(BuildContext context) {
-    final provider = context.read<TravelProvider>();
+  TourPackage? _findTourPackage(WidgetRef ref) {
+    final tourPackages = ref.watch(toursProvider);
     final name = widget.trip.destination.toLowerCase().trim();
     try {
-      return provider.tourPackages.firstWhere(
+      return tourPackages.firstWhere(
         (t) => t.name.toLowerCase().trim() == name,
       );
     } catch (_) {
@@ -233,8 +234,8 @@ class _TourTripDetailScreenState extends State<TourTripDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tourPackage = _findTourPackage(context);
-    final provider = context.read<TravelProvider>();
+    final tourPackage = _findTourPackage(ref);
+    final destinations = ref.watch(destinationsProvider);
     final screenHeight = MediaQuery.sizeOf(context).height;
     final heroCacheWidth =
         (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round();
@@ -245,7 +246,7 @@ class _TourTripDetailScreenState extends State<TourTripDetailScreen> {
     if (tourPackage != null) {
       for (final destName in tourPackage.destinations) {
         try {
-          final d = provider.destinations.firstWhere(
+          final d = destinations.firstWhere(
             (dest) => dest.name.toLowerCase().trim().contains(destName.toLowerCase().trim()) ||
                 destName.toLowerCase().trim().contains(dest.name.toLowerCase().trim())
           );
@@ -265,7 +266,7 @@ class _TourTripDetailScreenState extends State<TourTripDetailScreen> {
       }
     } else {
       try {
-        final d = provider.destinations.firstWhere(
+        final d = destinations.firstWhere(
           (dest) => dest.name.toLowerCase().trim() == widget.trip.destination.toLowerCase().trim()
         );
         if (d.latitude != 0.0 && d.longitude != 0.0) {

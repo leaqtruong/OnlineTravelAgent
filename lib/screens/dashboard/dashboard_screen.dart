@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
 
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
+import '../../providers/trip_provider.dart';
+import '../../providers/tour_provider.dart';
 import 'widgets/popular_destination_card.dart';
 import '../flights/flight_search_screen.dart';
 import '../tours/tours_screen.dart';
@@ -16,16 +18,16 @@ import '../hotels/hotels_screen.dart';
 import '../tours/tour_detail_screen.dart';
 import '../../models/tour_package.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   final Function(Destination) onDestinationClick;
 
   const DashboardScreen({super.key, required this.onDestinationClick});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -36,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final categories = context.read<TravelProvider>().categories;
+    final categories = ['Tất cả', 'Địa điểm', 'Khách sạn', 'Ẩm thực'];
     final visibleCategories = categories
         .where((category) => category != 'Máy bay')
         .toList();
@@ -108,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       return TextField(
                         controller: _searchController,
                         onChanged: (text) =>
-                            context.read<TravelProvider>().setSearchQuery(text),
+                            ref.read(searchQueryProvider.notifier).update(''),
                         decoration: InputDecoration(
                           icon: const Icon(
                             Icons.search,
@@ -126,9 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   icon: const Icon(Icons.clear, size: 18),
                                   onPressed: () {
                                     _searchController.clear();
-                                    context
-                                        .read<TravelProvider>()
-                                        .setSearchQuery('');
+                                    ref.read(searchQueryProvider.notifier).update('');
                                   },
                                 )
                               : null,
@@ -141,9 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 32),
               SizedBox(
                 height: 48,
-                child: Selector<TravelProvider, String>(
-                  selector: (_, provider) => provider.selectedCategory,
-                  builder: (context, selectedCategory, child) {
+                child: Consumer(builder: (context, ref, child) {
                     return ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       scrollDirection: Axis.horizontal,
@@ -151,7 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       separatorBuilder: (_, _) => const SizedBox(width: 16),
                       itemBuilder: (context, index) {
                         final category = visibleCategories[index];
-                        final isSelected = selectedCategory == category;
+                        final isSelected = ref.watch(selectedCategoryProvider) == category;
                         return GestureDetector(
                           onTap: () {
                             if (category == 'Khách sạn') {
@@ -178,9 +176,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ),
   );
                             } else {
-                              context
-                                  .read<TravelProvider>()
-                                  .setSelectedCategory(category);
+                              ref.read(selectedCategoryProvider.notifier).update(category);
                             }
                           },
                           child: Container(
@@ -294,14 +290,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Consumer<TravelProvider>(
-                  builder: (context, provider, _) {
+                child: Consumer(
+                  builder: (context, ref, _) {
                     return Row(
                       children: [
                         Expanded(
                           child: _statCard(
                             title: 'Điểm đến',
-                            value: provider.destinations.length.toString(),
+                            value: ref.watch(destinationsProvider).length.toString(),
                             icon: Icons.place_outlined,
                           ),
                         ),
@@ -309,7 +305,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: _statCard(
                             title: 'Yêu thích',
-                            value: provider.favorites.length.toString(),
+                            value: ref.watch(favoritesProvider).length.toString(),
                             icon: Icons.favorite_border,
                           ),
                         ),
@@ -317,7 +313,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Expanded(
                           child: _statCard(
                             title: 'Sắp tới',
-                            value: provider.upcomingTrips.length.toString(),
+                            value: ref.watch(tripsProvider).length.toString(),
                             icon: Icons.flight_takeoff,
                           ),
                         ),
@@ -329,10 +325,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Consumer<TravelProvider>(
-                  builder: (context, provider, _) {
-                    final upcomingTrip = provider.upcomingTrips.isNotEmpty
-                        ? provider.upcomingTrips.first
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final upcomingTrip = ref.watch(tripsProvider).isNotEmpty
+                        ? ref.watch(tripsProvider).first
                         : null;
                     return Container(
                       width: double.infinity,
@@ -496,10 +492,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              Selector<TravelProvider, List<Destination>>(
-                selector: (_, provider) => provider.filteredDestinations,
-                builder: (context, destinations, child) {
-                  if (destinations.isEmpty) {
+              Consumer(builder: (context, ref, child) {
+                  if (ref.watch(filteredDestinationsProvider).isEmpty) {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(20.0),
@@ -507,7 +501,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   }
-                  final displayList = destinations.take(5).toList();
+                  final displayList = ref.watch(filteredDestinationsProvider).take(5).toList();
                   return SizedBox(
                     height: 240,
                     child: ListView.separated(
@@ -521,9 +515,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         }
                         return PopularDestinationCard(
                           destination: displayList[index],
-                          onFavoriteClick: () => context
-                              .read<TravelProvider>()
-                              .toggleFavorite(displayList[index].id),
+                          onFavoriteClick: () => ref.read(destinationsProvider.notifier).toggleFavorite(displayList[index].id),
                           onClick: () =>
                               widget.onDestinationClick(displayList[index]),
                         );
@@ -567,10 +559,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              Selector<TravelProvider, List<TourPackage>>(
-                selector: (_, provider) => provider.tourPackages,
-                builder: (context, tours, child) {
-                  if (tours.isEmpty) {
+              Consumer(builder: (context, ref, child) {
+                  if (ref.watch(toursProvider).isEmpty) {
                     return const Center(
                       child: Padding(
                         padding: EdgeInsets.all(20.0),
@@ -578,7 +568,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     );
                   }
-                  final displayList = tours.take(5).toList();
+                  final displayList = ref.watch(toursProvider).take(5).toList();
                   return SizedBox(
                     height: 200,
                     child: ListView.separated(

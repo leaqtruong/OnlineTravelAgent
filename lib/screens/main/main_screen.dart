@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/app_state_provider.dart';
+import '../../providers/destination_provider.dart';
+
 import '../dashboard/dashboard_screen.dart';
 import '../destination_detail/destination_detail_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../my_trips/my_trips_screen.dart';
 import '../profile/profile_screen.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
   // Track visited tabs and only build them after first selection.
   final Set<int> _visitedTabs = {0};
@@ -37,24 +38,56 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Selector<TravelProvider, Destination?>(
-      selector: (_, provider) => provider.selectedDestination,
-      builder: (context, selectedDestination, _) {
-        return Scaffold(
-          body: selectedDestination != null
-              ? DestinationDetailScreen(
-                  destination: selectedDestination,
-                  onBackClick: () =>
-                      context.read<TravelProvider>().selectDestination(null),
-                  onFavoriteClick: () => context
-                      .read<TravelProvider>()
-                      .toggleFavorite(selectedDestination.id),
-                )
-              : _buildLazyIndexedStack(),
-          bottomNavigationBar:
-              selectedDestination == null ? _buildBottomNavigationBar() : null,
-        );
-      },
+    final bootstrapAsync = ref.watch(bootstrapProvider);
+    final selectedDestination = ref.watch(selectedDestinationProvider);
+
+    return bootstrapAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stack) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.wifi_off, size: 64, color: Colors.grey),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại mạng.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () => ref.refresh(bootstrapProvider),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Thử lại'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (_) => Scaffold(
+        body: selectedDestination != null
+            ? DestinationDetailScreen(
+                destination: selectedDestination,
+                onBackClick: () =>
+                    ref.read(selectedDestinationProvider.notifier).update(null),
+                onFavoriteClick: () =>
+                    ref.read(destinationsProvider.notifier).toggleFavorite(selectedDestination.id),
+              )
+            : _buildLazyIndexedStack(),
+        bottomNavigationBar:
+            selectedDestination == null ? _buildBottomNavigationBar() : null,
+      ),
     );
   }
 
@@ -75,14 +108,14 @@ class _MainScreenState extends State<MainScreen> {
       case 0:
         return DashboardScreen(
           onDestinationClick: (dest) =>
-              context.read<TravelProvider>().selectDestination(dest),
+              ref.read(selectedDestinationProvider.notifier).update(dest),
         );
       case 1:
         return const MyTripsScreen();
       case 2:
         return FavoritesScreen(
           onDestinationClick: (dest) =>
-              context.read<TravelProvider>().selectDestination(dest),
+              ref.read(selectedDestinationProvider.notifier).update(dest),
         );
       case 3:
         return const ProfileScreen();

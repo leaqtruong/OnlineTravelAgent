@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import '../destination_detail/destination_detail_screen.dart';
 
-class FoodScreen extends StatefulWidget {
+class FoodScreen extends ConsumerStatefulWidget {
   const FoodScreen({super.key});
 
   @override
-  State<FoodScreen> createState() => _FoodScreenState();
+  ConsumerState<FoodScreen> createState() => _FoodScreenState();
 }
 
-class _FoodScreenState extends State<FoodScreen> {
+class _FoodScreenState extends ConsumerState<FoodScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _sortBy = 'Popular';
 
@@ -95,7 +95,7 @@ class _FoodScreenState extends State<FoodScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
           onPressed: () {
-            context.read<TravelProvider>().setSearchQuery('');
+            ref.read(searchQueryProvider.notifier).update('');
             Navigator.pop(context);
           },
         ),
@@ -115,10 +115,10 @@ class _FoodScreenState extends State<FoodScreen> {
           ),
         ],
       ),
-      body: Consumer<TravelProvider>(
-        builder: (context, provider, _) {
-          final searchQuery = provider.searchQuery;
-          final foods = _getFilteredAndSorted(provider.foodDestinations, searchQuery);
+      body: Consumer(
+        builder: (context, ref, _) {
+          final searchQuery = ref.watch(searchQueryProvider);
+          final foods = _getFilteredAndSorted(ref.watch(foodDestinationsProvider), searchQuery);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -132,7 +132,7 @@ class _FoodScreenState extends State<FoodScreen> {
                   ),
                   child: TextField(
                     controller: _searchController,
-                    onChanged: (text) => provider.setSearchQuery(text),
+                    onChanged: (text) => ref.read(searchQueryProvider.notifier).update(text),
                     decoration: InputDecoration(
                       icon: const Icon(Icons.restaurant, color: Colors.grey, size: 20),
                       hintText: 'Tìm món ăn, địa điểm...',
@@ -146,7 +146,7 @@ class _FoodScreenState extends State<FoodScreen> {
                               icon: const Icon(Icons.clear, size: 18),
                               onPressed: () {
                                 _searchController.clear();
-                                provider.setSearchQuery('');
+                                ref.read(searchQueryProvider.notifier).update('');
                               },
                             )
                           : null,
@@ -222,7 +222,7 @@ class _FoodScreenState extends State<FoodScreen> {
               destination: destination,
               onBackClick: () => Navigator.pop(context),
               onFavoriteClick: () =>
-                  context.read<TravelProvider>().toggleFavorite(destination.id),
+                  ref.read(destinationsProvider.notifier).toggleFavorite(destination.id),
             ),
           ),
         );
@@ -288,7 +288,7 @@ class _FoodScreenState extends State<FoodScreen> {
                     right: 12,
                     child: GestureDetector(
                       onTap: () {
-                        context.read<TravelProvider>().toggleFavorite(destination.id);
+                        ref.read(destinationsProvider.notifier).toggleFavorite(destination.id);
                       },
                       child: CircleAvatar(
                         radius: 18,
@@ -421,7 +421,7 @@ class _FoodScreenState extends State<FoodScreen> {
             ElevatedButton(
               onPressed: () {
                 _searchController.clear();
-                context.read<TravelProvider>().setSearchQuery('');
+                ref.read(searchQueryProvider.notifier).update('');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,

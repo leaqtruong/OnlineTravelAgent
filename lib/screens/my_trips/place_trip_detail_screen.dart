@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
 import 'widgets/booking_info_card.dart';
 import 'widgets/booking_status_timeline.dart';
 import 'widgets/trip_action_buttons.dart';
 import 'widgets/trip_section_header.dart';
 
-class PlaceTripDetailScreen extends StatelessWidget {
+class PlaceTripDetailScreen extends ConsumerWidget {
   final Trip trip;
 
   const PlaceTripDetailScreen({super.key, required this.trip});
 
-  Destination? _findDestination(BuildContext context) {
-    final provider = context.read<TravelProvider>();
+  Destination? _findDestination(WidgetRef ref) {
+    final destinations = ref.watch(destinationsProvider);
     final name = trip.destination.toLowerCase().trim();
     try {
-      return provider.destinations.firstWhere(
+      return destinations.firstWhere(
         (d) => d.name.toLowerCase().trim() == name,
       );
     } catch (_) {
@@ -48,8 +48,8 @@ class PlaceTripDetailScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final destination = _findDestination(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final destination = _findDestination(ref);
     final screenHeight = MediaQuery.sizeOf(context).height;
     final heroCacheWidth =
         (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round();

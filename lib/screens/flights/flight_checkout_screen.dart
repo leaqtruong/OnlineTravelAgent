@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/trip_provider.dart';
 import '../checkout/payment_method_screen.dart';
 
-class FlightCheckoutScreen extends StatefulWidget {
+class FlightCheckoutScreen extends ConsumerStatefulWidget {
   final Flight flight;
   final String date;
 
@@ -17,10 +17,10 @@ class FlightCheckoutScreen extends StatefulWidget {
   });
 
   @override
-  State<FlightCheckoutScreen> createState() => _FlightCheckoutScreenState();
+  ConsumerState<FlightCheckoutScreen> createState() => _FlightCheckoutScreenState();
 }
 
-class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
+class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
   int _adults = 1;
   int _children = 0;
   bool _isBusinessClass = false;
@@ -50,8 +50,8 @@ class _FlightCheckoutScreenState extends State<FlightCheckoutScreen> {
           totalPrice: _totalPrice,
           onPaymentSuccess: () async {
             if (!mounted) return false;
-            final provider = context.read<TravelProvider>();
-            return await provider.bookFlight(
+            final notifier = ref.read(tripsProvider.notifier);
+            return await notifier.bookFlight(
               flightId: widget.flight.id,
               date: widget.date,
               guests: guestsStr,

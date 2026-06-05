@@ -1,18 +1,18 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/profile_provider.dart';
 
-class ContactSpecialScreen extends StatefulWidget {
+class ContactSpecialScreen extends ConsumerStatefulWidget {
   const ContactSpecialScreen({super.key});
 
   @override
-  State<ContactSpecialScreen> createState() => _ContactSpecialScreenState();
+  ConsumerState<ContactSpecialScreen> createState() => _ContactSpecialScreenState();
 }
 
-class _ContactSpecialScreenState extends State<ContactSpecialScreen> {
+class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
   final _formKey = GlobalKey<FormState>();
 
   // State Fields
@@ -39,10 +39,10 @@ class _ContactSpecialScreenState extends State<ContactSpecialScreen> {
     super.initState();
     // Auto-fill profile info if available
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<TravelProvider>();
+      final profile = ref.read(profileProvider);
       setState(() {
-        _nameController.text = provider.profile.name;
-        _emailController.text = provider.profile.email;
+        _nameController.text = profile.name;
+        _emailController.text = profile.email;
       });
     });
   }
@@ -506,7 +506,7 @@ class _ContactSpecialScreenState extends State<ContactSpecialScreen> {
     final docTitle = 'Đoàn: ${_nameController.text} (${_guests.toInt()} khách)';
     final docDesc = 'Dịch vụ: $_selectedCategory. Ngân sách: \$${_budget.toInt()}. Mã số: #$reqId. Trạng thái: Đang xử lý.';
 
-    final success = await context.read<TravelProvider>().addDocument(
+    final success = await ref.read(documentsProvider.notifier).addDocument(
           title: docTitle,
           description: docDesc,
           icon: 'business',

@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/trip_provider.dart';
 import 'place_trip_detail_screen.dart';
 import 'tour_trip_detail_screen.dart';
 import 'widgets/trip_card.dart';
 
-class MyTripsScreen extends StatefulWidget {
+class MyTripsScreen extends ConsumerStatefulWidget {
   const MyTripsScreen({super.key});
 
   @override
-  State<MyTripsScreen> createState() => _MyTripsScreenState();
+  ConsumerState<MyTripsScreen> createState() => _MyTripsScreenState();
 }
 
-class _MyTripsScreenState extends State<MyTripsScreen>
+class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _activeProductFilter = 'all';
@@ -37,11 +37,11 @@ class _MyTripsScreenState extends State<MyTripsScreen>
     return Scaffold(
       backgroundColor: AppTheme.backgroundGray,
       body: SafeArea(
-        child: Consumer<TravelProvider>(
-          builder: (context, provider, child) {
-            final ongoing = provider.ongoingTrips;
-            final upcoming = provider.upcomingTrips;
-            final history = provider.historyTrips;
+        child: Consumer(
+          builder: (context, ref, child) {
+            final ongoing = ref.watch(ongoingTripsProvider);
+            final upcoming = ref.watch(upcomingTripsProvider);
+            final history = ref.watch(historyTripsProvider);
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),

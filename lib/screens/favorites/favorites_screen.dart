@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/destination.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/destination_provider.dart';
 import 'widgets/favorite_destination_card.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends ConsumerWidget {
   final Function(Destination) onDestinationClick;
 
   const FavoritesScreen({super.key, required this.onDestinationClick});
 
   @override
-  Widget build(BuildContext context) {
-    final favorites = context.select<TravelProvider, List<Destination>>((p) => p.favorites);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final favorites = ref.watch(favoritesProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -42,7 +42,7 @@ class FavoritesScreen extends StatelessWidget {
                         itemBuilder: (context, index) {
                           return FavoriteDestinationCard(
                             destination: favorites[index],
-                            onFavoriteClick: () => context.read<TravelProvider>()
+                            onFavoriteClick: () => ref.read(destinationsProvider.notifier)
                                 .toggleFavorite(favorites[index].id),
                             onClick: () => onDestinationClick(favorites[index]),
                           );

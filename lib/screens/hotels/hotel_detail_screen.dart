@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/hotel.dart';
 import '../../models/room.dart';
-import '../../providers/travel_provider.dart';
+import '../../providers/trip_provider.dart';
 import '../checkout/payment_method_screen.dart';
 
-class HotelDetailScreen extends StatefulWidget {
+class HotelDetailScreen extends ConsumerStatefulWidget {
   final Hotel hotel;
 
   const HotelDetailScreen({super.key, required this.hotel});
 
   @override
-  State<HotelDetailScreen> createState() => _HotelDetailScreenState();
+  ConsumerState<HotelDetailScreen> createState() => _HotelDetailScreenState();
 }
 
-class _HotelDetailScreenState extends State<HotelDetailScreen> {
+class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
   Room? _selectedRoom;
   final String _checkInDate = '20/05/2026';
   final String _checkOutDate = '23/05/2026';
@@ -295,7 +295,7 @@ class _HotelDetailScreenState extends State<HotelDetailScreen> {
           totalPrice: _selectedRoom!.price,
           onPaymentSuccess: () async {
             if (!mounted) return false;
-            final success = await context.read<TravelProvider>().bookHotel(
+            final success = await ref.read(tripsProvider.notifier).bookHotel(
                   roomId: _selectedRoom!.id,
                   checkIn: _checkInDate,
                   checkOut: _checkOutDate,

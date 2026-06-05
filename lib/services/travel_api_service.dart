@@ -50,7 +50,7 @@ class TravelApiService {
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
   Future<Map<String, dynamic>> _getJson(String path) async {
-    final response = await http.get(_uri(path)).timeout(const Duration(seconds: 5));
+    final response = await http.get(_uri(path)).timeout(const Duration(seconds: 10));
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -60,7 +60,7 @@ class TravelApiService {
       _uri(path),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 10));
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -70,7 +70,7 @@ class TravelApiService {
       _uri(path),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 10));
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -113,7 +113,7 @@ class TravelApiService {
     } else if (arrival != null) {
       query = '?arrival=$arrival';
     }
-    final response = await http.get(_uri('/api/flights/search$query'));
+    final response = await http.get(_uri('/api/flights/search$query')).timeout(const Duration(seconds: 10));
     _throwIfError(response);
     final List<dynamic> raw = jsonDecode(response.body);
     return raw.map((e) => Flight.fromJson(e)).toList();
@@ -174,7 +174,7 @@ class TravelApiService {
       _uri(path),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
-    );
+    ).timeout(const Duration(seconds: 10));
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }

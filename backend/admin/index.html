@@ -644,7 +644,7 @@ async function refreshData() { await loadPage(curPage); toast('Đã làm mới',
 
 // ── API ────────────────────────────────────────────────────────────────────
 async function req(path, method='GET', body=null) {
-  const o = { method, headers:{'Content-Type':'application/json'} };
+  const o = { method, credentials: 'same-origin', headers:{'Content-Type':'application/json'} };
   if (body) o.body = JSON.stringify(body);
   const r = await fetch(API + path, o);
   if (!r.ok) throw new Error('HTTP ' + r.status);

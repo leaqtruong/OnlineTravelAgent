@@ -1,4 +1,4 @@
-import prisma from "./prisma.js";
+import prisma from "./config/prisma.js";
 
 function formatDate(date: Date): string {
   const day = date.getDate().toString().padStart(2, "0");

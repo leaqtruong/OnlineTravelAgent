@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
-import '../../models/document_item.dart';
-import '../../models/user_profile.dart';
-import '../../providers/travel_provider.dart';
+
+import '../../providers/profile_provider.dart';
 import 'widgets/document_card.dart';
 import 'contact_special_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
-  Future<void> _showEditProfileDialog(BuildContext context) async {
-    final provider = context.read<TravelProvider>();
-    final nameController = TextEditingController(text: provider.profile.name);
-    final emailController = TextEditingController(text: provider.profile.email);
+  Future<void> _showEditProfileDialog(BuildContext context, WidgetRef ref) async {
+    final profile = ref.read(profileProvider);
+    final nameController = TextEditingController(text: profile.name);
+    final emailController = TextEditingController(text: profile.email);
 
     final shouldSave = await showDialog<bool>(
       context: context,
@@ -52,7 +51,7 @@ class ProfileScreen extends StatelessWidget {
       return;
     }
 
-    final ok = await provider.updateProfile(
+    final ok = await ref.read(profileProvider.notifier).updateProfile(
       name: nameController.text.trim(),
       email: emailController.text.trim(),
     );
@@ -70,8 +69,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _showAddDocumentDialog(BuildContext context) async {
-    final provider = context.read<TravelProvider>();
+  Future<void> _showAddDocumentDialog(BuildContext context, WidgetRef ref) async {
     final titleController = TextEditingController();
     final descriptionController = TextEditingController();
 
@@ -127,7 +125,7 @@ class ProfileScreen extends StatelessWidget {
     }
 
     final ok =
-        await provider.addDocument(title: title, description: description);
+        await ref.read(documentsProvider.notifier).addDocument(title: title, description: description);
     if (!context.mounted) {
       return;
     }
@@ -140,9 +138,9 @@ class ProfileScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final profile = context.select<TravelProvider, UserProfile>((p) => p.profile);
-    final documents = context.select<TravelProvider, List<DocumentItem>>((p) => p.documents);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider);
+    final documents = ref.watch(documentsProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -202,7 +200,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => _showEditProfileDialog(context),
+                      onPressed: () => _showEditProfileDialog(context, ref),
                       icon: const Icon(Icons.edit, color: AppTheme.primaryBlue),
                     ),
                   ],
@@ -291,7 +289,7 @@ class ProfileScreen extends StatelessWidget {
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                   TextButton(
-                    onPressed: () => _showAddDocumentDialog(context),
+                    onPressed: () => _showAddDocumentDialog(context, ref),
                     child: const Text(
                       "Thêm mới",
                       style: TextStyle(
