@@ -23,6 +23,9 @@ app.get("/", (req, res) => {
 // Serve admin panel at /admin
 app.use("/admin", adminAuth, express.static(join(__dirname, "../admin")));
 
+// Serve uploads
+app.use("/uploads", express.static(join(__dirname, "../public/uploads")));
+
 app.get("/health", (_, res) => {
   res.json({ ok: true });
 });

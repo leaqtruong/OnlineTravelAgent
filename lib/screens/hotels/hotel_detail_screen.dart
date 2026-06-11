@@ -5,7 +5,9 @@ import '../../core/theme/app_theme.dart';
 import '../../models/hotel.dart';
 import '../../models/room.dart';
 import '../../providers/trip_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../checkout/payment_method_screen.dart';
+import '../../widgets/review_section.dart';
 
 class HotelDetailScreen extends ConsumerStatefulWidget {
   final Hotel hotel;
@@ -20,6 +22,16 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
   Room? _selectedRoom;
   final String _checkInDate = '20/05/2026';
   final String _checkOutDate = '23/05/2026';
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,6 +143,11 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   Text(
                     widget.hotel.description,
                     style: const TextStyle(color: Colors.grey, height: 1.5),
+                  ),
+                  const SizedBox(height: 24),
+                  ReviewSection(
+                    targetType: 'hotel',
+                    targetId: widget.hotel.id,
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -287,6 +304,14 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
 
   void _bookHotel() {
     if (_selectedRoom == null) return;
+
+    if (!ref.read(authProvider).isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
+      );
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
 
     Navigator.push(
       context,

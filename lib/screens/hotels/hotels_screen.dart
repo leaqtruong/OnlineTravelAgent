@@ -6,6 +6,7 @@ import '../../models/hotel.dart';
 import '../../providers/hotel_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import 'hotel_detail_screen.dart';
+import '../../utils/app_utils.dart';
 
 class HotelsScreen extends ConsumerStatefulWidget {
   const HotelsScreen({super.key});
@@ -74,18 +75,7 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
     return filtered;
   }
 
-  String _getSortLabel() {
-    switch (_sortBy) {
-      case 'PriceAsc':
-        return 'Giá tăng dần';
-      case 'PriceDesc':
-        return 'Giá giảm dần';
-      case 'Rating':
-        return 'Đánh giá tốt';
-      default:
-        return 'Phổ biến nhất';
-    }
-  }
+  String _getSortLabel() => getSortLabel(_sortBy);
 
   @override
   Widget build(BuildContext context) {

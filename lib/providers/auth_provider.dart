@@ -29,9 +29,13 @@ class AuthNotifier extends Notifier<AuthState> {
 
   Future<String?> login({required String email, required String password}) async {
     try {
-      final data = await ref.read(apiProvider).login(email: email, password: password);
+      final api = ref.read(apiProvider);
+      final data = await api.login(email: email, password: password);
       final user = UserProfile.fromJson(data['user'] as Map<String, dynamic>? ?? {'name': email, 'email': email});
       final token = data['token']?.toString();
+
+      // Inject token into API Service
+      api.token = token;
 
       state = AuthState(isLoggedIn: true, token: token, user: user);
 
@@ -54,6 +58,7 @@ class AuthNotifier extends Notifier<AuthState> {
   }
 
   void logout() {
+    ref.read(apiProvider).token = null;
     state = const AuthState();
   }
 }

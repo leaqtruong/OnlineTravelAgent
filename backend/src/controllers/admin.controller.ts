@@ -169,6 +169,7 @@ export const adminController = {
         destinations: body.destinations || [],
         includes: body.includes || [],
         departure: body.departure || "",
+        departureDate: body.departureDate || null,
         isPopular: body.isPopular ?? false,
         includesGuide: body.includesGuide ?? true,
         guideFee: body.guideFee ?? 50,
@@ -185,6 +186,7 @@ export const adminController = {
         name: body.name, description: body.description, imagePath: body.imagePath, 
         duration: body.duration, price: body.price, originalPrice: body.originalPrice, 
         destinations: body.destinations, includes: body.includes, departure: body.departure, 
+        departureDate: body.departureDate ?? undefined,
         isPopular: body.isPopular, includesGuide: body.includesGuide, guideFee: body.guideFee 
       },
     });
@@ -216,6 +218,49 @@ export const adminController = {
     res.json({ ok: true });
   },
 
+  getTripSchedule: async (req: Request, res: Response) => {
+    const tripId = req.params.id as string;
+    const days = await prisma.tripScheduleDay.findMany({
+      where: { tripId },
+      include: {
+        items: {
+          orderBy: { sortOrder: "asc" }
+        }
+      },
+      orderBy: { dayNumber: "asc" }
+    });
+    const updates = await prisma.tripScheduleUpdate.findMany({
+      where: { tripId },
+      orderBy: { createdAt: "desc" }
+    });
+    res.json({ days, updates });
+  },
+
+  updateTripScheduleItem: async (req: Request, res: Response) => {
+    const itemId = req.params.itemId as string;
+    const body = req.body as { statusOverride?: string, note?: string };
+    const item = await prisma.tripScheduleItem.update({
+      where: { id: itemId },
+      data: {
+        statusOverride: body.statusOverride,
+        note: body.note
+      }
+    });
+    res.json(item);
+  },
+
+  createTripScheduleUpdate: async (req: Request, res: Response) => {
+    const tripId = req.params.id as string;
+    const body = req.body as { message: string };
+    const update = await prisma.tripScheduleUpdate.create({
+      data: {
+        tripId,
+        message: body.message
+      }
+    });
+    res.status(201).json(update);
+  },
+
   // --- Categories ---
   getCategories: async (_: Request, res: Response) => {
     const data = await prisma.category.findMany({ orderBy: { name: "asc" } });
@@ -230,6 +275,88 @@ export const adminController = {
 
   deleteCategory: async (req: Request, res: Response) => {
     await prisma.category.delete({ where: { id: req.params.id as string } });
+    res.json({ ok: true });
+  },
+
+  // --- Users ---
+  getUsers: async (_: Request, res: Response) => {
+    const data = await prisma.user.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, name: true, email: true, createdAt: true } });
+    res.json(data);
+  },
+
+  createUser: async (req: Request, res: Response) => {
+    const body = req.body as any;
+    const user = await prisma.user.create({ data: { name: body.name, email: body.email, password: body.password } });
+    res.status(201).json({ id: user.id, name: user.name, email: user.email });
+  },
+
+  deleteUser: async (req: Request, res: Response) => {
+    await prisma.user.delete({ where: { id: req.params.id as string } });
+    res.json({ ok: true });
+  },
+
+  // --- Rooms ---
+  getRooms: async (req: Request, res: Response) => {
+    const data = await prisma.room.findMany({ where: { hotelId: req.params.hotelId as string }, orderBy: { name: "asc" } });
+    res.json(data);
+  },
+
+  createRoom: async (req: Request, res: Response) => {
+    const body = req.body as any;
+    const room = await prisma.room.create({
+      data: {
+        id: body.id || `room-${Date.now()}`,
+        hotelId: req.params.hotelId as string,
+        name: body.name,
+        description: body.description || "",
+        price: body.price,
+        capacity: body.capacity,
+        imagePath: body.imagePath || "",
+        amenities: body.amenities || []
+      }
+    });
+    res.status(201).json(room);
+  },
+
+  updateRoom: async (req: Request, res: Response) => {
+    const body = req.body as any;
+    const room = await prisma.room.update({
+      where: { id: req.params.roomId as string },
+      data: { name: body.name, description: body.description, price: body.price, capacity: body.capacity, imagePath: body.imagePath, amenities: body.amenities }
+    });
+    res.json(room);
+  },
+
+  deleteRoom: async (req: Request, res: Response) => {
+    await prisma.room.delete({ where: { id: req.params.roomId as string } });
+    res.json({ ok: true });
+  },
+
+  // --- Documents ---
+  getDocuments: async (_: Request, res: Response) => {
+    const data = await prisma.documentItem.findMany({ orderBy: { createdAt: "desc" } });
+    res.json(data);
+  },
+
+  createDocument: async (req: Request, res: Response) => {
+    const body = req.body as any;
+    const doc = await prisma.documentItem.create({
+      data: { id: body.id || `doc-${Date.now()}`, title: body.title, description: body.description || "", icon: body.icon || "fa-file", color: body.color || "text-gray-500" }
+    });
+    res.status(201).json(doc);
+  },
+
+  updateDocument: async (req: Request, res: Response) => {
+    const body = req.body as any;
+    const doc = await prisma.documentItem.update({
+      where: { id: req.params.id as string },
+      data: { title: body.title, description: body.description, icon: body.icon, color: body.color }
+    });
+    res.json(doc);
+  },
+
+  deleteDocument: async (req: Request, res: Response) => {
+    await prisma.documentItem.delete({ where: { id: req.params.id as string } });
     res.json({ ok: true });
   },
 };

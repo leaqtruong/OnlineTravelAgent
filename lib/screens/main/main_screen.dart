@@ -10,6 +10,7 @@ import '../destination_detail/destination_detail_screen.dart';
 import '../favorites/favorites_screen.dart';
 import '../my_trips/my_trips_screen.dart';
 import '../profile/profile_screen.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -43,7 +44,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     return bootstrapAsync.when(
       loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: SafeArea(
+          child: _SkeletonLoading(),
+        ),
       ),
       error: (error, stack) => Scaffold(
         body: Center(
@@ -181,6 +184,77 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SkeletonLoading extends StatelessWidget {
+  const _SkeletonLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(width: 100, height: 14, color: Colors.white),
+                  const SizedBox(height: 8),
+                  Container(width: 200, height: 32, color: Colors.white),
+                ],
+              ),
+              Container(width: 40, height: 40, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+            ],
+          ),
+          const SizedBox(height: 32),
+          // Search bar
+          Container(
+            width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+          ),
+          const SizedBox(height: 32),
+          // Categories
+          Row(
+            children: List.generate(
+              4,
+              (index) => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Container(width: 80, height: 40, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Flight banner
+          Container(
+            width: double.infinity,
+            height: 100,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+          ),
+          const SizedBox(height: 32),
+          // Popular Destinations Title
+          Container(width: 150, height: 24, color: Colors.white),
+          const SizedBox(height: 16),
+          // Destination Cards
+          Row(
+            children: List.generate(
+              2,
+              (index) => Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Container(width: 200, height: 240, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

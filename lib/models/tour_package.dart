@@ -9,6 +9,7 @@ class TourPackage {
   final List<String> destinations;
   final List<String> includes;
   final String departure;
+  final String? departureDate;
   final bool isPopular;
   final bool includesGuide;
   final double guideFee;
@@ -24,6 +25,7 @@ class TourPackage {
     required this.destinations,
     required this.includes,
     required this.departure,
+    this.departureDate,
     this.isPopular = false,
     this.includesGuide = true,
     this.guideFee = 50.0,
@@ -41,6 +43,7 @@ class TourPackage {
       destinations: (json['destinations'] as List?)?.cast<String>() ?? [],
       includes: (json['includes'] as List?)?.cast<String>() ?? [],
       departure: json['departure']?.toString() ?? '',
+      departureDate: json['departureDate']?.toString(),
       isPopular: json['isPopular'] == true,
       includesGuide: json['includesGuide'] != false,
       guideFee: (json['guideFee'] as num?)?.toDouble() ?? 50.0,

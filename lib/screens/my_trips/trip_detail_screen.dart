@@ -26,7 +26,7 @@ class TripDetailScreen extends StatelessWidget {
                 fit: BoxFit.cover,
                 cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                 errorBuilder: (context, error, stackTrace) =>
-                    Container(color: Colors.grey.shade300),
+                    ColoredBox(color: Colors.grey.shade300),
               ),
             ),
           ),

@@ -1,10 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/travel_api_service.dart';
 import 'api_provider.dart';
+import 'auth_provider.dart';
+import 'profile_provider.dart';
 
 final bootstrapProvider = FutureProvider<BootstrapData>((ref) async {
   final api = ref.watch(apiProvider);
+  // Watch token to trigger refetch on login/logout
+  ref.watch(authProvider.select((state) => state.token));
   return api.fetchBootstrap();
+});
+
+// Sync bootstrap data to documents provider
+final bootstrapSyncProvider = Provider<void>((ref) {
+  ref.listen<AsyncValue<BootstrapData>>(bootstrapProvider, (previous, next) {
+    final data = next.value;
+    if (data != null) {
+      ref.read(documentsProvider.notifier).updateFromBootstrap(data.documents);
+    }
+  });
 });
 
 // A provider for the categories list (static from bootstrap)

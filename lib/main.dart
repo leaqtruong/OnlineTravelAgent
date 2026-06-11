@@ -6,17 +6,21 @@ import 'screens/main/main_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'core/theme/app_theme.dart';
+import 'providers/app_state_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const ProviderScope(child: OnlineTravelAgentApp()));
 }
 
-class OnlineTravelAgentApp extends StatelessWidget {
+class OnlineTravelAgentApp extends ConsumerWidget {
   const OnlineTravelAgentApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Activate bootstrap sync (profile + documents from bootstrap data)
+    ref.watch(bootstrapSyncProvider);
+
     return MaterialApp(
       title: 'Online Travel Agent',
       debugShowCheckedModeBanner: false,

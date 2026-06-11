@@ -10,8 +10,8 @@ import '../../providers/tour_provider.dart';
 import 'widgets/popular_destination_card.dart';
 import '../flights/flight_search_screen.dart';
 import '../tours/tours_screen.dart';
-import '../custom_tour/custom_tour_stepper_screen.dart';
 import '../notifications/notifications_screen.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../destinations/destinations_screen.dart';
 import '../food/food_screen.dart';
 import '../hotels/hotels_screen.dart';
@@ -46,10 +46,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: AnimationLimiter(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: AnimationConfiguration.toStaggeredList(
+                duration: const Duration(milliseconds: 500),
+                childAnimationBuilder: (widget) => SlideAnimation(
+                  verticalOffset: 50.0,
+                  child: FadeInAnimation(
+                    child: widget,
+                  ),
+                ),
+                children: [
               const SizedBox(height: 24),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -602,24 +611,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _buildTravelStoriesSection(),
               const SizedBox(height: 32),
               const SizedBox(height: 32),
+              const SizedBox(height: 32),
             ],
+            ),
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CustomTourStepperScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppTheme.primaryBlue,
-        icon: const Icon(Icons.add_location_alt, color: Colors.white),
-        label: const Text(
-          'Tự Tạo Tour',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
     );

@@ -13,11 +13,6 @@ export const bookFlightSchema = z.object({
   guests: z.any().optional()
 });
 
-export const profileSchema = z.object({
-  name: z.string().optional(),
-  email: z.string().email().optional()
-});
-
 export const documentSchema = z.object({
   title: z.string().min(1, "title is required"),
   description: z.string().min(1, "description is required"),
@@ -49,4 +44,11 @@ export const customTourSchema = z.object({
   hotelId: z.string().optional(),
   roomId: z.string().optional(),
   totalPrice: z.any().optional()
+});
+
+export const reviewSchema = z.object({
+  targetType: z.string().min(1, "targetType is required"),
+  targetId: z.string().min(1, "targetId is required"),
+  rating: z.number().int().min(1).max(5, "rating must be 1-5"),
+  comment: z.string().min(1, "comment is required").max(1000)
 });

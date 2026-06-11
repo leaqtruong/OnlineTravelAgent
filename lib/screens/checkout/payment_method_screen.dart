@@ -265,7 +265,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          nameController.dispose();
+                          numberController.dispose();
+                          expiryController.dispose();
+                          cvvController.dispose();
+                          Navigator.pop(context);
+                        },
                         icon: const Icon(Icons.close, color: Colors.grey),
                       ),
                     ],
@@ -420,6 +426,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                             _selectedMethodId = newId;
                           });
 
+                          nameController.dispose();
+                          numberController.dispose();
+                          expiryController.dispose();
+                          cvvController.dispose();
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Đã thêm thẻ thành công!')),
@@ -446,18 +456,23 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   void _handlePay() async {
     setState(() => _isProcessing = true);
-
-    // Call onPaymentSuccess callback
-    final success = await widget.onPaymentSuccess();
-
-    setState(() => _isProcessing = false);
-
-    if (success && mounted) {
-      _showSuccessDialog();
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Thanh toán thất bại, vui lòng thử lại')),
-      );
+    try {
+      final success = await widget.onPaymentSuccess();
+      setState(() => _isProcessing = false);
+      if (success && mounted) {
+        _showSuccessDialog();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Thanh toán thất bại, vui lòng thử lại')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi thanh toán: $e')),
+        );
+      }
     }
   }
 

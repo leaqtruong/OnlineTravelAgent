@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
 import '../../providers/trip_provider.dart';
+import '../../providers/auth_provider.dart';
 import 'place_trip_detail_screen.dart';
 import 'tour_trip_detail_screen.dart';
 import 'widgets/trip_card.dart';
@@ -39,6 +40,11 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
       body: SafeArea(
         child: Consumer(
           builder: (context, ref, child) {
+            final authState = ref.watch(authProvider);
+            if (!authState.isLoggedIn) {
+              return _buildLoginPrompt();
+            }
+
             final ongoing = ref.watch(ongoingTripsProvider);
             final upcoming = ref.watch(upcomingTripsProvider);
             final history = ref.watch(historyTripsProvider);
@@ -291,8 +297,8 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
               width: 180,
               child: ElevatedButton(
                 onPressed: () {
-                  // Pop back to explore destinations
-                  Navigator.pop(context);
+                  // Navigate back to MainScreen (Home tab)
+                  Navigator.pushReplacementNamed(context, '/main');
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryBlue,
@@ -321,6 +327,103 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildLoginPrompt() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 24),
+          const Text(
+            "Chuyến đi của tôi",
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.textBlack,
+            ),
+          ),
+          const Spacer(),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.lock_person_rounded,
+                    size: 80,
+                    color: AppTheme.primaryBlue,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  "Vui lòng đăng nhập",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textBlack,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "Bạn cần đăng nhập để xem danh sách các chuyến đi và lịch sử đặt chỗ của mình.",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                      height: 1.6,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  height: 48,
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/login');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryBlue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 2,
+                      shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Đăng nhập ngay",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.login_rounded, color: Colors.white, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Spacer(flex: 2),
+        ],
       ),
     );
   }

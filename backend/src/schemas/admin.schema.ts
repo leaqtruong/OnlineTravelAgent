@@ -54,6 +54,7 @@ export const adminTourSchema = z.object({
   destinations: z.array(z.string()).optional(),
   includes: z.array(z.string()).optional(),
   departure: z.string().optional(),
+  departureDate: z.string().nullable().optional(),
   isPopular: z.boolean().optional(),
   includesGuide: z.boolean().optional(),
   guideFee: z.number().optional()
@@ -66,4 +67,28 @@ export const adminTripSchema = z.object({
 
 export const adminCategorySchema = z.object({
   name: z.string().min(1, "name is required")
+});
+
+export const adminRoomSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "name is required"),
+  description: z.string().optional(),
+  price: z.number().min(0, "price must be positive"),
+  capacity: z.number().min(1, "capacity must be at least 1"),
+  imagePath: z.string().optional(),
+  amenities: z.array(z.string()).optional()
+});
+
+export const adminUserSchema = z.object({
+  name: z.string().min(1, "name is required"),
+  email: z.string().email("invalid email"),
+  password: z.string().min(6, "password must be at least 6 characters")
+});
+
+export const adminDocumentSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(1, "title is required"),
+  description: z.string().optional(),
+  icon: z.string().optional(),
+  color: z.string().optional()
 });

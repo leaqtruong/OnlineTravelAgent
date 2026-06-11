@@ -7,6 +7,7 @@ import '../../models/hotel.dart';
 import '../../providers/destination_provider.dart';
 import '../../providers/hotel_provider.dart';
 import '../../providers/trip_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../checkout/payment_method_screen.dart';
 
 class CustomTourStepperScreen extends ConsumerStatefulWidget {
@@ -1258,6 +1259,14 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
   }
 
   void _submitCustomTour() {
+    if (!ref.read(authProvider).isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
+      );
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
     Navigator.push(
       context,
       MaterialPageRoute(

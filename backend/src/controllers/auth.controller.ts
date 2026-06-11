@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.js";
 
 export const authController = {
@@ -21,7 +22,8 @@ export const authController = {
     }
 
     const { password: _, ...userWithoutPassword } = user;
-    const token = crypto.randomUUID();
+    const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ user: userWithoutPassword, token });
   },
 
@@ -50,6 +52,8 @@ export const authController = {
     });
 
     const { password: _, ...userWithoutPassword } = user;
-    res.status(201).json({ user: userWithoutPassword });
+    const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ user: userWithoutPassword, token });
   },
 };

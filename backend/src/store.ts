@@ -1,4 +1,5 @@
 import prisma from "./config/prisma.js";
+import { scheduleService } from "./services/schedule.service.js";
 
 function formatDate(date: Date): string {
   const day = date.getDate().toString().padStart(2, "0");
@@ -49,12 +50,11 @@ function orderCategoryNames(categories: Array<{ name: string }>): string[] {
 }
 
 export const store = {
-  async getBootstrap() {
-    const [categories, destinations, trips, profile, documents, hotels, tourPackages] = await Promise.all([
+  async getBootstrap(userId?: string) {
+    const [categories, destinations, trips, documents, hotels, tourPackages] = await Promise.all([
       prisma.category.findMany({ orderBy: { name: "asc" } }),
       prisma.destination.findMany(),
-      prisma.trip.findMany({ orderBy: { createdAt: "desc" } }),
-      prisma.profile.findFirst(),
+      userId ? prisma.trip.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }) : Promise.resolve([]),
       prisma.documentItem.findMany({ orderBy: { createdAt: "desc" } }),
       prisma.hotel.findMany(),
       prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } }),
@@ -71,7 +71,6 @@ export const store = {
       destinations: normalizedDestinations,
       recommended,
       trips,
-      profile,
       documents,
       hotels,
       tourPackages,
@@ -101,7 +100,7 @@ export const store = {
     });
   },
 
-  async bookHotel(roomId: string, checkIn: string, checkOut: string, guests: string) {
+  async bookHotel(userId: string, roomId: string, checkIn: string, checkOut: string, guests: string) {
     const room = await prisma.room.findUnique({
       where: { id: roomId },
       include: { hotel: true },
@@ -113,6 +112,7 @@ export const store = {
     return prisma.trip.create({
       data: {
         id: `trip-hotel-${Date.now()}`,
+        userId,
         destination: room.hotel.name,
         location: room.hotel.location,
         date: `${checkIn} - ${checkOut}`,
@@ -132,7 +132,7 @@ export const store = {
     return prisma.tourPackage.findUnique({ where: { id } });
   },
 
-  async bookTour(tourId: string, date: string, guests: string, totalPrice?: number) {
+  async bookTour(userId: string, tourId: string, date: string, guests: string, totalPrice?: number) {
     const tour = await prisma.tourPackage.findUnique({ where: { id: tourId } });
     if (!tour) return null;
 
@@ -140,6 +140,7 @@ export const store = {
     const trip = await prisma.trip.create({
       data: {
         id: tripId,
+        userId,
         destination: tour.name,
         location: tour.departure,
         date,
@@ -151,34 +152,33 @@ export const store = {
       },
     });
 
+    try {
+      await scheduleService.copyTemplateToTrip({
+        tripId: trip.id,
+        sourceType: "tour",
+        sourceId: tour.id,
+        tripDate: date,
+      });
+    } catch (e) {
+      console.error("Failed to copy schedule template to trip", e);
+    }
+
     return trip;
   },
 
-  async createCustomTour(data: {
-    destination: string;
-    location: string;
-    date: string;
-    guests: string;
-    imagePath: string;
-    flightId?: string;
-    hotelId?: string;
-    roomId?: string;
-    totalPrice?: number;
-  }) {
+  async createCustomTour(userId: string, data: { destinations: string[]; date: string; guests: string; location: string; imagePath: string; totalPrice?: number }) {
     const tripId = `trip_custom_${Date.now()}`;
     const trip = await prisma.trip.create({
       data: {
         id: tripId,
-        destination: data.destination,
+        userId,
+        destination: "Tour thiết kế riêng",
         location: data.location,
         date: data.date,
         guests: data.guests,
         status: "Chờ thanh toán",
         imagePath: data.imagePath,
         isUpcoming: true,
-        flightId: data.flightId,
-        hotelId: data.hotelId,
-        roomId: data.roomId,
         totalPrice: data.totalPrice,
         isCustom: true,
       },
@@ -205,32 +205,38 @@ export const store = {
     });
   },
 
-  async createTrip(destinationId: string, customDate?: string, customGuests?: string, totalPrice?: number) {
+  async createTrip(userId: string, destinationId: string, date: string, guests: string, totalPrice?: number) {
     const destination = await prisma.destination.findUnique({ where: { id: destinationId } });
-    if (!destination) {
-      return null;
-    }
+    if (!destination) return null;
 
-    const now = new Date();
-    const start = new Date(now);
-    start.setDate(start.getDate() + 7);
-    const days = durationToDays(destination.duration);
-    const end = new Date(start);
-    end.setDate(end.getDate() + days);
-
-    return prisma.trip.create({
+    const tripId = `trip_dest_${Date.now()}`;
+    const trip = await prisma.trip.create({
       data: {
-        id: `trip-${Date.now()}`,
+        id: tripId,
+        userId,
         destination: destination.name,
         location: destination.location,
-        date: customDate ?? `${formatDate(start)} - ${formatDate(end)}`,
-        guests: customGuests ?? "1 Người lớn",
-        status: "Sắp tới",
+        date,
+        guests,
+        status: "Đã xác nhận",
         imagePath: destination.imagePath,
         isUpcoming: true,
         totalPrice: totalPrice,
       },
     });
+
+    try {
+      await scheduleService.copyTemplateToTrip({
+        tripId: trip.id,
+        sourceType: "destination",
+        sourceId: destination.id,
+        tripDate: date,
+      });
+    } catch (e) {
+      console.error("Failed to copy schedule template to trip", e);
+    }
+
+    return trip;
   },
 
   async searchFlights(departure?: string, arrival?: string) {
@@ -246,15 +252,17 @@ export const store = {
     return prisma.flight.findMany({ where });
   },
 
-  async bookFlightTrip(flightId: string, date: string, guests: string) {
+  async bookFlightTrip(userId: string, flightId: string, date: string, guests: string) {
     const flight = await prisma.flight.findUnique({ where: { id: flightId } });
     if (!flight) {
       return null;
     }
 
+    const tripId = `trip_flight_${Date.now()}`;
     return prisma.trip.create({
       data: {
-        id: `trip-fl-${Date.now()}`,
+        id: tripId,
+        userId,
         destination: `${flight.departure} ✈ ${flight.arrival}`,
         location: flight.airline,
         date,
@@ -266,48 +274,11 @@ export const store = {
     });
   },
 
-  async getTrips(type?: string) {
-    if (type === "upcoming") {
-      return prisma.trip.findMany({
-        where: { isUpcoming: true },
-        orderBy: { createdAt: "desc" },
-      });
-    }
-    if (type === "history") {
-      return prisma.trip.findMany({
-        where: { isUpcoming: false },
-        orderBy: { createdAt: "desc" },
-      });
-    }
-    return prisma.trip.findMany({ orderBy: { createdAt: "desc" } });
-  },
-
-  async getProfile() {
-    return prisma.profile.findFirst();
-  },
-
-  async updateProfile(name?: string, email?: string) {
-    const profile = await prisma.profile.findFirst();
-    if (!profile) {
-      return null;
-    }
-
-    const data: Record<string, string> = {};
-    if (typeof name === "string" && name.trim().length > 0) {
-      data.name = name.trim();
-    }
-    if (typeof email === "string" && email.trim().length > 0) {
-      data.email = email.trim();
-    }
-
-    if (Object.keys(data).length === 0) {
-      return profile;
-    }
-
-    return prisma.profile.update({
-      where: { id: profile.id },
-      data,
-    });
+  async getTrips(userId: string, type?: string) {
+    const where: any = { userId };
+    if (type === "upcoming") where.isUpcoming = true;
+    if (type === "past") where.isUpcoming = false;
+    return prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
   },
 
   async getDocuments() {
@@ -324,5 +295,34 @@ export const store = {
         color,
       },
     });
+  },
+
+  // --- Reviews ---
+  async getReviews(targetType: string, targetId: string) {
+    const reviews = await prisma.review.findMany({
+      where: { targetType, targetId },
+      include: { user: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const total = reviews.length;
+    const avgRating = total > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / total : 0;
+
+    return { reviews, total, avgRating: Math.round(avgRating * 10) / 10 };
+  },
+
+  async createReview(userId: string, targetType: string, targetId: string, rating: number, comment: string) {
+    const review = await prisma.review.create({
+      data: { userId, targetType, targetId, rating, comment },
+      include: { user: { select: { id: true, name: true } } },
+    });
+    return review;
+  },
+
+  async deleteReview(userId: string, reviewId: string) {
+    const review = await prisma.review.findUnique({ where: { id: reviewId } });
+    if (!review || review.userId !== userId) return null;
+    await prisma.review.delete({ where: { id: reviewId } });
+    return true;
   },
 };

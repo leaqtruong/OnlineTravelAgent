@@ -11,6 +11,8 @@ import 'widgets/booking_info_card.dart';
 import 'widgets/booking_status_timeline.dart';
 import 'widgets/trip_action_buttons.dart';
 import 'widgets/trip_section_header.dart';
+import 'widgets/trip_schedule_timeline.dart';
+import '../../utils/app_utils.dart';
 
 class PlaceTripDetailScreen extends ConsumerWidget {
   final Trip trip;
@@ -70,7 +72,7 @@ class PlaceTripDetailScreen extends ConsumerWidget {
               cacheWidth: heroCacheWidth,
               filterQuality: FilterQuality.low,
               errorBuilder: (context, error, stackTrace) =>
-                  Container(color: Colors.grey.shade300),
+                  ColoredBox(color: Colors.grey.shade300),
             ),
           ),
 
@@ -216,6 +218,10 @@ class PlaceTripDetailScreen extends ConsumerWidget {
                     BookingStatusTimeline(status: trip.status),
                     const SizedBox(height: 28),
 
+                    // Lịch trình chi tiết (Real-time tracking)
+                    TripScheduleTimeline(trip: trip),
+                    const SizedBox(height: 28),
+
                     // Map
                     const TripSectionHeader(title: 'Vị trí trên bản đồ'),
                     _buildMap(destination),
@@ -321,8 +327,7 @@ class PlaceTripDetailScreen extends ConsumerWidget {
           ),
           children: [
             TileLayer(
-              urlTemplate:
-                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: kOpenStreetMapTileUrl,
               userAgentPackageName: 'com.example.onlinetravelagent',
             ),
             MarkerLayer(

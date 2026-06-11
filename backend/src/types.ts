@@ -38,11 +38,6 @@ export type Flight = {
   duration: string;
 };
 
-export type Profile = {
-  name: string;
-  email: string;
-};
-
 export type DocumentItem = {
   id: string;
   title: string;

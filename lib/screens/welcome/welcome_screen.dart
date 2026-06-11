@@ -74,7 +74,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 filterQuality: FilterQuality.low,
                 errorBuilder: (context, error, stackTrace) {
                   debugPrint("Error loading image: $error");
-                  return Container(color: Colors.blueGrey);
+                  return ColoredBox(color: Colors.blueGrey);
                 },
               ),
             ),

@@ -7,6 +7,10 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_package.dart';
 import '../../providers/trip_provider.dart';
+import '../../providers/tour_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/app_utils.dart';
+import '../../widgets/review_section.dart';
 
 class TourDetailScreen extends ConsumerStatefulWidget {
   final TourPackage tour;
@@ -27,6 +31,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
     super.initState();
     _selectedDate = DateTime(2026, 6, 25);
     _guideToggle = widget.tour.includesGuide;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   double get _totalPrice {
@@ -185,51 +194,53 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                 backgroundColor: AppTheme.primaryBlue,
                 elevation: 0,
                 leadingWidth: 70,
-                leading: Padding(
-                  padding: const EdgeInsets.only(left: 20),
-                  child: Center(
-                    child: ClipOval(
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        color: Colors.black.withValues(alpha: 0.4),
-                        child: IconButton(
-                          icon: const Icon(Icons.chevron_left, color: Colors.white, size: 28),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                leading: Center(
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      margin: const EdgeInsets.only(left: 20),
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      child: const Icon(Icons.chevron_left, color: Colors.black),
                     ),
                   ),
                 ),
                 actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 20),
-                    key: const ValueKey('tour_detail_actions'),
-                    child: ClipOval(
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        color: Colors.black.withValues(alpha: 0.4),
-                        child: IconButton(
-                          icon: Icon(
-                            widget.tour.isPopular ? Icons.favorite : Icons.favorite_border,
-                            color: widget.tour.isPopular ? Colors.red : Colors.white,
-                            size: 24,
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        ref.read(tourFavoritesProvider.notifier).toggle(widget.tour.id);
+                        final isFav = ref.read(tourFavoritesProvider).contains(widget.tour.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              isFav
+                                  ? 'Đã lưu tour vào danh sách yêu thích'
+                                  : 'Đã xóa tour khỏi danh sách yêu thích',
+                            ),
+                            duration: const Duration(seconds: 1),
                           ),
-                          onPressed: () {
-                            // Quick interactive mock toast
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  widget.tour.isPopular
-                                      ? 'Đã xóa tour khỏi danh sách yêu thích'
-                                      : 'Đã lưu tour vào danh sách yêu thích',
-                                ),
-                                duration: const Duration(seconds: 1),
-                              ),
-                            );
-                          },
-                        ),
+                        );
+                      },
+                      child: Builder(
+                        builder: (context) {
+                          final isFav = ref.watch(tourFavoritesProvider).contains(widget.tour.id);
+                          return Container(
+                            margin: const EdgeInsets.only(right: 20),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? Colors.red : Colors.grey,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -242,112 +253,18 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.asset(
-                        widget.tour.imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.image, size: 50, color: Colors.grey),
-                        ),
-                      ),
-                      // Top dark overlay for actions visibility
-                      Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 100,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.5),
-                                Colors.transparent,
-                              ],
-                            ),
+                      Hero(
+                        tag: 'tour_image_${widget.tour.name}',
+                        child: Image.asset(
+                          widget.tour.imagePath,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            color: Colors.grey[300],
+                            child: const Icon(Icons.image, size: 50, color: Colors.grey),
                           ),
                         ),
                       ),
-                      // Bottom gradient overlay for name legibility
-                      Positioned(
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        height: 160,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.8),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Popular badge and name
-                      Positioned(
-                        bottom: 30,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.tour.isPopular)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFF9800),
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFFFF9800).withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.stars, color: Colors.white, size: 14),
-                                    SizedBox(width: 4),
-                                    Text(
-                                      'BÁN CHẠY',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.0,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            Text(
-                              widget.tour.name,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                height: 1.2,
-                                shadows: [
-                                  Shadow(
-                                    offset: Offset(0, 2),
-                                    blurRadius: 4,
-                                    color: Colors.black45,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      // Clean background without overlay texts
                     ],
                   ),
                 ),
@@ -361,7 +278,51 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                     borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                   ),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // B. Title and Badge
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 32, 20, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (widget.tour.isPopular)
+                              Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFF9800).withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.stars, color: Color(0xFFFF9800), size: 16),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'BÁN CHẠY',
+                                      style: TextStyle(
+                                        color: Color(0xFFFF9800),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            Text(
+                              widget.tour.name,
+                              style: const TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       // A. Overview Info Row
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
@@ -864,7 +825,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                 ),
                                 children: [
                                   TileLayer(
-                                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    urlTemplate: kOpenStreetMapTileUrl,
                                     userAgentPackageName: 'com.example.onlinetravelagent',
                                   ),
                                   // Connect route paths if multiple destinations
@@ -919,6 +880,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                 ],
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 32),
+                          ReviewSection(
+                            targetType: 'tour',
+                            targetId: widget.tour.id,
                           ),
                           const SizedBox(height: 120), // Bottom padding for sheet
                         ],
@@ -1060,33 +1026,49 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   }
 
   Widget _buildOverviewDivider() {
-    return Container(
+    return const SizedBox(
       width: 1,
       height: 40,
-      color: Colors.grey.withValues(alpha: 0.2),
+      child: ColoredBox(color: Color(0x339E9E9E)),
     );
   }
 
   void _bookTour() async {
+    if (!ref.read(authProvider).isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
+      );
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
     final String formattedDate = DateFormat('dd/MM/yyyy').format(_selectedDate);
     final String guestsLabel = '$_guestsCount Người';
 
-    final success = await ref.read(tripsProvider.notifier).bookTour(
-          tourId: widget.tour.id,
-          date: formattedDate,
-          guests: guestsLabel,
-          totalPrice: _totalPrice,
-        );
+    try {
+      final success = await ref.read(tripsProvider.notifier).bookTour(
+            tourId: widget.tour.id,
+            date: formattedDate,
+            guests: guestsLabel,
+            totalPrice: _totalPrice,
+          );
 
-    if (mounted) {
-      if (success) {
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đặt tour thành công!')),
+          );
+          Navigator.pop(context);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đặt tour thất bại.')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đặt tour thành công!')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Đặt tour thất bại.')),
+          SnackBar(content: Text('Lỗi đặt tour: $e')),
         );
       }
     }

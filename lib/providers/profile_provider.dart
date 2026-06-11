@@ -1,25 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_profile.dart';
 import '../models/document_item.dart';
-import 'app_state_provider.dart';
 import 'api_provider.dart';
 
 class ProfileNotifier extends Notifier<UserProfile> {
   @override
-  UserProfile build() {
-    final bootstrap = ref.watch(bootstrapProvider).value;
-    return bootstrap?.profile ?? const UserProfile(name: 'User', email: '');
-  }
-
-  Future<bool> updateProfile({required String name, required String email}) async {
-    try {
-      final updated = await ref.read(apiProvider).updateProfile(name: name, email: email);
-      state = updated;
-      return true;
-    } catch (_) {
-      return false;
-    }
-  }
+  UserProfile build() => const UserProfile(name: 'User', email: '');
 
   void updateFromAuth({required String name, required String email}) {
     state = UserProfile(name: name, email: email);
@@ -30,10 +16,7 @@ final profileProvider = NotifierProvider<ProfileNotifier, UserProfile>(ProfileNo
 
 class DocumentsNotifier extends Notifier<List<DocumentItem>> {
   @override
-  List<DocumentItem> build() {
-    final bootstrap = ref.watch(bootstrapProvider).value;
-    return bootstrap?.documents ?? [];
-  }
+  List<DocumentItem> build() => [];
 
   Future<bool> addDocument({
     required String title,
@@ -50,6 +33,10 @@ class DocumentsNotifier extends Notifier<List<DocumentItem>> {
     } catch (_) {
       return false;
     }
+  }
+
+  void updateFromBootstrap(List<DocumentItem> documents) {
+    state = documents;
   }
 }
 

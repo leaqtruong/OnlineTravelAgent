@@ -5,7 +5,6 @@ import '../models/hotel.dart';
 import '../models/room.dart';
 import '../models/tour_package.dart';
 import '../models/document_item.dart';
-import '../models/user_profile.dart';
 
 class FallbackData {
   static List<Destination> foodDestinations() => [
@@ -132,10 +131,6 @@ class FallbackData {
       date: '15/04/2026 - 17/04/2026', guests: '1 Người lớn', status: 'Đã đi',
       imagePath: 'assets/images/hoian_image.webp', isUpcoming: false),
   ];
-
-  static UserProfile profile() => const UserProfile(
-    name: 'Nguyễn Văn A', email: 'vanya.traveler@email.com',
-  );
 
   static List<DocumentItem> documents() => [
     DocumentItem(id: 'local-doc-1', title: 'Hộ chiếu', description: 'Hết hạn: 12/2030',

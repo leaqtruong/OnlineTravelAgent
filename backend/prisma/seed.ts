@@ -6,6 +6,13 @@ async function main() {
   console.log("🌱 Seeding database with rich data...");
 
   // Clean up existing data
+  await prisma.tripScheduleUpdate.deleteMany();
+  await prisma.tripScheduleItem.deleteMany();
+  await prisma.tripScheduleDay.deleteMany();
+  await prisma.scheduleTemplateItem.deleteMany();
+  await prisma.scheduleTemplateDay.deleteMany();
+  await prisma.scheduleTemplate.deleteMany();
+  
   await prisma.room.deleteMany();
   await prisma.hotel.deleteMany();
   await prisma.tourPackage.deleteMany();
@@ -14,7 +21,6 @@ async function main() {
   await prisma.flight.deleteMany();
   await prisma.destination.deleteMany();
   await prisma.category.deleteMany();
-  await prisma.profile.deleteMany();
 
   // --- Categories ---
   const categoryNames = ["Tất cả", "Địa điểm", "Khách sạn", "Máy bay", "Ẩm thực"];
@@ -281,6 +287,16 @@ async function main() {
       imagePath: "assets/images/phuquoc_image.jpg",
       isUpcoming: false,
     },
+    {
+      id: "trip-7",
+      destination: "Khám Phá Đà Lạt Mộng Mơ",
+      location: "Lâm Đồng, VN",
+      date: "Hôm nay - 3 Ngày nữa",
+      guests: "2 Người lớn",
+      status: "Đang diễn ra",
+      imagePath: "assets/images/dalat_image.jpg",
+      isUpcoming: true,
+    },
   ];
 
   for (const trip of trips) {
@@ -494,15 +510,6 @@ async function main() {
     await prisma.flight.create({ data: flight });
   }
   console.log(`  Flight Seeding: Created ${flights.length} flights.`);
-
-  // --- Profile ---
-  await prisma.profile.create({
-    data: {
-      name: "Nguyễn Văn A",
-      email: "vanya.traveler@email.com",
-    },
-  });
-  console.log("  Profile Seeding: Created 1 user profile.");
 
   // --- Documents ---
   const documents = [
@@ -910,6 +917,157 @@ async function main() {
     await prisma.tourPackage.create({ data: tour });
   }
   console.log(`  Tour Seeding: Created ${tours.length} tour packages.`);
+
+  // --- Schedule Templates ---
+  const dalatTemplate = await prisma.scheduleTemplate.create({
+    data: {
+      sourceType: "tour",
+      tourPackageId: "tour-dalat-3n2d",
+      days: {
+        create: [
+          {
+            dayNumber: 1,
+            items: {
+              create: [
+                {
+                  sortOrder: 1,
+                  startTime: "08:00",
+                  endTime: "09:00",
+                  title: "Đón khách và ăn sáng",
+                  description: "Xe và HDV đón khách tại điểm hẹn. Dùng điểm tâm sáng.",
+                  location: "Trung tâm TP.HCM",
+                },
+                {
+                  sortOrder: 2,
+                  startTime: "12:00",
+                  endTime: "13:00",
+                  title: "Ăn trưa và nhận phòng",
+                  description: "Dùng cơm trưa tại nhà hàng địa phương, sau đó nhận phòng khách sạn nghỉ ngơi.",
+                  location: "Khách sạn Mường Thanh Đà Lạt",
+                },
+                {
+                  sortOrder: 3,
+                  startTime: "15:00",
+                  endTime: "17:30",
+                  title: "Tham quan Thác Datanla",
+                  description: "Trải nghiệm máng trượt xuyên rừng thông và ngắm vẻ đẹp hùng vĩ của Thác Datanla.",
+                  location: "Thác Datanla",
+                  latitude: 11.9022,
+                  longitude: 108.4497,
+                },
+                {
+                  sortOrder: 4,
+                  startTime: "18:30",
+                  endTime: "20:00",
+                  title: "Ăn tối Buffet Rau",
+                  description: "Thưởng thức Buffet Rau Léguda đặc sản Đà Lạt.",
+                  location: "Nhà hàng Léguda",
+                }
+              ]
+            }
+          },
+          {
+            dayNumber: 2,
+            items: {
+              create: [
+                {
+                  sortOrder: 1,
+                  startTime: "08:00",
+                  endTime: "11:30",
+                  title: "Chinh phục đỉnh Langbiang",
+                  description: "Di chuyển bằng xe Jeep lên đỉnh Langbiang ngắm toàn cảnh Đà Lạt sương mờ.",
+                  location: "Khu du lịch Langbiang",
+                },
+                {
+                  sortOrder: 2,
+                  startTime: "14:00",
+                  endTime: "16:00",
+                  title: "Chèo thuyền Kayak Hồ Tuyền Lâm",
+                  description: "Trải nghiệm chèo thuyền Kayak ngắm hoàng hôn trên Hồ Tuyền Lâm.",
+                  location: "Hồ Tuyền Lâm",
+                },
+                {
+                  sortOrder: 3,
+                  startTime: "18:00",
+                  endTime: "21:00",
+                  title: "Tiệc BBQ rừng thông",
+                  description: "Giao lưu lửa trại và thưởng thức tiệc BBQ giữa rừng thông.",
+                  location: "Rừng thông Đà Lạt",
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  });
+
+  const phuquocTemplate = await prisma.scheduleTemplate.create({
+    data: {
+      sourceType: "tour",
+      tourPackageId: "tour-phuquoc-4n3d",
+      days: {
+        create: [
+          {
+            dayNumber: 1,
+            items: {
+              create: [
+                { sortOrder: 1, startTime: "09:00", endTime: "11:00", title: "Bay đến Phú Quốc", description: "Đón sân bay và di chuyển đến resort.", location: "Sân bay Phú Quốc" },
+                { sortOrder: 2, startTime: "14:00", endTime: "18:00", title: "Khám phá VinWonders", description: "Vui chơi không giới hạn tại công viên giải trí lớn nhất Việt Nam.", location: "VinWonders Phú Quốc" }
+              ]
+            }
+          },
+          {
+            dayNumber: 2,
+            items: {
+              create: [
+                { sortOrder: 1, startTime: "08:00", endTime: "16:00", title: "Tour 4 Đảo hoang sơ", description: "Đi cano thám hiểm 4 hòn đảo đẹp nhất Nam Đảo, lặn ngắm san hô.", location: "Quần đảo An Thới" },
+                { sortOrder: 2, startTime: "18:30", endTime: "21:00", title: "Ăn tối chợ đêm", description: "Tự do thưởng thức hải sản tại Chợ Đêm Phú Quốc.", location: "Chợ Đêm Phú Quốc" }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  });
+
+  console.log(`  Schedule Template Seeding: Created 2 templates.`);
+
+  // Create real schedule for trip-7 (Đang diễn ra)
+  const d = new Date();
+  const dStr = d.toISOString().split('T')[0];
+  d.setDate(d.getDate() + 1);
+  const d2Str = d.toISOString().split('T')[0];
+
+  await prisma.tripScheduleDay.create({
+    data: {
+      tripId: "trip-7",
+      dayNumber: 1,
+      date: dStr,
+      items: {
+        create: [
+          { sortOrder: 1, startTime: "08:00", endTime: "09:00", title: "Đón khách và ăn sáng", description: "Xe và HDV đón khách tại điểm hẹn.", location: "Trung tâm TP.HCM", statusOverride: "completed" },
+          { sortOrder: 2, startTime: "12:00", endTime: "13:00", title: "Ăn trưa và nhận phòng", description: "Dùng cơm trưa tại nhà hàng địa phương.", location: "Khách sạn Mường Thanh Đà Lạt", statusOverride: "ongoing" },
+          { sortOrder: 3, startTime: "15:00", endTime: "17:30", title: "Tham quan Thác Datanla", description: "Trải nghiệm máng trượt xuyên rừng thông.", location: "Thác Datanla", statusOverride: "upcoming" }
+        ]
+      }
+    }
+  });
+  
+  await prisma.tripScheduleDay.create({
+    data: {
+      tripId: "trip-7",
+      dayNumber: 2,
+      date: d2Str,
+      items: {
+        create: [
+          { sortOrder: 1, startTime: "08:00", endTime: "11:30", title: "Chinh phục đỉnh Langbiang", description: "Di chuyển bằng xe Jeep.", location: "Khu du lịch Langbiang", statusOverride: "upcoming" }
+        ]
+      }
+    }
+  });
+
+  console.log(`  Trip Schedule Seeding: Created ongoing schedule for trip-7.`);
 
   console.log("🎉 Seeding completed successfully!");
 }

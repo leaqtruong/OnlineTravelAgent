@@ -8,9 +8,22 @@ import {
   adminTourSchema,
   adminTripSchema,
   adminCategorySchema,
+  adminUserSchema,
+  adminRoomSchema,
+  adminDocumentSchema,
 } from "../schemas/admin.schema.js";
 
+import { upload } from "../middlewares/upload.js";
+
 export const adminRouter = Router();
+
+// Upload
+adminRouter.post("/upload", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+  res.json({ url: `/uploads/${req.file.filename}` });
+});
 
 // Stats
 adminRouter.get("/stats", adminController.getStats);
@@ -43,8 +56,28 @@ adminRouter.delete("/tours/:id", adminController.deleteTour);
 adminRouter.get("/trips", adminController.getTrips);
 adminRouter.put("/trips/:id", validate(adminTripSchema), adminController.updateTrip);
 adminRouter.delete("/trips/:id", adminController.deleteTrip);
+adminRouter.get("/trips/:id/schedule", adminController.getTripSchedule);
+adminRouter.put("/trips/:id/schedule/items/:itemId", adminController.updateTripScheduleItem);
+adminRouter.post("/trips/:id/schedule/updates", adminController.createTripScheduleUpdate);
 
 // Categories
 adminRouter.get("/categories", adminController.getCategories);
 adminRouter.post("/categories", validate(adminCategorySchema), adminController.createCategory);
 adminRouter.delete("/categories/:id", adminController.deleteCategory);
+
+// Users
+adminRouter.get("/users", adminController.getUsers);
+adminRouter.post("/users", validate(adminUserSchema), adminController.createUser);
+adminRouter.delete("/users/:id", adminController.deleteUser);
+
+// Rooms
+adminRouter.get("/hotels/:hotelId/rooms", adminController.getRooms);
+adminRouter.post("/hotels/:hotelId/rooms", validate(adminRoomSchema), adminController.createRoom);
+adminRouter.put("/hotels/:hotelId/rooms/:roomId", validate(adminRoomSchema), adminController.updateRoom);
+adminRouter.delete("/hotels/:hotelId/rooms/:roomId", adminController.deleteRoom);
+
+// Documents
+adminRouter.get("/documents", adminController.getDocuments);
+adminRouter.post("/documents", validate(adminDocumentSchema), adminController.createDocument);
+adminRouter.put("/documents/:id", validate(adminDocumentSchema), adminController.updateDocument);
+adminRouter.delete("/documents/:id", adminController.deleteDocument);

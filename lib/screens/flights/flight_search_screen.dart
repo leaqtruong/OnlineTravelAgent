@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
-import '../../services/travel_api_service.dart';
+import '../../providers/flight_provider.dart';
 import 'flight_checkout_screen.dart';
 
-class FlightSearchScreen extends StatefulWidget {
+class FlightSearchScreen extends ConsumerStatefulWidget {
   const FlightSearchScreen({super.key});
 
   @override
-  State<FlightSearchScreen> createState() => _FlightSearchScreenState();
+  ConsumerState<FlightSearchScreen> createState() => _FlightSearchScreenState();
 }
 
-class _FlightSearchScreenState extends State<FlightSearchScreen> {
-  final TravelApiService _api = TravelApiService();
-  List<Flight> _flights = [];
-  bool _isLoading = true;
-
+class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
   String? _selectedAirline;
   String _departure = 'SGN';
   String _arrival = 'HAN';
@@ -25,28 +22,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
 
   final List<String> _airlines = ['Tất cả', 'Vietnam Airlines', 'Vietjet Air', 'Bamboo Airways'];
   final List<String> _airports = ['SGN', 'HAN', 'DLI', 'PQC', 'DAD'];
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchFlights();
-  }
-
-  Future<void> _fetchFlights() async {
-    setState(() => _isLoading = true);
-    try {
-      final results = await _api.searchFlights(null, null);
-      setState(() {
-        _flights = results;
-      });
-    } catch (e) {
-      debugPrint('Error fetching flights: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   void _swapAirports() {
     setState(() {
@@ -58,15 +33,10 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    List<Flight> displayedFlights = _flights.where((f) {
-      bool matchDep = f.departure == _departure;
-      bool matchArr = f.arrival == _arrival;
-      bool matchAirline = _selectedAirline == null || _selectedAirline == 'Tất cả' || f.airline == _selectedAirline;
-      return matchDep && matchArr && matchAirline;
-    }).toList();
+    final flightsAsync = ref.watch(flightsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Very subtle, clean off-white background
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -95,23 +65,55 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
           ),
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            sliver: _isLoading
-                ? const SliverToBoxAdapter(
-                    child: Padding(
-                      padding: EdgeInsets.all(48.0),
-                      child: Center(
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
-                      ),
-                    ),
-                  )
-                : displayedFlights.isEmpty
-                    ? SliverToBoxAdapter(child: _buildEmptyState())
-                    : SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _buildFlightCard(displayedFlights[index]),
-                          childCount: displayedFlights.length,
+            sliver: flightsAsync.when(
+              loading: () => const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(48.0),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                  ),
+                ),
+              ),
+              error: (e, _) => SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(48.0),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        const Text('Không thể tải dữ liệu chuyến bay',
+                            style: TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => ref.invalidate(flightsProvider),
+                          child: const Text('Thử lại'),
                         ),
-                      ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              data: (flights) {
+                final displayed = flights.where((f) {
+                  bool matchDep = f.departure == _departure;
+                  bool matchArr = f.arrival == _arrival;
+                  bool matchAirline = _selectedAirline == null || _selectedAirline == 'Tất cả' || f.airline == _selectedAirline;
+                  return matchDep && matchArr && matchAirline;
+                }).toList();
+
+                if (displayed.isEmpty) {
+                  return SliverToBoxAdapter(child: _buildEmptyState());
+                }
+
+                return SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildFlightCard(displayed[index]),
+                    childCount: displayed.length,
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -135,7 +137,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
       ),
       child: Column(
         children: [
-          // Airports Row
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -161,7 +162,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
                     ],
                   ),
                 ),
-                // Minimal Swap Button
                 GestureDetector(
                   onTap: _swapAirports,
                   child: Container(
@@ -199,7 +199,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
             ),
           ),
           Divider(height: 1, color: Colors.grey.shade200),
-          // Date Row
           InkWell(
             onTap: () async {
               final date = await showDatePicker(
@@ -307,7 +306,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row: Airline & Price
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -345,7 +343,6 @@ class _FlightSearchScreenState extends State<FlightSearchScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Middle row: Times & Route
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

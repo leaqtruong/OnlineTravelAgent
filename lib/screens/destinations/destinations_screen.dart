@@ -6,6 +6,7 @@ import '../../models/destination.dart';
 import '../../providers/destination_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import '../destination_detail/destination_detail_screen.dart';
+import '../../utils/app_utils.dart';
 
 class DestinationsScreen extends ConsumerStatefulWidget {
   final String? initialCategory;
@@ -39,18 +40,7 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
     super.dispose();
   }
 
-  double _parseReviewsCount(String reviewsCount) {
-    final clean = reviewsCount.toLowerCase().trim();
-    double multiplier = 1.0;
-    if (clean.endsWith('k')) {
-      multiplier = 1000.0;
-    } else if (clean.endsWith('m')) {
-      multiplier = 1000000.0;
-    }
-    final numberOnly = clean.replaceAll(RegExp(r'[^0-9.]'), '');
-    final value = double.tryParse(numberOnly) ?? 0.0;
-    return value * multiplier;
-  }
+  double _parseReviewsCount(String reviewsCount) => parseReviewsCount(reviewsCount);
 
   List<Destination> _getSortedAndFiltered(List<Destination> list) {
     final sorted = List<Destination>.from(list);
@@ -87,18 +77,7 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
     return sorted;
   }
 
-  String _getSortLabel() {
-    switch (_sortBy) {
-      case 'PriceAsc':
-        return 'Giá tăng dần';
-      case 'PriceDesc':
-        return 'Giá giảm dần';
-      case 'Rating':
-        return 'Đánh giá tốt';
-      default:
-        return 'Phổ biến nhất';
-    }
-  }
+  String _getSortLabel() => getSortLabel(_sortBy);
 
   void _resetFiltersOnExit() {
 

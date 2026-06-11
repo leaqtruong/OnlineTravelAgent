@@ -3,20 +3,21 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../core/theme/app_theme.dart';
 import '../models/destination.dart';
 import '../models/document_item.dart';
 import '../models/flight.dart';
 import '../models/trip.dart';
-import '../models/user_profile.dart';
 import '../models/hotel.dart';
+import '../models/review.dart';
 import '../models/tour_package.dart';
+import '../models/trip_schedule.dart';
 
 class BootstrapData {
   final List<String> categories;
   final List<Destination> destinations;
   final List<Destination> recommended;
   final List<Trip> trips;
-  final UserProfile profile;
   final List<DocumentItem> documents;
   final List<Hotel> hotels;
   final List<TourPackage> tourPackages;
@@ -26,7 +27,6 @@ class BootstrapData {
     required this.destinations,
     required this.recommended,
     required this.trips,
-    required this.profile,
     required this.documents,
     required this.hotels,
     required this.tourPackages,
@@ -37,6 +37,7 @@ class TravelApiService {
   TravelApiService({String? baseUrl}) : _baseUrl = baseUrl ?? _defaultBaseUrl();
 
   final String _baseUrl;
+  String? token;
 
   static String _defaultBaseUrl() {
     const fromDefine = String.fromEnvironment('API_BASE_URL');
@@ -49,8 +50,16 @@ class TravelApiService {
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
+  Map<String, String> get _headers {
+    final headers = {'Content-Type': 'application/json'};
+    if (token != null && token!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+    return headers;
+  }
+
   Future<Map<String, dynamic>> _getJson(String path) async {
-    final response = await http.get(_uri(path)).timeout(const Duration(seconds: 10));
+    final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -58,9 +67,9 @@ class TravelApiService {
   Future<Map<String, dynamic>> _postJson(String path, Map<String, dynamic> body) async {
     final response = await http.post(
       _uri(path),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 10));
+    ).timeout(AppTheme.apiTimeout);
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -68,9 +77,9 @@ class TravelApiService {
   Future<Map<String, dynamic>> _patchJson(String path, Map<String, dynamic> body) async {
     final response = await http.patch(
       _uri(path),
-      headers: {'Content-Type': 'application/json'},
+      headers: _headers,
       body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 10));
+    ).timeout(AppTheme.apiTimeout);
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
@@ -82,7 +91,6 @@ class TravelApiService {
       destinations: _parseList(data['destinations'], Destination.fromJson),
       recommended: _parseList(data['recommended'], Destination.fromJson),
       trips: _parseList(data['trips'], Trip.fromJson),
-      profile: UserProfile.fromJson(data['profile'] as Map<String, dynamic>),
       documents: _parseList(data['documents'], DocumentItem.fromJson),
       hotels: _parseList(data['hotels'], Hotel.fromJson),
       tourPackages: _parseList(data['tourPackages'], TourPackage.fromJson),
@@ -113,7 +121,7 @@ class TravelApiService {
     } else if (arrival != null) {
       query = '?arrival=$arrival';
     }
-    final response = await http.get(_uri('/api/flights/search$query')).timeout(const Duration(seconds: 10));
+    final response = await http.get(_uri('/api/flights/search$query'), headers: _headers).timeout(AppTheme.apiTimeout);
     _throwIfError(response);
     final List<dynamic> raw = jsonDecode(response.body);
     return raw.map((e) => Flight.fromJson(e)).toList();
@@ -126,16 +134,32 @@ class TravelApiService {
     return Trip.fromJson(data);
   }
 
-  Future<UserProfile> updateProfile({required String name, required String email}) async {
-    final data = await _putJson('/api/profile', {'name': name, 'email': email});
-    return UserProfile.fromJson(data);
-  }
-
   Future<DocumentItem> addDocument({required String title, required String description, required String icon, required String color}) async {
     final data = await _postJson('/api/documents', {
       'title': title, 'description': description, 'icon': icon, 'color': color,
     });
     return DocumentItem.fromJson(data);
+  }
+
+  Future<ReviewResponse> getReviews({required String targetType, required String targetId}) async {
+    final data = await _getJson('/api/reviews?targetType=$targetType&targetId=$targetId');
+    return ReviewResponse.fromJson(data);
+  }
+
+  Future<Review> createReview({required String targetType, required String targetId, required int rating, required String comment}) async {
+    final data = await _postJson('/api/reviews', {
+      'targetType': targetType, 'targetId': targetId, 'rating': rating, 'comment': comment,
+    });
+    return Review.fromJson(data);
+  }
+
+  Future<bool> deleteReview(String reviewId) async {
+    final response = await http.delete(
+      _uri('/api/reviews/$reviewId'),
+      headers: _headers,
+    ).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
+    return true;
   }
 
   Future<Trip> bookHotel({required String roomId, required String checkIn, required String checkOut, required String guests}) async {
@@ -169,6 +193,11 @@ class TravelApiService {
     return Trip.fromJson(data);
   }
 
+  Future<TripSchedule> fetchTripSchedule(String tripId) async {
+    final data = await _getJson('/api/trips/$tripId/schedule');
+    return TripSchedule.fromJson(data);
+  }
+
   // ── Auth ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login({required String email, required String password}) async {
@@ -177,16 +206,6 @@ class TravelApiService {
 
   Future<Map<String, dynamic>> register({required String name, required String email, required String password}) async {
     return await _postJson('/api/auth/register', {'name': name, 'email': email, 'password': password});
-  }
-
-  Future<Map<String, dynamic>> _putJson(String path, Map<String, dynamic> body) async {
-    final response = await http.put(
-      _uri(path),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    ).timeout(const Duration(seconds: 10));
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
   static List<T> _parseList<T>(dynamic raw, T Function(Map<String, dynamic>) fromJson) {

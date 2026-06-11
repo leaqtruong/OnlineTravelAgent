@@ -5,8 +5,12 @@ import '../../models/destination.dart';
 import '../checkout/checkout_screen.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_provider.dart';
+import '../../utils/app_utils.dart';
+import '../../widgets/review_section.dart';
 
-class DestinationDetailScreen extends StatelessWidget {
+class DestinationDetailScreen extends ConsumerStatefulWidget {
   final Destination destination;
   final VoidCallback onBackClick;
   final VoidCallback onFavoriteClick;
@@ -18,17 +22,43 @@ class DestinationDetailScreen extends StatelessWidget {
     required this.onFavoriteClick,
   });
 
-  void _navigateToCheckout(BuildContext context) {
+  @override
+  ConsumerState<DestinationDetailScreen> createState() =>
+      _DestinationDetailScreenState();
+}
+
+class _DestinationDetailScreenState
+    extends ConsumerState<DestinationDetailScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  void _navigateToCheckout(BuildContext context, WidgetRef ref) {
+    if (!ref.read(authProvider).isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
+      );
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CheckoutScreen(destination: destination),
+        builder: (context) => CheckoutScreen(destination: widget.destination),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final d = widget.destination;
     final heroCacheWidth = (MediaQuery.sizeOf(context).width *
             MediaQuery.devicePixelRatioOf(context))
         .round();
@@ -45,9 +75,9 @@ class DestinationDetailScreen extends StatelessWidget {
             right: 0,
             height: MediaQuery.of(context).size.height * 0.45,
             child: Hero(
-              tag: 'dest_image_${destination.name}',
+              tag: 'dest_image_${d.name}',
               child: Image.asset(
-                destination.imagePath,
+                d.imagePath,
                 fit: BoxFit.cover,
                 cacheWidth: heroCacheWidth,
                 filterQuality: FilterQuality.low,
@@ -61,7 +91,7 @@ class DestinationDetailScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   GestureDetector(
-                    onTap: onBackClick,
+                    onTap: widget.onBackClick,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -73,7 +103,7 @@ class DestinationDetailScreen extends StatelessWidget {
                     ),
                   ),
                   GestureDetector(
-                    onTap: onFavoriteClick,
+                    onTap: widget.onFavoriteClick,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -81,11 +111,10 @@ class DestinationDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        destination.isFavorite
+                        d.isFavorite
                             ? Icons.favorite
                             : Icons.favorite_border,
-                        color:
-                            destination.isFavorite ? Colors.red : Colors.grey,
+                        color: d.isFavorite ? Colors.red : Colors.grey,
                       ),
                     ),
                   ),
@@ -119,7 +148,7 @@ class DestinationDetailScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                destination.name,
+                                d.name,
                                 style: const TextStyle(
                                     fontSize: 28, fontWeight: FontWeight.bold),
                               ),
@@ -130,7 +159,7 @@ class DestinationDetailScreen extends StatelessWidget {
                                       size: 16, color: AppTheme.primaryBlue),
                                   const SizedBox(width: 4),
                                   Text(
-                                    destination.location,
+                                    d.location,
                                     style: const TextStyle(
                                         color: Colors.grey, fontSize: 14),
                                   ),
@@ -145,9 +174,9 @@ class DestinationDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _infoItem(Icons.star, destination.rating,
-                            "(${destination.reviewsCount} Đánh giá)"),
-                        _infoItem(Icons.access_time, destination.duration,
+                        _infoItem(Icons.star, d.rating,
+                            "(${d.reviewsCount} Đánh giá)"),
+                        _infoItem(Icons.access_time, d.duration,
                             "Thời lượng"),
                         _infoItem(Icons.wb_cloudy, "24°C", "Thời tiết"),
                       ],
@@ -160,9 +189,9 @@ class DestinationDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      destination.description.isNotEmpty
-                          ? destination.description
-                          : "Khám phá vẻ đẹp tuyệt vời của ${destination.name}. Một hành trình đáng nhớ đang chờ đợi bạn.",
+                      d.description.isNotEmpty
+                          ? d.description
+                          : "Khám phá vẻ đẹp tuyệt vời của ${d.name}. Một hành trình đáng nhớ đang chờ đợi bạn.",
                       style: const TextStyle(
                           color: Colors.black87, fontSize: 15, height: 1.6),
                     ),
@@ -196,7 +225,7 @@ class DestinationDetailScreen extends StatelessWidget {
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 16),
-                    if (destination.latitude != 0.0 && destination.longitude != 0.0)
+                    if (d.latitude != 0.0 && d.longitude != 0.0)
                       Container(
                         height: 200,
                         decoration: BoxDecoration(
@@ -207,8 +236,7 @@ class DestinationDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           child: FlutterMap(
                             options: MapOptions(
-                              initialCenter: LatLng(
-                                  destination.latitude, destination.longitude),
+                              initialCenter: LatLng(d.latitude, d.longitude),
                               initialZoom: 13,
                               interactionOptions: const InteractionOptions(
                                 flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
@@ -216,15 +244,13 @@ class DestinationDetailScreen extends StatelessWidget {
                             ),
                             children: [
                               TileLayer(
-                                urlTemplate:
-                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                urlTemplate: kOpenStreetMapTileUrl,
                                 userAgentPackageName: 'com.example.onlinetravelagent',
                               ),
                               MarkerLayer(
                                 markers: [
                                   Marker(
-                                    point: LatLng(destination.latitude,
-                                        destination.longitude),
+                                    point: LatLng(d.latitude, d.longitude),
                                     width: 40,
                                     height: 40,
                                     child: const Icon(
@@ -265,7 +291,7 @@ class DestinationDetailScreen extends StatelessWidget {
                         itemBuilder: (context, index) => ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: Image.asset(
-                            destination.imagePath,
+                            d.imagePath,
                             width: 100,
                             height: 100,
                             fit: BoxFit.cover,
@@ -276,7 +302,12 @@ class DestinationDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    _buildReviewsSection(context),
+                    ReviewSection(
+                      targetType: 'destination',
+                      targetId: widget.destination.id,
+                      fallbackRating: double.tryParse(widget.destination.rating) ?? 0.0,
+                      fallbackCount: int.tryParse(widget.destination.reviewsCount) ?? 0,
+                    ),
                   ],
                 ),
               );
@@ -307,7 +338,7 @@ class DestinationDetailScreen extends StatelessWidget {
                       const Text("Giá từ",
                           style: TextStyle(color: Colors.grey, fontSize: 12)),
                       Text(
-                        "\$${destination.price}",
+                        "\$${d.price}",
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -321,7 +352,7 @@ class DestinationDetailScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () => _navigateToCheckout(context),
+                        onPressed: () => _navigateToCheckout(context, ref),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryBlue,
                           shape: RoundedRectangleBorder(
@@ -391,298 +422,5 @@ class DestinationDetailScreen extends StatelessWidget {
                 fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
       ],
     );
-  }
-
-  Widget _buildReviewsSection(BuildContext context) {
-    final reviews = _getSampleReviews(destination.name);
-    final double ratingVal = double.tryParse(destination.rating) ?? 4.8;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Đánh giá & Nhận xét",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        // Rating Summary Header Row
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              children: [
-                Text(
-                  destination.rating,
-                  style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.black87),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: List.generate(5, (index) {
-                    final isFilled = index < ratingVal.round();
-                    return Icon(
-                      Icons.star,
-                      size: 16,
-                      color: isFilled ? Colors.amber : Colors.grey.shade300,
-                    );
-                  }),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "${destination.reviewsCount} nhận xét",
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(width: 24),
-            // Progress bars on the right
-            Expanded(
-              child: Column(
-                children: [
-                  _ratingProgressBar("5 sao", 0.85),
-                  _ratingProgressBar("4 sao", 0.10),
-                  _ratingProgressBar("3 sao", 0.03),
-                  _ratingProgressBar("2 sao", 0.01),
-                  _ratingProgressBar("1 sao", 0.01),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
-        // List of Vertical Review Cards
-        Column(
-          children: reviews.map((review) => _buildReviewCard(review)).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _ratingProgressBar(String label, double percentage) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: percentage,
-                backgroundColor: Colors.grey.shade100,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
-                minHeight: 6,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 30,
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                "${(percentage * 100).toStringAsFixed(0)}%",
-                style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewCard(Map<String, String> review) {
-    final double ratingVal = double.tryParse(review['rating'] ?? '5.0') ?? 5.0;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.06)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 18,
-                backgroundImage: NetworkImage(review['avatar']!),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      review['name']!,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      review['date']!,
-                      style: const TextStyle(color: Colors.grey, fontSize: 10),
-                    ),
-                  ],
-                ),
-              ),
-              Row(
-                children: List.generate(5, (index) {
-                  final isFilled = index < ratingVal.round();
-                  return Icon(
-                    Icons.star,
-                    size: 12,
-                    color: isFilled ? Colors.amber : Colors.grey.shade200,
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            review['comment']!,
-            style: TextStyle(color: Colors.grey.shade800, fontSize: 13, height: 1.5),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(Icons.thumb_up_alt_outlined, size: 14, color: Colors.grey.shade500),
-              const SizedBox(width: 4),
-              Text(
-                "Hữu ích",
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11, fontWeight: FontWeight.w500),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Map<String, String>> _getSampleReviews(String name) {
-    final clean = name.toLowerCase().trim();
-    if (clean.contains('đà lạt')) {
-      return [
-        {
-          'name': 'Trần Minh Quân',
-          'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
-          'date': '3 ngày trước',
-          'rating': '5.0',
-          'comment': 'Đà Lạt mùa này lạnh tê tái rất thích hợp để nghỉ dưỡng. Khách sạn Mường Thanh ở vị trí trung tâm đi lại cực tiện, Hồ Xuân Hương thơ mộng lộng gió buổi tối tuyệt vời!',
-        },
-        {
-          'name': 'Nguyễn Thảo Nguyên',
-          'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&fit=crop',
-          'date': '1 tuần trước',
-          'rating': '4.5',
-          'comment': 'Đồ ăn đêm ở chợ Đà Lạt siêu ngon, bánh tráng nướng và sữa đậu nành nóng hổi giữa trời lạnh rất chill. Thác Datanla trượt máng hơi mạo hiểm nhưng rất phấn khích.',
-        },
-        {
-          'name': 'Hoàng Bách',
-          'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop',
-          'date': '2 tuần trước',
-          'rating': '4.8',
-          'comment': 'Thung Lũng Tình Yêu cảnh sắc lãng mạn ngập sắc hoa ôn đới. Chuyến đi cực kỳ đáng giá, chắc chắn sẽ quay lại cùng gia đình!',
-        },
-      ];
-    } else if (clean.contains('phú quốc')) {
-      return [
-        {
-          'name': 'Lê Hải Đăng',
-          'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop',
-          'date': '2 ngày trước',
-          'rating': '5.0',
-          'comment': 'Đảo ngọc Phú Quốc biển trong xanh vắt ngắm rõ san hô. Tour đi cano 4 đảo xuất sắc, ngắm hoàng hôn rực rỡ ở Sunset Sanato là trải nghiệm đỉnh cao của chuyến đi.',
-        },
-        {
-          'name': 'Phạm Khánh Linh',
-          'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&fit=crop',
-          'date': '1 tuần trước',
-          'rating': '4.9',
-          'comment': 'Resort 5 sao bãi biển riêng cát trắng mịn. Đồ ăn hải sản nướng thơm ngon, đặc biệt gỏi cá trích cuốn bánh tráng nướng vị thanh tao khó cưỡng.',
-        },
-        {
-          'name': 'Đặng Quốc Huy',
-          'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
-          'date': '3 tuần trước',
-          'rating': '4.7',
-          'comment': 'Cáp treo vượt biển Hòn Thơm ngắm toàn cảnh các hòn đảo từ trên cao cực kỳ hùng vĩ. Trò chơi trượt nước ở Aquatopia vui nhộn!',
-        },
-      ];
-    } else if (clean.contains('sapa') || clean.contains('sa pa')) {
-      return [
-        {
-          'name': 'Nguyễn Tiến Đạt',
-          'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
-          'date': '5 ngày trước',
-          'rating': '5.0',
-          'comment': 'Chinh phục đỉnh Fansipan 3.143m ngắm thung lũng mây trôi bồng bềnh hùng vĩ. Khách sạn view núi tuyệt đẹp, buổi sáng dậy nhâm nhi tách trà nóng ngắm mây sương bay vô cùng thư giãn!',
-        },
-        {
-          'name': 'Vũ Quỳnh Chi',
-          'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&fit=crop',
-          'date': '1 tuần trước',
-          'rating': '4.8',
-          'comment': 'Trải nghiệm đi bộ trekking xuyên qua bản Cát Cát và thung lũng Mường Hoa rất thú vị. Buổi tối ăn lẩu cá tầm nóng hổi trong tiết trời lạnh buốt Sa Pa rất ngon miệng.',
-        },
-        {
-          'name': 'Lê Minh Triết',
-          'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop',
-          'date': '2 tuần trước',
-          'rating': '4.7',
-          'comment': 'Tắm lá thuốc người Dao Đỏ xong cơ thể sảng khoái, hết mỏi cơ. Người dân bản địa vô cùng thân thiện mến khách!',
-        },
-      ];
-    } else if (clean.contains('hạ long') || clean.contains('halong')) {
-      return [
-        {
-          'name': 'Đỗ Hoàng Long',
-          'avatar': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&fit=crop',
-          'date': '1 ngày trước',
-          'rating': '5.0',
-          'comment': 'Ngủ đêm trên du thuyền 5 sao lướt êm đềm giữa hàng ngàn đảo đá vôi là trải nghiệm thượng lưu. Thức dậy đón bình minh trên boong tàu tập Thái Cực Quyền vô cùng thanh tịnh.',
-        },
-        {
-          'name': 'Nguyễn Phương Thảo',
-          'avatar': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&fit=crop',
-          'date': '1 tuần trước',
-          'rating': '4.8',
-          'comment': 'Chèo kayak luồn lách qua các hang động đá vôi tự nhiên vô cùng kì thú. Hải sản phục vụ trên tàu tươi ngon, nhân viên phục vụ cực kì tận tâm và lịch sự.',
-        },
-      ];
-    } else {
-      // Default / general destinations (Hội An, Hà Nội, Đà Nẵng, etc.)
-      return [
-        {
-          'name': 'Nguyễn Tuấn Kiệt',
-          'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&fit=crop',
-          'date': '4 ngày trước',
-          'rating': '4.9',
-          'comment': 'Địa điểm du lịch tuyệt vời mang đậm nét bản sắc văn hóa. Không gian phong cảnh lãng mạn, ẩm thực bản địa phong phú và người dân địa phương vô cùng mến khách!',
-        },
-        {
-          'name': 'Mai Thu Trang',
-          'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&fit=crop',
-          'date': '1 tuần trước',
-          'rating': '4.8',
-          'comment': 'Chuyến đi tổ chức rất trọn vẹn và an toàn. Hướng dẫn viên nhiệt tình hướng dẫn các điểm chụp hình đẹp và kể những câu chuyện lịch sử văn hóa vô cùng bổ ích.',
-        },
-      ];
-    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
 import '../../providers/trip_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../checkout/payment_method_screen.dart';
 
 class FlightCheckoutScreen extends ConsumerStatefulWidget {
@@ -40,6 +41,14 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
   }
 
   void _navigateToPayment() {
+    if (!ref.read(authProvider).isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
+      );
+      Navigator.pushNamed(context, '/login');
+      return;
+    }
+
     final String guestsStr = '$_adults Người lớn, $_children Trẻ em'
         '${_isBusinessClass ? ' (Thương gia)' : ' (Phổ thông)'}';
 

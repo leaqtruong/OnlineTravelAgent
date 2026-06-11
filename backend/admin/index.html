@@ -3,597 +3,568 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TravelAgent Admin Panel</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <style>
-    :root {
-      --bg-primary: #0a0e1a;
-      --bg-secondary: #111827;
-      --bg-card: #1a2235;
-      --bg-card-hover: #1e2a40;
-      --bg-sidebar: #0d1525;
-      --accent: #6366f1;
-      --accent-light: #818cf8;
-      --accent-glow: rgba(99,102,241,0.2);
-      --green: #10b981;
-      --red: #ef4444;
-      --orange: #f59e0b;
-      --blue: #3b82f6;
-      --purple: #8b5cf6;
-      --teal: #14b8a6;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --text-muted: #475569;
-      --border: rgba(255,255,255,0.07);
-      --border-strong: rgba(255,255,255,0.12);
-      --shadow: 0 4px 24px rgba(0,0,0,0.4);
-      --radius: 14px;
-      --radius-sm: 8px;
-      --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  <title>TravelAgent Admin | Awwwards</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+          colors: {
+            white: '#FFFFFF',
+            offwhite: '#F3F8FE',
+            silver: '#E2E8F0',
+            ink: '#212121',
+            muted: '#4D5652',
+            primary: '#176FF2'
+          },
+          transitionTimingFunction: {
+            'haptic': 'cubic-bezier(0.32, 0.72, 0, 1)'
+          },
+          boxShadow: {
+            'glass': '0 24px 60px -12px rgba(0,0,0,0.05)',
+            'glass-hover': '0 32px 80px -10px rgba(0,0,0,0.08)',
+            'inner-glow': 'inset 0 1px 1px rgba(255,255,255,0.8)'
+          }
+        }
+      }
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:var(--bg-primary);color:var(--text-primary);display:flex;min-height:100vh;overflow:hidden;}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  
+  <style>
+    body { background: #F3F8FE; color: #2C2B29; overflow: hidden; }
+    
+    .doppelrand {
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255,255,255, 0.6);
+      border-radius: 2rem;
+      padding: 0.375rem;
+      box-shadow: 0 12px 40px -12px rgba(0,0,0,0.04);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.7s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .doppelrand-inner {
+      background: #FCFBF9;
+      border-radius: calc(2rem - 0.375rem);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    ::-webkit-scrollbar { width: 0; height: 0; }
+    
+    .nav-item { transition: all 0.5s cubic-bezier(0.32,0.72,0,1); }
+    .nav-item.active { background: #176FF2; color: #FFFFFF; transform: scale(0.98); }
+    
+    .page { display: none; opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.32,0.72,0,1); }
+    .page.active { display: block; opacity: 1; transform: translateY(0); }
+    
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(243, 248, 254, 0.7); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      align-items: center; justify-content: center;
+      opacity: 0; transition: all 0.6s cubic-bezier(0.32,0.72,0,1);
+    }
+    .modal-overlay.open { display: flex; opacity: 1; }
+    .modal-content { transform: scale(0.95) translateY(20px); transition: all 0.6s cubic-bezier(0.32,0.72,0,1); }
+    .modal-overlay.open .modal-content { transform: scale(1) translateY(0); }
+    
+    .floating-btn { transition: all 0.5s cubic-bezier(0.32,0.72,0,1); }
+    .floating-btn:hover { transform: translateY(-2px) scale(0.98); box-shadow: 0 12px 30px rgba(0,0,0,0.1); }
+    .floating-btn:active { transform: scale(0.95); }
+    
+    .btn-icon { transition: transform 0.5s cubic-bezier(0.32,0.72,0,1); }
+    .floating-btn:hover .btn-icon { transform: translate(2px, -2px) scale(1.05); }
 
-    /* SIDEBAR */
-    .sidebar{width:256px;min-width:256px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;}
-    .sidebar-logo{padding:24px 20px 18px;border-bottom:1px solid var(--border);}
-    .logo-mark{display:flex;align-items:center;gap:12px;}
-    .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 20px var(--accent-glow);}
-    .logo-text h1{font-size:14px;font-weight:700;letter-spacing:-0.3px;}
-    .logo-text span{font-size:11px;color:var(--text-muted);}
-    .sidebar-nav{flex:1;overflow-y:auto;padding:14px 10px;}
-    .nav-section-title{font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;padding:8px 12px 5px;margin-top:6px;}
-    .nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);color:var(--text-secondary);font-size:13px;font-weight:500;margin-bottom:2px;position:relative;}
-    .nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text-primary);}
-    .nav-item.active{background:var(--accent-glow);color:var(--accent-light);}
-    .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--accent);border-radius:0 3px 3px 0;}
-    .nav-item i{width:16px;text-align:center;font-size:13px;}
-    .nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
-    .sidebar-footer{padding:14px;border-top:1px solid var(--border);}
-    .api-status{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--bg-card);border-radius:var(--radius-sm);border:1px solid var(--border);}
-    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
-    .status-dot.offline{background:var(--red);box-shadow:0 0 8px var(--red);animation:none;}
-    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-    .status-text{font-size:12px;color:var(--text-secondary);}
+    .toast-container{position:fixed;bottom:32px;right:32px;display:flex;flex-direction:column;gap:16px;z-index:999;}
+    .toast{
+      background:white; border-radius:1rem; padding:16px 24px; box-shadow:0 20px 40px rgba(0,0,0,0.08);
+      display:flex; align-items:center; gap:12px; font-weight:600; font-size:14px;
+      transform: translateY(20px) scale(0.9); opacity: 0; animation: toastIn 0.6s cubic-bezier(0.32,0.72,0,1) forwards;
+    }
+    @keyframes toastIn { to { transform: translateY(0) scale(1); opacity: 1; } }
 
-    /* MAIN */
-    .main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-    .topbar{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg-secondary);flex-shrink:0;}
-    .topbar-left h2{font-size:19px;font-weight:700;}
-    .topbar-left p{font-size:12px;color:var(--text-muted);margin-top:2px;}
-    .topbar-actions{display:flex;gap:10px;}
-
-    /* BUTTONS */
-    .btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:var(--transition);font-family:'Inter',sans-serif;}
-    .btn-primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:white;box-shadow:0 4px 14px var(--accent-glow);}
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 18px var(--accent-glow);}
-    .btn-secondary{background:var(--bg-card);color:var(--text-secondary);border:1px solid var(--border);}
-    .btn-secondary:hover{background:var(--bg-card-hover);color:var(--text-primary);}
-    .btn-danger{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.25);}
-    .btn-danger:hover{background:rgba(239,68,68,0.22);}
-    .btn-sm{padding:5px 11px;font-size:11.5px;}
-
-    /* CONTENT */
-    .content{flex:1;overflow-y:auto;padding:24px 28px;}
-    .page{display:none;}
-    .page.active{display:block;}
-
-    /* STATS */
-    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
-    .stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:14px;transition:var(--transition);cursor:pointer;}
-    .stat-card:hover{border-color:var(--border-strong);transform:translateY(-2px);box-shadow:var(--shadow);}
-    .stat-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
-    .stat-info h3{font-size:24px;font-weight:800;line-height:1;}
-    .stat-info p{font-size:11.5px;color:var(--text-muted);margin-top:3px;}
-
-    /* DASHBOARD GRID */
-    .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
-    .quick-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-    .qp-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-    .qp-title{font-size:13.5px;font-weight:700;}
-    .qp-item{display:flex;align-items:center;gap:11px;padding:10px 18px;border-bottom:1px solid var(--border);transition:var(--transition);}
-    .qp-item:last-child{border-bottom:none;}
-    .qp-item:hover{background:rgba(255,255,255,0.03);}
-    .qp-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-    .qp-name{font-size:12.5px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .qp-sub{font-size:11px;color:var(--text-muted);}
-
-    /* TABLE */
-    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-    .section-title{font-size:15px;font-weight:700;}
-    .search-box{position:relative;}
-    .search-box input{background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);padding:7px 13px 7px 34px;border-radius:var(--radius-sm);font-size:12.5px;font-family:'Inter',sans-serif;width:210px;outline:none;transition:var(--transition);}
-    .search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
-    .search-box i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;}
-    .table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-    table{width:100%;border-collapse:collapse;}
-    thead th{padding:11px 14px;text-align:left;font-size:10.5px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.7px;background:rgba(255,255,255,0.025);border-bottom:1px solid var(--border);}
-    tbody tr{border-bottom:1px solid var(--border);transition:var(--transition);}
-    tbody tr:last-child{border-bottom:none;}
-    tbody tr:hover{background:rgba(255,255,255,0.025);}
-    tbody td{padding:11px 14px;font-size:12.5px;color:var(--text-secondary);vertical-align:middle;}
-    .td-name{font-weight:600;color:var(--text-primary);max-width:170px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .actions-cell{display:flex;gap:5px;}
-    .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
-    .bg-green{background:rgba(16,185,129,0.14);color:var(--green);}
-    .bg-blue{background:rgba(59,130,246,0.14);color:var(--blue);}
-    .bg-orange{background:rgba(245,158,11,0.14);color:var(--orange);}
-    .bg-red{background:rgba(239,68,68,0.14);color:var(--red);}
-    .bg-purple{background:rgba(139,92,246,0.14);color:var(--purple);}
-    .bg-teal{background:rgba(20,184,166,0.14);color:var(--teal);}
-    .bg-gray{background:rgba(255,255,255,0.07);color:var(--text-muted);}
-    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;color:var(--text-muted);gap:10px;}
-    .empty-state i{font-size:36px;opacity:0.35;}
-    .empty-state p{font-size:13px;}
-
-    /* MODAL */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:100;align-items:center;justify-content:center;}
-    .modal-overlay.open{display:flex;}
-    .modal{background:var(--bg-card);border:1px solid var(--border-strong);border-radius:var(--radius);width:90%;max-width:560px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6);animation:mIn 0.2s ease;}
-    @keyframes mIn{from{opacity:0;transform:scale(0.96) translateY(-10px);}to{opacity:1;transform:scale(1) translateY(0);}}
-    .modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-    .modal-title{font-size:15px;font-weight:700;}
-    .modal-close{width:30px;height:30px;border-radius:7px;border:none;background:rgba(255,255,255,0.06);color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);font-size:14px;}
-    .modal-close:hover{background:rgba(239,68,68,0.18);color:var(--red);}
-    .modal-body{padding:18px 22px;}
-    .modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:9px;}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-    .form-group{display:flex;flex-direction:column;gap:5px;}
-    .form-group.full{grid-column:1/-1;}
-    .form-label{font-size:11px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;}
-    .form-control{background:var(--bg-secondary);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:var(--radius-sm);font-size:12.5px;font-family:'Inter',sans-serif;outline:none;transition:var(--transition);}
-    .form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);}
-    textarea.form-control{resize:vertical;min-height:72px;}
-    select.form-control option{background:var(--bg-secondary);}
-
-    /* TOGGLE */
-    .toggle-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-    .toggle-label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;color:var(--text-secondary);}
-    .toggle{position:relative;display:inline-block;width:36px;height:20px;}
-    .toggle input{opacity:0;width:0;height:0;}
-    .toggle-slider{position:absolute;inset:0;background:var(--bg-primary);border-radius:20px;cursor:pointer;transition:var(--transition);border:1px solid var(--border);}
-    .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:var(--text-muted);left:2px;top:2px;transition:var(--transition);}
-    .toggle input:checked+.toggle-slider{background:var(--accent);border-color:var(--accent);}
-    .toggle input:checked+.toggle-slider::before{transform:translateX(16px);background:white;}
-
-    /* CONFIRM */
-    .confirm-modal{max-width:380px;}
-    .confirm-body{text-align:center;padding:22px 22px 8px;}
-    .confirm-icon{width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.28);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--red);margin:0 auto 14px;}
-    .confirm-body h3{font-size:15px;font-weight:700;margin-bottom:7px;}
-    .confirm-body p{font-size:12.5px;color:var(--text-muted);}
-
-    /* TOAST */
-    .toast-container{position:fixed;bottom:22px;right:22px;display:flex;flex-direction:column;gap:9px;z-index:999;}
-    .toast{display:flex;align-items:center;gap:11px;padding:12px 16px;border-radius:var(--radius-sm);background:var(--bg-card);border:1px solid var(--border-strong);box-shadow:var(--shadow);min-width:260px;animation:tIn 0.3s ease;font-size:13px;font-weight:500;color:var(--text-primary);}
-    @keyframes tIn{from{opacity:0;transform:translateX(28px);}to{opacity:1;transform:translateX(0);}}
-    .toast.success{border-left:3px solid var(--green);}
-    .toast.success i{color:var(--green);}
-    .toast.error{border-left:3px solid var(--red);}
-    .toast.error i{color:var(--red);}
-    .toast.info{border-left:3px solid var(--blue);}
-    .toast.info i{color:var(--blue);}
-
-    /* SCROLLBAR */
-    ::-webkit-scrollbar{width:5px;height:5px;}
-    ::-webkit-scrollbar-track{background:transparent;}
-    ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.08);border-radius:3px;}
-    ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.15);}
-
-    /* PROFILE */
-    .profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;max-width:480px;}
-    .profile-avatar{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:25px;margin-bottom:20px;}
+    .upload-box { border: 2px dashed #EAE8E3; border-radius: 1rem; position: relative; overflow: hidden; transition: all 0.3s; }
+    .upload-box:hover { border-color: #176FF2; background: #F5F4F0; }
+    .upload-img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; opacity: 0; transition: opacity 0.3s; }
+    .upload-img.show { opacity: 1; z-index: 10; }
+    .upload-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 20; }
   </style>
 </head>
-<body>
+<body class="flex">
 
-<!-- SIDEBAR -->
-<aside class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-mark">
-      <div class="logo-icon">✈️</div>
-      <div class="logo-text">
-        <h1>TravelAgent</h1>
-        <span>Admin Dashboard</span>
+<!-- FLOATING SIDEBAR -->
+<div class="fixed left-6 top-6 bottom-6 w-72 z-40">
+  <div class="doppelrand h-full flex flex-col">
+    <div class="doppelrand-inner flex flex-col p-6">
+      
+      <div class="flex items-center gap-4 mb-8 mt-2">
+        <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white text-xl shadow-lg">
+          <i class="fa-solid fa-plane-up opacity-80"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-ink">TravelAgent</h1>
+          <p class="text-[11px] uppercase tracking-widest text-muted font-bold">Workspace</p>
+        </div>
+      </div>
+
+      <nav class="flex-1 overflow-y-auto pr-2 flex flex-col gap-1">
+        <div class="text-[10px] uppercase tracking-[0.15em] text-muted font-bold mt-2 mb-2 pl-4">Overview</div>
+        <div class="nav-item active flex items-center gap-4 p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('dashboard')" id="nav-dashboard">
+          <i class="fa-solid fa-layer-group w-5 text-center"></i> Dashboard
+        </div>
+        
+        <div class="text-[10px] uppercase tracking-[0.15em] text-muted font-bold mt-6 mb-2 pl-4">Database</div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('destinations')" id="nav-destinations">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-map-pin w-5 text-center"></i> Điểm đến</div>
+        </div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('hotels')" id="nav-hotels">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-building w-5 text-center"></i> Khách sạn</div>
+        </div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('flights')" id="nav-flights">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-plane w-5 text-center"></i> Chuyến bay</div>
+        </div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('tours')" id="nav-tours">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-compass w-5 text-center"></i> Gói tour</div>
+        </div>
+
+        <div class="text-[10px] uppercase tracking-[0.15em] text-muted font-bold mt-6 mb-2 pl-4">Management</div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('trips')" id="nav-trips">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-ticket w-5 text-center"></i> Đặt chỗ</div>
+        </div>
+        <div class="nav-item flex items-center justify-between p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('users')" id="nav-users">
+          <div class="flex items-center gap-4"><i class="fa-solid fa-users w-5 text-center"></i> Người dùng</div>
+        </div>
+        <div class="nav-item flex items-center gap-4 p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('categories')" id="nav-categories">
+          <i class="fa-solid fa-folder-tree w-5 text-center"></i> Danh mục
+        </div>
+        <div class="nav-item flex items-center gap-4 p-4 rounded-[1rem] cursor-pointer text-sm font-semibold text-muted hover:text-primary hover:bg-silver" onclick="navigate('documents')" id="nav-documents">
+          <i class="fa-solid fa-file-lines w-5 text-center"></i> Hành trang
+        </div>
+      </nav>
+
+      <div class="mt-4 p-4 rounded-[1rem] bg-offwhite flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-emerald-500" id="statusDot"></div>
+        <span class="text-xs font-bold text-ink uppercase tracking-widest" id="statusText">Online</span>
       </div>
     </div>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-title">Tổng quan</div>
-    <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')">
-      <i class="fa-solid fa-chart-pie"></i> Dashboard
-    </div>
-    <div class="nav-section-title">Dữ liệu</div>
-    <div class="nav-item" id="nav-destinations" onclick="navigate('destinations')">
-      <i class="fa-solid fa-map-location-dot"></i> Điểm đến
-      <span class="nav-badge" id="badge-destinations">—</span>
-    </div>
-    <div class="nav-item" id="nav-hotels" onclick="navigate('hotels')">
-      <i class="fa-solid fa-hotel"></i> Khách sạn
-      <span class="nav-badge" id="badge-hotels">—</span>
-    </div>
-    <div class="nav-item" id="nav-flights" onclick="navigate('flights')">
-      <i class="fa-solid fa-plane"></i> Chuyến bay
-      <span class="nav-badge" id="badge-flights">—</span>
-    </div>
-    <div class="nav-item" id="nav-tours" onclick="navigate('tours')">
-      <i class="fa-solid fa-umbrella-beach"></i> Gói tour
-      <span class="nav-badge" id="badge-tours">—</span>
-    </div>
-    <div class="nav-section-title">Quản lý</div>
-    <div class="nav-item" id="nav-trips" onclick="navigate('trips')">
-      <i class="fa-solid fa-suitcase-rolling"></i> Đặt chỗ
-      <span class="nav-badge" id="badge-trips">—</span>
-    </div>
-    <div class="nav-item" id="nav-categories" onclick="navigate('categories')">
-      <i class="fa-solid fa-tags"></i> Danh mục
-    </div>
-    <div class="nav-item" id="nav-profile" onclick="navigate('profile')">
-      <i class="fa-solid fa-circle-user"></i> Hồ sơ
-    </div>
-  </nav>
-  <div class="sidebar-footer">
-    <div class="api-status">
-      <div class="status-dot" id="statusDot"></div>
-      <span class="status-text" id="statusText">Đang kết nối...</span>
-    </div>
-  </div>
-</aside>
+</div>
 
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <div class="topbar-left">
-      <h2 id="pageTitle">Dashboard</h2>
-      <p id="pageSubtitle">Tổng quan hệ thống quản trị</p>
+<!-- MAIN CONTENT -->
+<div class="ml-[22rem] flex-1 h-screen overflow-y-auto px-16 py-20 relative">
+  <div class="flex items-end justify-between mb-24">
+    <div>
+      <div class="text-[11px] uppercase tracking-[0.3em] font-bold text-muted mb-2" id="pageSubtitle">Overview</div>
+      <h2 class="text-5xl font-extrabold tracking-tight text-ink" id="pageTitle">Dashboard</h2>
     </div>
-    <div class="topbar-actions">
-      <button class="btn btn-secondary" onclick="refreshData()">
-        <i class="fa-solid fa-rotate-right"></i> Làm mới
+    <div class="flex gap-4">
+      <button class="floating-btn bg-white text-ink font-bold py-4 px-8 rounded-full shadow-glass hover:shadow-glass-hover flex items-center gap-3 text-sm" onclick="refreshData()">
+        <i class="fa-solid fa-rotate-right text-muted"></i> Refresh
       </button>
-      <button class="btn btn-primary" id="addBtn" style="display:none" onclick="openAddModal()">
-        <i class="fa-solid fa-plus"></i> Thêm mới
+      <button class="floating-btn group bg-primary text-white font-bold py-3 px-3 pr-8 rounded-full shadow-lg flex items-center gap-4 text-sm" id="addBtn" style="display:none" onclick="openAddModal()">
+        <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center btn-icon">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+        Thêm mới
       </button>
     </div>
   </div>
 
-  <div class="content">
-
+  <div class="relative">
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
-      <div class="stats-grid">
-        <div class="stat-card" onclick="navigate('destinations')">
-          <div class="stat-icon" style="background:rgba(99,102,241,0.13);color:var(--accent)"><i class="fa-solid fa-map-location-dot"></i></div>
-          <div class="stat-info"><h3 id="st-dest">—</h3><p>Điểm đến</p></div>
-        </div>
-        <div class="stat-card" onclick="navigate('hotels')">
-          <div class="stat-icon" style="background:rgba(20,184,166,0.13);color:var(--teal)"><i class="fa-solid fa-hotel"></i></div>
-          <div class="stat-info"><h3 id="st-hotel">—</h3><p>Khách sạn</p></div>
-        </div>
-        <div class="stat-card" onclick="navigate('flights')">
-          <div class="stat-icon" style="background:rgba(59,130,246,0.13);color:var(--blue)"><i class="fa-solid fa-plane"></i></div>
-          <div class="stat-info"><h3 id="st-flight">—</h3><p>Chuyến bay</p></div>
-        </div>
-        <div class="stat-card" onclick="navigate('tours')">
-          <div class="stat-icon" style="background:rgba(245,158,11,0.13);color:var(--orange)"><i class="fa-solid fa-umbrella-beach"></i></div>
-          <div class="stat-info"><h3 id="st-tour">—</h3><p>Gói tour</p></div>
-        </div>
-        <div class="stat-card" onclick="navigate('trips')">
-          <div class="stat-icon" style="background:rgba(16,185,129,0.13);color:var(--green)"><i class="fa-solid fa-suitcase-rolling"></i></div>
-          <div class="stat-info"><h3 id="st-upcoming">—</h3><p>Sắp tới</p></div>
-        </div>
-        <div class="stat-card" onclick="navigate('trips')">
-          <div class="stat-icon" style="background:rgba(139,92,246,0.13);color:var(--purple)"><i class="fa-solid fa-clock-rotate-left"></i></div>
-          <div class="stat-info"><h3 id="st-history">—</h3><p>Lịch sử</p></div>
-        </div>
-      </div>
-      <div class="dash-grid">
-        <div class="quick-panel">
-          <div class="qp-header"><span class="qp-title">🗺️ Điểm đến</span><button class="btn btn-secondary btn-sm" onclick="navigate('destinations')">Xem tất cả</button></div>
-          <div id="dash-dest"></div>
-        </div>
-        <div class="quick-panel">
-          <div class="qp-header"><span class="qp-title">🧳 Đặt chỗ gần đây</span><button class="btn btn-secondary btn-sm" onclick="navigate('trips')">Xem tất cả</button></div>
-          <div id="dash-trips"></div>
-        </div>
-        <div class="quick-panel">
-          <div class="qp-header"><span class="qp-title">✈️ Chuyến bay</span><button class="btn btn-secondary btn-sm" onclick="navigate('flights')">Xem tất cả</button></div>
-          <div id="dash-flights"></div>
-        </div>
-        <div class="quick-panel">
-          <div class="qp-header"><span class="qp-title">🌴 Gói tour</span><button class="btn btn-secondary btn-sm" onclick="navigate('tours')">Xem tất cả</button></div>
-          <div id="dash-tours"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DESTINATIONS -->
-    <div class="page" id="page-destinations">
-      <div class="section-header">
-        <span class="section-title">Điểm đến</span>
-        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="search-destinations" type="text" placeholder="Tìm kiếm..." oninput="filterTable('destinations')"/></div>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Tên</th><th>Địa điểm</th><th>Danh mục</th><th>Rating</th><th>Giá</th><th>Nổi bật</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-destinations"></tbody></table>
-        <div class="empty-state" id="empty-destinations" style="display:none"><i class="fa-solid fa-map"></i><p>Chưa có điểm đến nào</p></div>
-      </div>
-    </div>
-
-    <!-- HOTELS -->
-    <div class="page" id="page-hotels">
-      <div class="section-header">
-        <span class="section-title">Khách sạn</span>
-        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="search-hotels" type="text" placeholder="Tìm kiếm..." oninput="filterTable('hotels')"/></div>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Tên</th><th>Địa điểm</th><th>Rating</th><th>Giá từ</th><th>Số phòng</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-hotels"></tbody></table>
-        <div class="empty-state" id="empty-hotels" style="display:none"><i class="fa-solid fa-hotel"></i><p>Chưa có khách sạn nào</p></div>
-      </div>
-    </div>
-
-    <!-- FLIGHTS -->
-    <div class="page" id="page-flights">
-      <div class="section-header">
-        <span class="section-title">Chuyến bay</span>
-        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="search-flights" type="text" placeholder="Tìm kiếm..." oninput="filterTable('flights')"/></div>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Hãng bay</th><th>Điểm đi</th><th>Điểm đến</th><th>Khởi hành</th><th>Đến nơi</th><th>Giá</th><th>Thời gian</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-flights"></tbody></table>
-        <div class="empty-state" id="empty-flights" style="display:none"><i class="fa-solid fa-plane"></i><p>Chưa có chuyến bay nào</p></div>
-      </div>
-    </div>
-
-    <!-- TOURS -->
-    <div class="page" id="page-tours">
-      <div class="section-header">
-        <span class="section-title">Gói tour</span>
-        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="search-tours" type="text" placeholder="Tìm kiếm..." oninput="filterTable('tours')"/></div>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Tên tour</th><th>Khởi hành</th><th>Thời gian</th><th>Giá</th><th>Phổ biến</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-tours"></tbody></table>
-        <div class="empty-state" id="empty-tours" style="display:none"><i class="fa-solid fa-umbrella-beach"></i><p>Chưa có gói tour nào</p></div>
-      </div>
-    </div>
-
-    <!-- TRIPS -->
-    <div class="page" id="page-trips">
-      <div class="section-header">
-        <span class="section-title">Đặt chỗ</span>
-        <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="search-trips" type="text" placeholder="Tìm kiếm..." oninput="filterTable('trips')"/></div>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Điểm đến</th><th>Địa điểm</th><th>Ngày</th><th>Khách</th><th>Trạng thái</th><th>Tổng tiền</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-trips"></tbody></table>
-        <div class="empty-state" id="empty-trips" style="display:none"><i class="fa-solid fa-suitcase-rolling"></i><p>Chưa có đặt chỗ nào</p></div>
-      </div>
-    </div>
-
-    <!-- CATEGORIES -->
-    <div class="page" id="page-categories">
-      <div class="section-header"><span class="section-title">Danh mục</span></div>
-      <div class="table-wrap">
-        <table><thead><tr><th>ID</th><th>Tên danh mục</th><th>Thao tác</th></tr></thead>
-        <tbody id="tb-categories"></tbody></table>
-        <div class="empty-state" id="empty-categories" style="display:none"><i class="fa-solid fa-tags"></i><p>Chưa có danh mục</p></div>
-      </div>
-    </div>
-
-    <!-- PROFILE -->
-    <div class="page" id="page-profile">
-      <div class="profile-card">
-        <div class="profile-avatar">👤</div>
-        <div style="display:flex;gap:10px;margin-bottom:20px">
-          <div>
-            <div style="font-size:18px;font-weight:700" id="pf-name-disp">—</div>
-            <div style="font-size:12px;color:var(--text-muted)" id="pf-email-disp">—</div>
+      <div class="grid grid-cols-3 gap-6 mb-16">
+        <div class="doppelrand cursor-pointer group" onclick="navigate('destinations')">
+          <div class="doppelrand-inner p-8 flex flex-col justify-between h-48 bg-gradient-to-br from-white to-offwhite">
+            <div class="w-12 h-12 rounded-full bg-silver flex items-center justify-center text-ink"><i class="fa-solid fa-map-pin"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-muted font-bold mb-1">Điểm đến</p>
+              <h3 class="text-4xl font-extrabold text-ink tracking-tight" id="st-dest">—</h3>
+            </div>
           </div>
         </div>
-        <div class="form-group" style="margin-bottom:12px">
-          <label class="form-label">Tên</label>
-          <input type="text" class="form-control" id="pf-name" placeholder="Nhập tên..." />
+        <div class="doppelrand cursor-pointer group" onclick="navigate('hotels')">
+          <div class="doppelrand-inner p-8 flex flex-col justify-between h-48 bg-gradient-to-br from-white to-offwhite">
+            <div class="w-12 h-12 rounded-full bg-silver flex items-center justify-center text-ink"><i class="fa-solid fa-building"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-muted font-bold mb-1">Khách sạn</p>
+              <h3 class="text-4xl font-extrabold text-ink tracking-tight" id="st-hotel">—</h3>
+            </div>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom:20px">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-control" id="pf-email" placeholder="Nhập email..." />
+        <div class="doppelrand cursor-pointer group" onclick="navigate('flights')">
+          <div class="doppelrand-inner p-8 flex flex-col justify-between h-48 bg-gradient-to-br from-white to-offwhite">
+            <div class="w-12 h-12 rounded-full bg-silver flex items-center justify-center text-ink"><i class="fa-solid fa-plane"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-muted font-bold mb-1">Chuyến bay</p>
+              <h3 class="text-4xl font-extrabold text-ink tracking-tight" id="st-flight">—</h3>
+            </div>
+          </div>
         </div>
-        <button class="btn btn-primary" onclick="saveProfile()"><i class="fa-solid fa-floppy-disk"></i> Lưu thay đổi</button>
+        <div class="doppelrand cursor-pointer group col-span-2" onclick="navigate('tours')">
+          <div class="doppelrand-inner p-8 flex flex-col justify-between h-48 bg-gradient-to-br from-primary to-blue-700 text-white">
+            <div class="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white"><i class="fa-solid fa-compass"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-white/50 font-bold mb-1">Gói Tour</p>
+              <h3 class="text-4xl font-extrabold text-white tracking-tight" id="st-tour">—</h3>
+            </div>
+          </div>
+        </div>
+        <div class="doppelrand cursor-pointer group" onclick="navigate('trips')">
+          <div class="doppelrand-inner p-8 flex flex-col justify-between h-48 bg-emerald-50">
+            <div class="w-12 h-12 rounded-full bg-emerald-200/50 flex items-center justify-center text-emerald-800"><i class="fa-solid fa-ticket"></i></div>
+            <div>
+              <p class="text-xs uppercase tracking-widest text-emerald-800/60 font-bold mb-1">Đặt chỗ</p>
+              <h3 class="text-4xl font-extrabold text-emerald-900 tracking-tight" id="st-upcoming">—</h3>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div><!-- /content -->
-</div><!-- /main -->
+    <!-- PAGES -->
+    <div class="page" id="page-destinations"><div class="flex items-center gap-6 mb-12"><div class="bg-white rounded-full px-6 py-4 shadow-glass w-96 flex items-center gap-4"><i class="fa-solid fa-search text-muted opacity-50"></i><input type="text" id="search-destinations" class="bg-transparent border-none outline-none w-full text-sm font-semibold" placeholder="Search..." oninput="filterTable('destinations')"></div></div><div id="tb-destinations" class="flex flex-col gap-4"></div><div id="empty-destinations" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-hotels"><div class="flex items-center gap-6 mb-12"><div class="bg-white rounded-full px-6 py-4 shadow-glass w-96 flex items-center gap-4"><i class="fa-solid fa-search text-muted opacity-50"></i><input type="text" id="search-hotels" class="bg-transparent border-none outline-none w-full text-sm font-semibold" placeholder="Search..." oninput="filterTable('hotels')"></div></div><div id="tb-hotels" class="flex flex-col gap-4"></div><div id="empty-hotels" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-flights"><div class="flex items-center gap-6 mb-12"><div class="bg-white rounded-full px-6 py-4 shadow-glass w-96 flex items-center gap-4"><i class="fa-solid fa-search text-muted opacity-50"></i><input type="text" id="search-flights" class="bg-transparent border-none outline-none w-full text-sm font-semibold" placeholder="Search..." oninput="filterTable('flights')"></div></div><div id="tb-flights" class="flex flex-col gap-4"></div><div id="empty-flights" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-tours"><div class="flex items-center gap-6 mb-12"><div class="bg-white rounded-full px-6 py-4 shadow-glass w-96 flex items-center gap-4"><i class="fa-solid fa-search text-muted opacity-50"></i><input type="text" id="search-tours" class="bg-transparent border-none outline-none w-full text-sm font-semibold" placeholder="Search..." oninput="filterTable('tours')"></div></div><div id="tb-tours" class="flex flex-col gap-4"></div><div id="empty-tours" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-trips"><div class="flex items-center gap-6 mb-12"><div class="bg-white rounded-full px-6 py-4 shadow-glass w-96 flex items-center gap-4"><i class="fa-solid fa-search text-muted opacity-50"></i><input type="text" id="search-trips" class="bg-transparent border-none outline-none w-full text-sm font-semibold" placeholder="Search..." oninput="filterTable('trips')"></div></div><div id="tb-trips" class="flex flex-col gap-4"></div><div id="empty-trips" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-categories"><div id="tb-categories" class="flex flex-col gap-4"></div><div id="empty-categories" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-users"><div id="tb-users" class="flex flex-col gap-4"></div><div id="empty-users" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
+    <div class="page" id="page-documents"><div id="tb-documents" class="flex flex-col gap-4"></div><div id="empty-documents" class="py-24 text-center text-muted font-bold tracking-widest uppercase text-sm" style="display:none">Chưa có dữ liệu</div></div>
 
-<!-- ===== MODALS ===== -->
+  </div>
+</div>
 
-<!-- DESTINATION MODAL -->
-<div class="modal-overlay" id="modal-destination">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="mdest-title">Thêm điểm đến</span>
-      <button class="modal-close" onclick="closeModal('modal-destination')"><i class="fa-solid fa-xmark"></i></button>
+<!-- MODALS -->
+
+<!-- Upload Widget Helper -->
+<script>
+function renderUploadField(idLabel, idInput, idImg){
+  return `
+    <div class="col-span-2">
+      <label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">${idLabel} (Upload Ảnh)</label>
+      <div class="upload-box h-32 flex flex-col items-center justify-center group">
+        <div class="text-silver group-hover:text-primary transition-all text-3xl mb-2"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <div class="text-xs font-bold text-muted group-hover:text-primary transition-all">Click để chọn file</div>
+        <img id="${idImg}" class="upload-img">
+        <input type="file" id="file-${idInput}" class="upload-input" accept="image/*" onchange="handleUpload(this, '${idInput}', '${idImg}')">
+        <input type="hidden" id="${idInput}">
+      </div>
     </div>
-    <div class="modal-body">
-      <input type="hidden" id="d-id" />
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID (slug)</label><input class="form-control" id="d-slug" placeholder="vd: dalat" /></div>
-        <div class="form-group"><label class="form-label">Tên *</label><input class="form-control" id="d-name" placeholder="Đà Lạt" /></div>
-        <div class="form-group"><label class="form-label">Địa điểm *</label><input class="form-control" id="d-loc" placeholder="Lâm Đồng, VN" /></div>
-        <div class="form-group"><label class="form-label">Danh mục</label>
-          <select class="form-control" id="d-cat">
-            <option>Địa điểm</option><option>Khách sạn</option><option>Ẩm thực</option><option>Bãi biển</option>
+  `;
+}
+async function handleUpload(fileInput, hiddenId, imgId){
+  const file = fileInput.files[0];
+  if(!file) return;
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const r = await fetch(API+'/api/admin/upload', {method:'POST', headers:{'Authorization':'Bearer '+localStorage.getItem('token')}, body:fd});
+    if(!r.ok) throw new Error("Upload failed");
+    const json = await r.json();
+    document.getElementById(hiddenId).value = json.url;
+    const imgEl = document.getElementById(imgId);
+    imgEl.src = API + json.url;
+    imgEl.classList.add('show');
+    toast("Upload thành công", "success");
+  }catch(e){ toast(e.message, "error"); }
+}
+</script>
+
+
+<!-- Destination Modal -->
+<div class="modal-overlay" id="modal-destination">
+  <div class="doppelrand modal-content w-full max-w-3xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight" id="mdest-title">Điểm đến</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-destination')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 overflow-y-auto bg-offwhite/30 flex-1 grid grid-cols-2 gap-8">
+        <input type="hidden" id="ds-id">
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Slug</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="ds-slug"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="ds-name"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Vị trí</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="ds-loc"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Category</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="ds-cat"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Rating</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="ds-rating"></div>
+        <script>document.write(renderUploadField('Ảnh Điểm đến', 'ds-img', 'ds-img-preview'))</script>
+        <div class="col-span-2 flex items-center gap-8">
+            <label class="flex items-center gap-3 text-sm font-bold text-ink"><input type="checkbox" id="ds-fav" class="w-5 h-5 accent-primary"> Yêu thích</label>
+            <label class="flex items-center gap-3 text-sm font-bold text-ink"><input type="checkbox" id="ds-rec" class="w-5 h-5 accent-primary"> Khuyên dùng</label>
+        </div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mô tả</label><textarea class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary h-24" id="ds-desc"></textarea></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all" onclick="saveDestination()">Lưu Điểm đến</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hotel Modal -->
+<div class="modal-overlay" id="modal-hotel">
+  <div class="doppelrand modal-content w-full max-w-4xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight" id="mhotel-title">Khách sạn</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-hotel')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 overflow-y-auto bg-offwhite/30 flex-1 flex flex-col gap-8">
+        <div class="grid grid-cols-2 gap-8">
+          <input type="hidden" id="h-id">
+          <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Slug</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-slug"></div>
+          <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-name"></div>
+          <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Vị trí</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-loc"></div>
+          <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Địa chỉ cụ thể</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-addr"></div>
+          <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Rating</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-rating" type="number" step="0.1"></div>
+          <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giá từ</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-price" type="number"></div>
+          <script>document.write(renderUploadField('Ảnh đại diện', 'h-img', 'h-img-preview'))</script>
+          <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tiện ích (cách nhau dấu phẩy)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="h-amenities"></div>
+          <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mô tả</label><textarea class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary h-24" id="h-desc"></textarea></div>
+        </div>
+
+        <div class="pt-8 border-t border-silver" id="h-rooms-section" style="display:none">
+          <div class="flex justify-between items-center mb-6">
+            <h4 class="text-lg font-bold text-ink tracking-tight">Danh sách Phòng (Rooms)</h4>
+            <button class="bg-primary text-white font-bold py-2 px-6 rounded-full text-xs" onclick="openRoomModal()"><i class="fa-solid fa-plus mr-2"></i> Thêm Phòng</button>
+          </div>
+          <div id="h-rooms-list" class="flex flex-col gap-3"></div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all" onclick="saveHotel()">Lưu Khách Sạn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Room Sub-Modal -->
+<div class="modal-overlay" id="modal-room" style="z-index: 105;">
+  <div class="doppelrand modal-content w-full max-w-2xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-6 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-lg font-extrabold text-ink tracking-tight" id="mroom-title">Phòng</h3>
+        <button class="w-8 h-8 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-room')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 overflow-y-auto bg-offwhite/30 flex-1 grid grid-cols-2 gap-6">
+        <input type="hidden" id="r-id">
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên Phòng</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="r-name"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Sức chứa (Khách)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="r-cap" type="number"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giá 1 đêm</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="r-price" type="number"></div>
+        <script>document.write(renderUploadField('Ảnh Phòng', 'r-img', 'r-img-preview'))</script>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tiện ích (comma sep)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="r-amenities"></div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mô tả</label><textarea class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary h-20" id="r-desc"></textarea></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all" onclick="saveRoom()">Lưu Phòng</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flight Modal -->
+<div class="modal-overlay" id="modal-flight">
+  <div class="doppelrand modal-content w-full max-w-3xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight" id="mflight-title">Flight</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-flight')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 overflow-y-auto bg-offwhite/30 flex-1 grid grid-cols-2 gap-8">
+        <input type="hidden" id="f-id">
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Slug</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-slug"></div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Hãng Bay</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-airline"></div>
+        <script>document.write(renderUploadField('Logo Hãng Bay', 'f-logo', 'f-logo-preview'))</script>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Điểm Đi</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-dep"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Điểm Đến</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-arr"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giờ Đi</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-dep-time"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giờ Đến</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-arr-time"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giá</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-price" type="number"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Thời gian bay</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="f-dur"></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all" onclick="saveFlight()">Lưu Chuyến Bay</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tour Modal -->
+<div class="modal-overlay" id="modal-tour">
+  <div class="doppelrand modal-content w-full max-w-3xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight" id="mtour-title">Tour</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-tour')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 overflow-y-auto bg-offwhite/30 flex-1 grid grid-cols-2 gap-8">
+        <input type="hidden" id="t-id">
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Slug</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-slug"></div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên Tour</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-name"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Khởi hành</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-dep"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Thời lượng</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-dur"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Ngày đi</label><input type="date" class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-depdate"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giá</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-price" type="number"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Giá gốc</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-orig" type="number"></div>
+        <script>document.write(renderUploadField('Ảnh Bìa Tour', 't-img', 't-img-preview'))</script>
+        <div class="col-span-2 flex items-center gap-8">
+            <label class="flex items-center gap-3 text-sm font-bold text-ink"><input type="checkbox" id="t-popular" class="w-5 h-5 accent-primary"> Phổ biến (Hot)</label>
+            <label class="flex items-center gap-3 text-sm font-bold text-ink"><input type="checkbox" id="t-guide" class="w-5 h-5 accent-primary"> Bao gồm HDV</label>
+        </div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Điểm đến (comma sep)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-dests"></div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Bao gồm (comma sep)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="t-incl"></div>
+        <div class="col-span-2"><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mô tả</label><textarea class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary h-32" id="t-desc"></textarea></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all" onclick="saveTour()">Lưu Tour</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- User Modal -->
+<div class="modal-overlay" id="modal-user">
+  <div class="doppelrand modal-content w-full max-w-md">
+    <div class="doppelrand-inner flex flex-col">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight">Thêm Người Dùng</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-user')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 flex-1 flex flex-col gap-6">
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="u-name"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Email</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="u-email" type="email"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mật khẩu</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="u-pass" type="password"></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all w-full" onclick="saveUser()">Tạo Tài Khoản</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Document Modal -->
+<div class="modal-overlay" id="modal-document">
+  <div class="doppelrand modal-content w-full max-w-md">
+    <div class="doppelrand-inner flex flex-col">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight" id="mdoc-title">Tài liệu</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-document')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 flex-1 flex flex-col gap-6">
+        <input type="hidden" id="d-id">
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tiêu đề</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="d-title"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">FontAwesome Icon (VD: fa-passport)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="d-icon"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tailwind Color (VD: text-blue-500)</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="d-color"></div>
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Mô tả</label><textarea class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary h-24" id="d-desc"></textarea></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all w-full" onclick="saveDocument()">Lưu</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trip Modal (Advanced Details) -->
+<div class="modal-overlay" id="modal-trip">
+  <div class="doppelrand modal-content w-full max-w-lg">
+    <div class="doppelrand-inner flex flex-col">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight">Chi tiết Đặt chỗ</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-trip')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 flex-1 flex flex-col gap-6">
+        <input type="hidden" id="tr-id">
+        <div class="p-4 bg-offwhite rounded-2xl border border-silver">
+          <div class="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">Chuyến đi</div>
+          <div class="text-lg font-bold text-ink" id="tr-dest-disp"></div>
+          <div class="text-sm font-semibold text-muted mt-2">Tổng tiền: <span id="tr-price-disp" class="text-ink"></span></div>
+          <div class="text-sm font-semibold text-muted">ID Chuyến bay: <span id="tr-flight-disp" class="text-ink font-mono"></span></div>
+          <div class="text-sm font-semibold text-muted">ID Khách sạn: <span id="tr-hotel-disp" class="text-ink font-mono"></span></div>
+        </div>
+        <div>
+          <label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Trạng thái</label>
+          <select id="tr-status" class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-bold outline-none focus:border-primary">
+            <option value="Sắp tới">Sắp tới</option>
+            <option value="Đã xác nhận">Đã xác nhận</option>
+            <option value="Chờ thanh toán">Chờ thanh toán</option>
+            <option value="Đã đi">Đã đi</option>
+            <option value="Đã hủy">Đã hủy</option>
           </select>
         </div>
-        <div class="form-group"><label class="form-label">Rating</label><input class="form-control" id="d-rating" placeholder="4.5" /></div>
-        <div class="form-group"><label class="form-label">Thời gian</label><input class="form-control" id="d-dur" placeholder="3N/2Đ" /></div>
-        <div class="form-group"><label class="form-label">Giá ($)</label><input class="form-control" id="d-price" placeholder="199" /></div>
-        <div class="form-group"><label class="form-label">Số đánh giá</label><input class="form-control" id="d-reviews" placeholder="820" /></div>
-        <div class="form-group full"><label class="form-label">Image Path</label><input class="form-control" id="d-img" placeholder="assets/images/..." /></div>
-        <div class="form-group full">
-          <label class="form-label">Tùy chọn</label>
-          <div class="toggle-row">
-            <label class="toggle-label"><label class="toggle"><input type="checkbox" id="d-recommended"><span class="toggle-slider"></span></label> Nổi bật</label>
-            <label class="toggle-label"><label class="toggle"><input type="checkbox" id="d-favorite"><span class="toggle-slider"></span></label> Yêu thích</label>
-          </div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all w-full" onclick="saveTripStatus()">Cập Nhật Trạng Thái</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Trip Schedule Modal -->
+<div class="modal-overlay" id="modal-trip-schedule">
+  <div class="doppelrand modal-content w-full max-w-4xl">
+    <div class="doppelrand-inner flex flex-col max-h-[85vh]">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight">Quản lý Lịch trình Real-time</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-trip-schedule')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="flex-1 flex overflow-hidden">
+        <!-- Schedule Days/Items -->
+        <div class="w-2/3 p-8 overflow-y-auto bg-offwhite/30 border-r border-silver">
+          <input type="hidden" id="ts-trip-id">
+          <div id="ts-days-list" class="flex flex-col gap-6"></div>
         </div>
-        <div class="form-group full"><label class="form-label">Mô tả</label><textarea class="form-control" id="d-desc" placeholder="Mô tả điểm đến..."></textarea></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-destination')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveDestination()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- HOTEL MODAL -->
-<div class="modal-overlay" id="modal-hotel">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="mhotel-title">Thêm khách sạn</span>
-      <button class="modal-close" onclick="closeModal('modal-hotel')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="h-id" />
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID</label><input class="form-control" id="h-slug" placeholder="vd: hotel-dalat" /></div>
-        <div class="form-group"><label class="form-label">Tên *</label><input class="form-control" id="h-name" placeholder="Dalat Palace" /></div>
-        <div class="form-group"><label class="form-label">Địa điểm *</label><input class="form-control" id="h-loc" placeholder="Đà Lạt, VN" /></div>
-        <div class="form-group"><label class="form-label">Địa chỉ</label><input class="form-control" id="h-addr" placeholder="Số 2, Trần Phú..." /></div>
-        <div class="form-group"><label class="form-label">Rating</label><input class="form-control" id="h-rating" placeholder="4.5" /></div>
-        <div class="form-group"><label class="form-label">Giá từ ($)</label><input type="number" class="form-control" id="h-price" placeholder="80" /></div>
-        <div class="form-group full"><label class="form-label">Image Path</label><input class="form-control" id="h-img" placeholder="assets/images/..." /></div>
-        <div class="form-group full"><label class="form-label">Tiện nghi (phẩy cách nhau)</label><input class="form-control" id="h-amenities" placeholder="WiFi, Hồ bơi, Spa..." /></div>
-        <div class="form-group full"><label class="form-label">Mô tả</label><textarea class="form-control" id="h-desc" placeholder="Mô tả khách sạn..."></textarea></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-hotel')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveHotel()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- FLIGHT MODAL -->
-<div class="modal-overlay" id="modal-flight">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="mflight-title">Thêm chuyến bay</span>
-      <button class="modal-close" onclick="closeModal('modal-flight')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="f-id" />
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID</label><input class="form-control" id="f-slug" placeholder="vd: vj123" /></div>
-        <div class="form-group"><label class="form-label">Hãng bay *</label><input class="form-control" id="f-airline" placeholder="Vietjet Air" /></div>
-        <div class="form-group"><label class="form-label">Logo URL</label><input class="form-control" id="f-logo" placeholder="assets/logos/..." /></div>
-        <div class="form-group"><label class="form-label">Điểm đi *</label><input class="form-control" id="f-dep" placeholder="HAN" /></div>
-        <div class="form-group"><label class="form-label">Điểm đến *</label><input class="form-control" id="f-arr" placeholder="SGN" /></div>
-        <div class="form-group"><label class="form-label">Giờ khởi hành</label><input class="form-control" id="f-dep-time" placeholder="07:30" /></div>
-        <div class="form-group"><label class="form-label">Giờ đến</label><input class="form-control" id="f-arr-time" placeholder="09:15" /></div>
-        <div class="form-group"><label class="form-label">Giá ($)</label><input type="number" class="form-control" id="f-price" placeholder="85" /></div>
-        <div class="form-group"><label class="form-label">Thời gian bay</label><input class="form-control" id="f-dur" placeholder="1g 45p" /></div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-flight')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveFlight()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- TOUR MODAL -->
-<div class="modal-overlay" id="modal-tour">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="mtour-title">Thêm gói tour</span>
-      <button class="modal-close" onclick="closeModal('modal-tour')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="t-id" />
-      <div class="form-grid">
-        <div class="form-group"><label class="form-label">ID</label><input class="form-control" id="t-slug" placeholder="vd: tour-halong" /></div>
-        <div class="form-group"><label class="form-label">Tên tour *</label><input class="form-control" id="t-name" placeholder="Tour Hạ Long 2 ngày" /></div>
-        <div class="form-group"><label class="form-label">Khởi hành từ</label><input class="form-control" id="t-dep" placeholder="Hà Nội" /></div>
-        <div class="form-group"><label class="form-label">Thời gian</label><input class="form-control" id="t-dur" placeholder="2N/1Đ" /></div>
-        <div class="form-group"><label class="form-label">Giá ($)</label><input type="number" class="form-control" id="t-price" placeholder="299" /></div>
-        <div class="form-group"><label class="form-label">Giá gốc ($)</label><input type="number" class="form-control" id="t-orig" placeholder="399" /></div>
-        <div class="form-group full"><label class="form-label">Image Path</label><input class="form-control" id="t-img" placeholder="assets/images/..." /></div>
-        <div class="form-group full"><label class="form-label">Điểm đến (phẩy cách nhau)</label><input class="form-control" id="t-dests" placeholder="Hạ Long, Tuần Châu..." /></div>
-        <div class="form-group full"><label class="form-label">Bao gồm (phẩy cách nhau)</label><input class="form-control" id="t-incl" placeholder="Xe đưa đón, Ăn sáng..." /></div>
-        <div class="form-group full">
-          <label class="form-label">Tùy chọn</label>
-          <div class="toggle-row">
-            <label class="toggle-label"><label class="toggle"><input type="checkbox" id="t-popular"><span class="toggle-slider"></span></label> Phổ biến</label>
-            <label class="toggle-label"><label class="toggle"><input type="checkbox" id="t-guide" checked><span class="toggle-slider"></span></label> Hướng dẫn viên</label>
-          </div>
+        <!-- Updates -->
+        <div class="w-1/3 p-8 overflow-y-auto bg-white flex flex-col">
+          <h4 class="text-lg font-bold text-ink mb-4 tracking-tight">Gửi Cập Nhật</h4>
+          <textarea id="ts-update-msg" class="w-full bg-offwhite border-none rounded-xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 ring-primary mb-4" placeholder="Nhập thông báo (VD: Xe đến trễ 10 phút...)" rows="3"></textarea>
+          <button class="bg-primary text-white font-bold py-3 px-6 rounded-full hover:bg-black transition-all text-sm mb-8" onclick="sendTripUpdate()">Gửi Thông Báo</button>
+          
+          <h4 class="text-sm font-bold text-muted uppercase tracking-widest mb-4">Lịch sử Cập nhật</h4>
+          <div id="ts-updates-list" class="flex flex-col gap-4"></div>
         </div>
-        <div class="form-group full"><label class="form-label">Mô tả</label><textarea class="form-control" id="t-desc" placeholder="Mô tả gói tour..."></textarea></div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-tour')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveTour()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
     </div>
   </div>
 </div>
 
-<!-- CATEGORY MODAL -->
+<!-- Modal Category -->
 <div class="modal-overlay" id="modal-category">
-  <div class="modal" style="max-width:360px">
-    <div class="modal-header">
-      <span class="modal-title">Thêm danh mục</span>
-      <button class="modal-close" onclick="closeModal('modal-category')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Tên danh mục *</label><input class="form-control" id="cat-name" placeholder="vd: Biển đảo" /></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-category')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveCategory()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-    </div>
-  </div>
-</div>
-
-<!-- TRIP STATUS MODAL -->
-<div class="modal-overlay" id="modal-trip">
-  <div class="modal" style="max-width:400px">
-    <div class="modal-header">
-      <span class="modal-title">Cập nhật trạng thái</span>
-      <button class="modal-close" onclick="closeModal('modal-trip')"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="tr-id" />
-      <div class="form-group" style="margin-bottom:12px"><label class="form-label">Điểm đến</label><input class="form-control" id="tr-dest" disabled /></div>
-      <div class="form-group"><label class="form-label">Trạng thái</label>
-        <select class="form-control" id="tr-status">
-          <option>Sắp tới</option><option>Đã xác nhận</option><option>Chờ thanh toán</option><option>Đã đi</option><option>Đã hủy</option>
-        </select>
+  <div class="doppelrand modal-content w-full max-w-md">
+    <div class="doppelrand-inner flex flex-col">
+      <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
+        <h3 class="text-xl font-extrabold text-ink tracking-tight">Thêm Danh Mục</h3>
+        <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-category')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-8 flex-1">
+        <div><label class="text-[10px] uppercase tracking-widest text-muted font-bold block mb-2">Tên danh mục</label><input class="w-full bg-white border border-silver rounded-xl px-6 py-4 text-sm font-semibold outline-none focus:border-primary" id="cat-name"></div>
+      </div>
+      <div class="p-6 border-t border-silver bg-white flex justify-end">
+        <button class="bg-primary text-white font-bold py-4 px-10 rounded-full hover:bg-black transition-all w-full" onclick="saveCategory()">Thêm</button>
       </div>
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-trip')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveTripStatus()"><i class="fa-solid fa-floppy-disk"></i> Lưu</button>
-    </div>
   </div>
 </div>
 
-<!-- CONFIRM DELETE -->
+<!-- Confirm Modal -->
 <div class="modal-overlay" id="modal-confirm">
-  <div class="modal confirm-modal">
-    <div class="confirm-body">
-      <div class="confirm-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-      <h3>Xác nhận xóa</h3>
-      <p id="confirm-msg">Bạn có chắc muốn xóa mục này không?</p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-confirm')">Hủy</button>
-      <button class="btn btn-danger" id="confirm-ok"><i class="fa-solid fa-trash"></i> Xóa</button>
+  <div class="doppelrand modal-content w-full max-w-sm">
+    <div class="doppelrand-inner flex flex-col items-center p-10 text-center">
+      <div class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-3xl mb-6 shadow-sm"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3 class="text-2xl font-extrabold text-ink tracking-tight mb-2">Chắc chắn xóa?</h3>
+      <p class="text-sm font-semibold text-muted mb-10" id="confirm-msg">Hành động này không thể hoàn tác.</p>
+      <div class="flex gap-4 w-full">
+        <button class="flex-1 bg-offwhite text-ink font-bold py-4 rounded-full hover:bg-silver transition-all" onclick="closeModal('modal-confirm')">Hủy</button>
+        <button class="flex-1 bg-red-500 text-white font-bold py-4 rounded-full hover:bg-red-600 shadow-glass transition-all" id="confirm-ok">Xóa</button>
+      </div>
     </div>
   </div>
 </div>
@@ -601,507 +572,481 @@
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const API = 'http://localhost:3000';
-let curPage = 'dashboard';
-let data = { destinations:[], hotels:[], flights:[], tours:[], trips:[], categories:[] };
+let curPage='dashboard';
+let data={destinations:[],hotels:[],flights:[],tours:[],trips:[],categories:[],users:[],documents:[]};
+const API='http://localhost:3000';
 
-const pageMeta = {
-  dashboard:    { title:'Dashboard',    sub:'Tổng quan hệ thống quản trị',    add:false },
-  destinations: { title:'Điểm đến',    sub:'Quản lý điểm đến du lịch',        add:true  },
-  hotels:       { title:'Khách sạn',   sub:'Quản lý danh sách khách sạn',     add:true  },
-  flights:      { title:'Chuyến bay',  sub:'Quản lý lịch trình bay',          add:true  },
-  tours:        { title:'Gói tour',    sub:'Quản lý các gói du lịch',         add:true  },
-  trips:        { title:'Đặt chỗ',     sub:'Quản lý lịch sử đặt chỗ',        add:false },
-  categories:   { title:'Danh mục',    sub:'Quản lý danh mục',                add:true  },
-  profile:      { title:'Hồ sơ',       sub:'Thông tin người dùng',            add:false },
-};
-
-// ── NAVIGATE ──────────────────────────────────────────────────────────────
-function navigate(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.getElementById('nav-' + page)?.classList.add('active');
-  curPage = page;
-  const m = pageMeta[page];
-  document.getElementById('pageTitle').textContent = m.title;
-  document.getElementById('pageSubtitle').textContent = m.sub;
-  document.getElementById('addBtn').style.display = m.add ? 'inline-flex' : 'none';
-  loadPage(page);
-}
-
-function openAddModal() {
-  const map = { destinations:'destination', hotels:'hotel', flights:'flight', tours:'tour', categories:'category' };
-  const m = map[curPage];
-  if (m === 'destination') openDestModal();
-  else if (m === 'hotel') openHotelModal();
-  else if (m === 'flight') openFlightModal();
-  else if (m === 'tour') openTourModal();
-  else if (m === 'category') { document.getElementById('cat-name').value=''; openModal('modal-category'); }
-}
-
-async function refreshData() { await loadPage(curPage); toast('Đã làm mới', 'info'); }
-
-// ── API ────────────────────────────────────────────────────────────────────
-async function req(path, method='GET', body=null) {
-  const o = { method, credentials: 'same-origin', headers:{'Content-Type':'application/json'} };
-  if (body) o.body = JSON.stringify(body);
-  const r = await fetch(API + path, o);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
+async function req(path,method='GET',body=null){
+  const opt={method,headers:{}};
+  if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+  const r=await fetch(API+path,opt);
+  if(!r.ok) throw new Error(await r.text()||r.statusText);
   return r.json();
 }
 
-// ── HEALTH ─────────────────────────────────────────────────────────────────
-async function checkHealth() {
-  try {
-    await fetch(API + '/health');
-    document.getElementById('statusDot').classList.remove('offline');
-    document.getElementById('statusText').textContent = 'API :3000 online';
-  } catch {
-    document.getElementById('statusDot').classList.add('offline');
-    document.getElementById('statusText').textContent = 'API offline';
+async function checkHealth(){
+  try{
+    await req('/health');
+    document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]';
+    document.getElementById('statusText').textContent='Online';
+  }catch(e){
+    document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-red-500';
+    document.getElementById('statusText').textContent='Offline';
   }
 }
 
-// ── LOAD PAGE ──────────────────────────────────────────────────────────────
-async function loadPage(page) {
-  if (page === 'dashboard') return loadDashboard();
-  if (page === 'destinations') return loadDestinations();
-  if (page === 'hotels') return loadHotels();
-  if (page === 'flights') return loadFlights();
-  if (page === 'tours') return loadTours();
-  if (page === 'trips') return loadTrips();
-  if (page === 'categories') return loadCategories();
-  if (page === 'profile') return loadProfile();
+function navigate(page){
+  document.querySelectorAll('.nav-item').forEach(e=>{e.classList.remove('active','bg-primary','text-white'); e.classList.add('text-muted');});
+  const el=document.getElementById(`nav-${page}`);
+  if(el){ el.classList.add('active','bg-primary','text-white'); el.classList.remove('text-muted'); }
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  curPage=page;
+  const titles={dashboard:'Dashboard',destinations:'Điểm đến',hotels:'Khách sạn',flights:'Chuyến bay',tours:'Gói tour',trips:'Đặt chỗ',categories:'Danh mục',users:'Người dùng',documents:'Hành trang'};
+  document.getElementById('pageTitle').textContent=titles[page]||'Admin';
+  
+  const addBtn=document.getElementById('addBtn');
+  if(['destinations','hotels','flights','tours','categories','users','documents'].includes(page)){addBtn.style.display='flex';}else{addBtn.style.display='none';}
+  loadPage(page);
 }
 
-// ── DASHBOARD ──────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  try {
-    const s = await req('/api/admin/stats');
-    document.getElementById('st-dest').textContent = s.destinations;
-    document.getElementById('st-hotel').textContent = s.hotels;
-    document.getElementById('st-flight').textContent = s.flights;
-    document.getElementById('st-tour').textContent = s.tours;
-    document.getElementById('st-upcoming').textContent = s.tripsUpcoming;
-    document.getElementById('st-history').textContent = s.tripsHistory;
-    document.getElementById('badge-destinations').textContent = s.destinations;
-    document.getElementById('badge-hotels').textContent = s.hotels;
-    document.getElementById('badge-flights').textContent = s.flights;
-    document.getElementById('badge-tours').textContent = s.tours;
-    document.getElementById('badge-trips').textContent = (s.tripsUpcoming||0)+(s.tripsHistory||0);
-  } catch(e) { console.warn(e); }
-
-  await Promise.allSettled([
-    req('/api/admin/destinations').then(d => {
-      data.destinations = d;
-      document.getElementById('dash-dest').innerHTML = d.slice(0,5).map(x => `
-        <div class="qp-item">
-          <div class="qp-icon" style="background:rgba(99,102,241,0.12);color:var(--accent)"><i class="fa-solid fa-map-pin"></i></div>
-          <div><div class="qp-name">${x.name}</div><div class="qp-sub">${x.location}</div></div>
-          <span class="badge ${x.isRecommended?'bg-green':'bg-gray'}">${x.isRecommended?'Nổi bật':'Thường'}</span>
-        </div>`).join('') || '<div class="empty-state" style="padding:20px"><p>Trống</p></div>';
-    }),
-    req('/api/admin/trips').then(d => {
-      data.trips = d;
-      document.getElementById('dash-trips').innerHTML = d.slice(0,5).map(x => `
-        <div class="qp-item">
-          <div class="qp-icon" style="background:rgba(16,185,129,0.12);color:var(--green)"><i class="fa-solid fa-suitcase"></i></div>
-          <div><div class="qp-name">${x.destination}</div><div class="qp-sub">${x.date}</div></div>
-          ${tripBadge(x.status)}
-        </div>`).join('') || '<div class="empty-state" style="padding:20px"><p>Trống</p></div>';
-    }),
-    req('/api/admin/flights').then(d => {
-      data.flights = d;
-      document.getElementById('dash-flights').innerHTML = d.slice(0,5).map(x => `
-        <div class="qp-item">
-          <div class="qp-icon" style="background:rgba(59,130,246,0.12);color:var(--blue)"><i class="fa-solid fa-plane-departure"></i></div>
-          <div><div class="qp-name">${x.departure} → ${x.arrival}</div><div class="qp-sub">${x.airline}</div></div>
-          <b style="color:var(--accent);font-size:12px">${fmtUSD(x.price)}</b>
-        </div>`).join('') || '<div class="empty-state" style="padding:20px"><p>Trống</p></div>';
-    }),
-    req('/api/admin/tours').then(d => {
-      data.tours = d;
-      document.getElementById('dash-tours').innerHTML = d.slice(0,5).map(x => `
-        <div class="qp-item">
-          <div class="qp-icon" style="background:rgba(245,158,11,0.12);color:var(--orange)"><i class="fa-solid fa-umbrella-beach"></i></div>
-          <div><div class="qp-name">${x.name}</div><div class="qp-sub">${x.duration} · ${x.departure}</div></div>
-          <b style="color:var(--orange);font-size:12px">${fmtUSD(x.price)}</b>
-        </div>`).join('') || '<div class="empty-state" style="padding:20px"><p>Trống</p></div>';
-    }),
-  ]);
+function loadPage(page){
+  if(page==='dashboard') loadDashboard();
+  if(page==='destinations') loadDestinations();
+  if(page==='hotels') loadHotels();
+  if(page==='flights') loadFlights();
+  if(page==='tours') loadTours();
+  if(page==='trips') loadTrips();
+  if(page==='categories') loadCategories();
+  if(page==='users') loadUsers();
+  if(page==='documents') loadDocuments();
+}
+function refreshData(){loadPage(curPage);}
+function openAddModal(){
+  if(curPage==='destinations') openDestinationModal();
+  if(curPage==='hotels') openHotelModal();
+  if(curPage==='flights') openFlightModal();
+  if(curPage==='tours') openTourModal();
+  if(curPage==='categories') openModal('modal-category');
+  if(curPage==='users') openUserModal();
+  if(curPage==='documents') openDocumentModal();
 }
 
-// ── DESTINATIONS ───────────────────────────────────────────────────────────
-async function loadDestinations() {
-  data.destinations = await req('/api/admin/destinations');
-  renderDestinations(data.destinations);
+const listRow = (cols, actions) => `
+  <div class="flex items-center justify-between p-6 bg-white rounded-3xl shadow-sm border border-silver hover:shadow-glass hover:-translate-y-1 transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)]">
+    <div class="flex flex-1 items-center gap-8">
+      ${cols.map(c=>`<div class="${c.cls||''}"><div class="text-[10px] uppercase tracking-widest text-muted font-bold mb-1">${c.label}</div><div class="text-sm font-bold text-ink">${c.val}</div></div>`).join('')}
+    </div>
+    <div class="flex gap-2 ml-6">
+      ${actions}
+    </div>
+  </div>`;
+
+// ── DASHBOARD ──
+async function loadDashboard(){
+  try{
+    const st = await req('/api/admin/stats');
+    document.getElementById('st-dest').textContent=st.destinations;
+    document.getElementById('st-hotel').textContent=st.hotels;
+    document.getElementById('st-flight').textContent=st.flights;
+    document.getElementById('st-tour').textContent=st.tours;
+    document.getElementById('st-upcoming').textContent=st.tripsUpcoming;
+  }catch(e){}
 }
-function renderDestinations(rows) {
-  const tb = document.getElementById('tb-destinations');
-  const em = document.getElementById('empty-destinations');
-  if (!rows.length) { tb.innerHTML=''; em.style.display='flex'; return; }
+
+// ── HOTELS & ROOMS ──
+async function loadHotels(){ data.hotels=await req('/api/admin/hotels'); renderHotels(data.hotels); }
+function renderHotels(rows){
+  const tb=document.getElementById('tb-hotels'), em=document.getElementById('empty-hotels');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  tb.innerHTML = rows.map(d => `<tr>
-    <td class="td-name">${d.name}</td>
-    <td>${d.location}</td>
-    <td><span class="badge bg-blue">${d.category}</span></td>
-    <td><span style="color:var(--orange)">★ ${d.rating}</span></td>
-    <td><b style="color:var(--accent)">$${d.price}</b></td>
-    <td>${d.isRecommended?'<span class="badge bg-green">Nổi bật</span>':'<span class="badge bg-gray">Không</span>'}</td>
-    <td><div class="actions-cell">
-      <button class="btn btn-secondary btn-sm" onclick="editDest('${d.id}')"><i class="fa-solid fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDel('destination','${d.id}','${d.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
+  tb.innerHTML=rows.map(h=>listRow([
+    {label:'Tên Khách Sạn', val:h.name, cls:'w-1/3'},
+    {label:'Địa điểm', val:h.location, cls:'w-1/4'},
+    {label:'Phòng', val:`<span class="px-2 py-1 bg-silver rounded-full text-xs">${h.rooms?.length||0}</span>`},
+    {label:'Giá từ', val:`$${h.priceFrom}`}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editHotel('${h.id}')"><i class="fa-solid fa-pen"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('hotel','${h.id}','${h.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
 }
-function openDestModal(dest=null) {
-  document.getElementById('mdest-title').textContent = dest ? 'Sửa điểm đến' : 'Thêm điểm đến';
-  document.getElementById('d-id').value = dest?.id ?? '';
-  document.getElementById('d-slug').value = dest?.id ?? '';
-  document.getElementById('d-slug').disabled = !!dest;
-  document.getElementById('d-name').value = dest?.name ?? '';
-  document.getElementById('d-loc').value = dest?.location ?? '';
-  document.getElementById('d-cat').value = dest?.category ?? 'Địa điểm';
-  document.getElementById('d-rating').value = dest?.rating ?? '';
-  document.getElementById('d-dur').value = dest?.duration ?? '';
-  document.getElementById('d-price').value = dest?.price ?? '';
-  document.getElementById('d-reviews').value = dest?.reviewsCount ?? '';
-  document.getElementById('d-img').value = dest?.imagePath ?? '';
-  document.getElementById('d-desc').value = dest?.description ?? '';
-  document.getElementById('d-recommended').checked = dest?.isRecommended ?? false;
-  document.getElementById('d-favorite').checked = dest?.isFavorite ?? false;
-  openModal('modal-destination');
+function setImg(id, url){
+  document.getElementById(id).value = url;
+  const img = document.getElementById(id+'-preview');
+  if(url){ img.src = url.startsWith('/') ? API+url : url; img.classList.add('show'); }
+  else { img.classList.remove('show'); }
 }
-function editDest(id) { openDestModal(data.destinations.find(x=>x.id===id)); }
-async function saveDestination() {
-  const id = document.getElementById('d-id').value;
-  const slug = document.getElementById('d-slug').value.trim();
-  const body = {
-    id: id||slug||`dest-${Date.now()}`,
-    name: v('d-name'), location: v('d-loc'), category: v('d-cat'),
-    rating: v('d-rating'), duration: v('d-dur'), price: v('d-price'),
-    reviewsCount: v('d-reviews'), imagePath: v('d-img'), description: v('d-desc'),
-    isRecommended: document.getElementById('d-recommended').checked,
-    isFavorite: document.getElementById('d-favorite').checked,
-  };
-  if (!body.name||!body.location) { toast('Tên và địa điểm là bắt buộc','error'); return; }
-  try {
-    if (id) await req(`/api/admin/destinations/${id}`, 'PUT', body);
-    else await req('/api/admin/destinations', 'POST', body);
-    closeModal('modal-destination');
-    await loadDestinations();
-    toast(id?'Đã cập nhật điểm đến':'Đã thêm điểm đến mới','success');
-  } catch(e) { toast('Lỗi: '+e.message,'error'); }
-}
-
-// ── HOTELS ─────────────────────────────────────────────────────────────────
-async function loadHotels() {
-  data.hotels = await req('/api/admin/hotels');
-  renderHotels(data.hotels);
-}
-function renderHotels(rows) {
-  const tb = document.getElementById('tb-hotels');
-  const em = document.getElementById('empty-hotels');
-  if (!rows.length) { tb.innerHTML=''; em.style.display='flex'; return; }
-  em.style.display='none';
-  tb.innerHTML = rows.map(h=>`<tr>
-    <td class="td-name">${h.name}</td>
-    <td>${h.location}</td>
-    <td><span style="color:var(--orange)">★ ${h.rating}</span></td>
-    <td><b style="color:var(--teal)">$${h.priceFrom}</b></td>
-    <td><span class="badge bg-purple">${h.rooms?.length??0} phòng</span></td>
-    <td><div class="actions-cell">
-      <button class="btn btn-secondary btn-sm" onclick="editHotel('${h.id}')"><i class="fa-solid fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDel('hotel','${h.id}','${h.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
-}
-function openHotelModal(hotel=null) {
-  document.getElementById('mhotel-title').textContent = hotel?'Sửa khách sạn':'Thêm khách sạn';
-  document.getElementById('h-id').value = hotel?.id??'';
-  document.getElementById('h-slug').value = hotel?.id??'';
-  document.getElementById('h-slug').disabled = !!hotel;
-  document.getElementById('h-name').value = hotel?.name??'';
-  document.getElementById('h-loc').value = hotel?.location??'';
-  document.getElementById('h-addr').value = hotel?.address??'';
-  document.getElementById('h-rating').value = hotel?.rating??'';
-  document.getElementById('h-price').value = hotel?.priceFrom??'';
-  document.getElementById('h-img').value = hotel?.imagePath??'';
-  document.getElementById('h-amenities').value = hotel?.amenities?.join(', ')??'';
-  document.getElementById('h-desc').value = hotel?.description??'';
+function openHotelModal(hotel=null){
+  document.getElementById('mhotel-title').textContent=hotel?'Cập nhật Khách Sạn':'Thêm mới Khách Sạn';
+  document.getElementById('h-id').value=hotel?.id??'';
+  document.getElementById('h-slug').value=hotel?.id??'';
+  document.getElementById('h-slug').disabled=!!hotel;
+  ['name','loc','addr','rating','price','desc'].forEach(k=>document.getElementById(`h-${k}`).value=hotel?.[k==='loc'?'location':k==='addr'?'address':k==='price'?'priceFrom':k==='desc'?'description':k]??'');
+  setImg('h-img', hotel?.imagePath??'');
+  document.getElementById('h-amenities').value=hotel?.amenities?.join(', ')??'';
+  
+  const roomSec=document.getElementById('h-rooms-section');
+  if(hotel){ roomSec.style.display='block'; renderRooms(hotel.rooms||[]); } else { roomSec.style.display='none'; }
   openModal('modal-hotel');
 }
-function editHotel(id) { openHotelModal(data.hotels.find(x=>x.id===id)); }
-async function saveHotel() {
-  const id = document.getElementById('h-id').value;
-  const body = {
-    id: id||v('h-slug')||`hotel-${Date.now()}`,
-    name:v('h-name'), location:v('h-loc'), address:v('h-addr'), rating:v('h-rating'),
-    priceFrom:parseFloat(v('h-price'))||0, imagePath:v('h-img'), description:v('h-desc'),
-    amenities: v('h-amenities').split(',').map(a=>a.trim()).filter(Boolean),
-  };
-  if (!body.name||!body.location) { toast('Tên và địa điểm là bắt buộc','error'); return; }
-  try {
-    if (id) await req(`/api/admin/hotels/${id}`,'PUT',body);
-    else await req('/api/admin/hotels','POST',body);
-    closeModal('modal-hotel');
-    await loadHotels();
-    toast(id?'Đã cập nhật khách sạn':'Đã thêm khách sạn mới','success');
-  } catch(e) { toast('Lỗi: '+e.message,'error'); }
+function editHotel(id){openHotelModal(data.hotels.find(x=>x.id===id));}
+async function saveHotel(){
+  const id=document.getElementById('h-id').value;
+  const body={ id:id||v('h-slug')||`hotel-${Date.now()}`, name:v('h-name'), location:v('h-loc'), address:v('h-addr'), rating:v('h-rating'), priceFrom:parseFloat(v('h-price'))||0, imagePath:v('h-img'), description:v('h-desc'), amenities: v('h-amenities').split(',').map(a=>a.trim()).filter(Boolean)};
+  try{ if(id)await req(`/api/admin/hotels/${id}`,'PUT',body); else await req('/api/admin/hotels','POST',body); closeModal('modal-hotel'); await loadHotels(); toast(id?'Đã cập nhật':'Đã thêm mới','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── FLIGHTS ────────────────────────────────────────────────────────────────
-async function loadFlights() {
-  data.flights = await req('/api/admin/flights');
-  renderFlights(data.flights);
+function renderRooms(rooms){
+  const tb = document.getElementById('h-rooms-list');
+  if(!rooms.length){tb.innerHTML='<div class="text-xs text-muted">Khách sạn này chưa có phòng nào.</div>';return;}
+  tb.innerHTML = rooms.map(r=>`
+    <div class="flex items-center justify-between p-4 bg-white border border-silver rounded-2xl">
+      <div><div class="text-sm font-bold text-ink">${r.name}</div><div class="text-xs text-muted">Sức chứa: ${r.capacity} khách - $${r.price}</div></div>
+      <div class="flex gap-2">
+        <button class="w-8 h-8 rounded-full bg-offwhite hover:bg-silver text-ink" onclick="editRoom('${r.id}')"><i class="fa-solid fa-pen text-xs"></i></button>
+        <button class="w-8 h-8 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500" onclick="confirmDel('room','${r.id}','${r.name}')"><i class="fa-solid fa-trash text-xs"></i></button>
+      </div>
+    </div>
+  `).join('');
 }
-function renderFlights(rows) {
+function openRoomModal(room=null){
+  document.getElementById('mroom-title').textContent=room?'Sửa Phòng':'Thêm Phòng';
+  document.getElementById('r-id').value=room?.id??'';
+  ['name','cap','price','desc'].forEach(k=>document.getElementById(`r-${k}`).value=room?.[k==='cap'?'capacity':k==='desc'?'description':k]??'');
+  setImg('r-img', room?.imagePath??'');
+  document.getElementById('r-amenities').value=room?.amenities?.join(', ')??'';
+  openModal('modal-room');
+}
+function editRoom(id){
+  const hotel=data.hotels.find(h=>h.id===document.getElementById('h-id').value);
+  openRoomModal(hotel.rooms.find(r=>r.id===id));
+}
+async function saveRoom(){
+  const hotelId=document.getElementById('h-id').value;
+  const id=document.getElementById('r-id').value;
+  const body={ name:v('r-name'), capacity:parseInt(v('r-cap'))||1, price:parseFloat(v('r-price'))||0, imagePath:v('r-img'), description:v('r-desc'), amenities:v('r-amenities').split(',').map(a=>a.trim()).filter(Boolean)};
+  try{ 
+    if(id) await req(`/api/admin/hotels/${hotelId}/rooms/${id}`,'PUT',body); 
+    else await req(`/api/admin/hotels/${hotelId}/rooms`,'POST',body); 
+    closeModal('modal-room'); await loadHotels(); editHotel(hotelId); toast('Lưu phòng thành công','success'); 
+  }catch(e){toast(e.message,'error');}
+}
+
+// ── FLIGHTS ──
+async function loadFlights(){ data.flights=await req('/api/admin/flights'); renderFlights(data.flights); }
+function renderFlights(rows){
   const tb=document.getElementById('tb-flights'), em=document.getElementById('empty-flights');
-  if (!rows.length) { tb.innerHTML=''; em.style.display='flex'; return; }
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  tb.innerHTML=rows.map(f=>`<tr>
-    <td class="td-name">${f.airline}</td>
-    <td><span class="badge bg-blue">${f.departure}</span></td>
-    <td><span class="badge bg-teal">${f.arrival}</span></td>
-    <td>${f.departureTime}</td>
-    <td>${f.arrivalTime}</td>
-    <td><b style="color:var(--accent)">${fmtUSD(f.price)}</b></td>
-    <td>${f.duration}</td>
-    <td><div class="actions-cell">
-      <button class="btn btn-secondary btn-sm" onclick="editFlight('${f.id}')"><i class="fa-solid fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDel('flight','${f.id}','${f.airline.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
+  tb.innerHTML=rows.map(f=>listRow([
+    {label:'Hãng bay', val:f.airline, cls:'w-1/4'},
+    {label:'Hành trình', val:`${f.departure} <i class="fa-solid fa-arrow-right text-[10px] mx-1 text-muted"></i> ${f.arrival}`, cls:'w-1/4'},
+    {label:'Thời gian', val:`${f.departureTime} - ${f.arrivalTime}`},
+    {label:'Giá', val:fmtUSD(f.price)}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editFlight('${f.id}')"><i class="fa-solid fa-pen"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('flight','${f.id}','${f.airline.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
 }
-function openFlightModal(fl=null) {
+function openFlightModal(fl=null){
   document.getElementById('mflight-title').textContent=fl?'Sửa chuyến bay':'Thêm chuyến bay';
   document.getElementById('f-id').value=fl?.id??'';
   document.getElementById('f-slug').value=fl?.id??'';
   document.getElementById('f-slug').disabled=!!fl;
-  document.getElementById('f-airline').value=fl?.airline??'';
-  document.getElementById('f-logo').value=fl?.airlineLogo??'';
-  document.getElementById('f-dep').value=fl?.departure??'';
-  document.getElementById('f-arr').value=fl?.arrival??'';
-  document.getElementById('f-dep-time').value=fl?.departureTime??'';
-  document.getElementById('f-arr-time').value=fl?.arrivalTime??'';
-  document.getElementById('f-price').value=fl?.price??'';
-  document.getElementById('f-dur').value=fl?.duration??'';
+  ['airline','dep','arr','dep-time','arr-time','price','dur'].forEach(k=>{
+    const mk=k==='dep'?'departure':k==='arr'?'arrival':k==='dep-time'?'departureTime':k==='arr-time'?'arrivalTime':k==='dur'?'duration':k;
+    document.getElementById(`f-${k}`).value=fl?.[mk]??'';
+  });
+  setImg('f-logo', fl?.airlineLogo??'');
   openModal('modal-flight');
 }
 function editFlight(id){openFlightModal(data.flights.find(x=>x.id===id));}
 async function saveFlight(){
   const id=document.getElementById('f-id').value;
-  const body={id:id||v('f-slug')||`fl-${Date.now()}`,airline:v('f-airline'),airlineLogo:v('f-logo'),
-    departure:v('f-dep'),arrival:v('f-arr'),departureTime:v('f-dep-time'),arrivalTime:v('f-arr-time'),
-    price:parseFloat(v('f-price'))||0,duration:v('f-dur')};
-  if(!body.airline||!body.departure||!body.arrival){toast('Vui lòng điền đủ thông tin','error');return;}
-  try{
-    if(id)await req(`/api/admin/flights/${id}`,'PUT',body);
-    else await req('/api/admin/flights','POST',body);
-    closeModal('modal-flight');await loadFlights();
-    toast(id?'Đã cập nhật chuyến bay':'Đã thêm chuyến bay mới','success');
-  }catch(e){toast('Lỗi: '+e.message,'error');}
+  const body={id:id||v('f-slug')||`fl-${Date.now()}`,airline:v('f-airline'),airlineLogo:v('f-logo'),departure:v('f-dep'),arrival:v('f-arr'),departureTime:v('f-dep-time'),arrivalTime:v('f-arr-time'),price:parseFloat(v('f-price'))||0,duration:v('f-dur')};
+  try{ if(id)await req(`/api/admin/flights/${id}`,'PUT',body); else await req('/api/admin/flights','POST',body); closeModal('modal-flight'); await loadFlights(); toast('Lưu thành công','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── TOURS ──────────────────────────────────────────────────────────────────
-async function loadTours(){
-  data.tours=await req('/api/admin/tours');
-  renderTours(data.tours);
-}
+// ── TOURS ──
+async function loadTours(){ data.tours=await req('/api/admin/tours'); renderTours(data.tours); }
 function renderTours(rows){
-  const tb=document.getElementById('tb-tours'),em=document.getElementById('empty-tours');
-  if(!rows.length){tb.innerHTML='';em.style.display='flex';return;}
+  const tb=document.getElementById('tb-tours'), em=document.getElementById('empty-tours');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  tb.innerHTML=rows.map(t=>`<tr>
-    <td class="td-name">${t.name}</td>
-    <td>${t.departure}</td>
-    <td>${t.duration}</td>
-    <td><b style="color:var(--orange)">${fmtUSD(t.price)}</b>${t.originalPrice?`<br><s style="color:var(--text-muted);font-size:10px">${fmtUSD(t.originalPrice)}</s>`:''}</td>
-    <td>${t.isPopular?'<span class="badge bg-orange">🔥 Hot</span>':'<span class="badge bg-gray">Không</span>'}</td>
-    <td><div class="actions-cell">
-      <button class="btn btn-secondary btn-sm" onclick="editTour('${t.id}')"><i class="fa-solid fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDel('tour','${t.id}','${t.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
+  tb.innerHTML=rows.map(t=>listRow([
+    {label:'Tên Tour', val:t.name, cls:'w-1/3'},
+    {label:'Khởi hành', val:t.departure},
+    {label:'Giá', val:`${fmtUSD(t.price)} ${t.originalPrice?`<s class="text-muted font-normal ml-2">${fmtUSD(t.originalPrice)}</s>`:''}`},
+    {label:'Tag', val:t.isPopular?'<span class="px-3 py-1 bg-primary text-white rounded-full text-[10px]">HOT</span>':''}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editTour('${t.id}')"><i class="fa-solid fa-pen"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('tour','${t.id}','${t.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
 }
 function openTourModal(tour=null){
-  document.getElementById('mtour-title').textContent=tour?'Sửa gói tour':'Thêm gói tour';
+  document.getElementById('mtour-title').textContent=tour?'Sửa tour':'Thêm tour';
   document.getElementById('t-id').value=tour?.id??'';
   document.getElementById('t-slug').value=tour?.id??'';
   document.getElementById('t-slug').disabled=!!tour;
-  document.getElementById('t-name').value=tour?.name??'';
-  document.getElementById('t-dep').value=tour?.departure??'';
-  document.getElementById('t-dur').value=tour?.duration??'';
-  document.getElementById('t-price').value=tour?.price??'';
-  document.getElementById('t-orig').value=tour?.originalPrice??'';
-  document.getElementById('t-img').value=tour?.imagePath??'';
+  ['name','dep','dur','price','orig','dests','incl','desc'].forEach(k=>{
+    const mk=k==='dep'?'departure':k==='dur'?'duration':k==='orig'?'originalPrice':k==='dests'?'destinations':k==='incl'?'includes':k==='desc'?'description':k;
+    let v=tour?.[mk]??''; if(Array.isArray(v))v=v.join(', ');
+    document.getElementById(`t-${k}`).value=v;
+  });
+  document.getElementById('t-depdate').value=tour?.departureDate??'';
+  setImg('t-img', tour?.imagePath??'');
   document.getElementById('t-popular').checked=tour?.isPopular??false;
   document.getElementById('t-guide').checked=tour?.includesGuide??true;
-  document.getElementById('t-dests').value=tour?.destinations?.join(', ')??'';
-  document.getElementById('t-incl').value=tour?.includes?.join(', ')??'';
-  document.getElementById('t-desc').value=tour?.description??'';
   openModal('modal-tour');
 }
 function editTour(id){openTourModal(data.tours.find(x=>x.id===id));}
 async function saveTour(){
   const id=document.getElementById('t-id').value;
-  const body={
-    id:id||v('t-slug')||`tour-${Date.now()}`,name:v('t-name'),departure:v('t-dep'),duration:v('t-dur'),
-    price:parseFloat(v('t-price'))||0,originalPrice:parseFloat(v('t-orig'))||null,
-    imagePath:v('t-img'),description:v('t-desc'),isPopular:document.getElementById('t-popular').checked,
-    includesGuide:document.getElementById('t-guide').checked,
-    destinations:v('t-dests').split(',').map(s=>s.trim()).filter(Boolean),
-    includes:v('t-incl').split(',').map(s=>s.trim()).filter(Boolean),
-  };
-  if(!body.name){toast('Tên tour là bắt buộc','error');return;}
-  try{
-    if(id)await req(`/api/admin/tours/${id}`,'PUT',body);
-    else await req('/api/admin/tours','POST',body);
-    closeModal('modal-tour');await loadTours();
-    toast(id?'Đã cập nhật tour':'Đã thêm tour mới','success');
-  }catch(e){toast('Lỗi: '+e.message,'error');}
+  const body={id:id||v('t-slug')||`tour-${Date.now()}`,name:v('t-name'),departure:v('t-dep'),duration:v('t-dur'),departureDate:v('t-depdate')||null,price:parseFloat(v('t-price'))||0,originalPrice:parseFloat(v('t-orig'))||null,imagePath:v('t-img'),description:v('t-desc'),isPopular:document.getElementById('t-popular').checked,includesGuide:document.getElementById('t-guide').checked,destinations:v('t-dests').split(',').map(s=>s.trim()).filter(Boolean),includes:v('t-incl').split(',').map(s=>s.trim()).filter(Boolean)};
+  try{ if(id)await req(`/api/admin/tours/${id}`,'PUT',body); else await req('/api/admin/tours','POST',body); closeModal('modal-tour'); await loadTours(); toast('Lưu thành công','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── TRIPS ──────────────────────────────────────────────────────────────────
-async function loadTrips(){
-  data.trips=await req('/api/admin/trips');
-  renderTrips(data.trips);
-}
+// ── TRIPS ──
+async function loadTrips(){ data.trips=await req('/api/admin/trips'); renderTrips(data.trips); }
 function renderTrips(rows){
-  const tb=document.getElementById('tb-trips'),em=document.getElementById('empty-trips');
-  if(!rows.length){tb.innerHTML='';em.style.display='flex';return;}
+  const tb=document.getElementById('tb-trips'), em=document.getElementById('empty-trips');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  tb.innerHTML=rows.map(t=>`<tr>
-    <td class="td-name">${t.destination}</td>
-    <td>${t.location}</td>
-    <td style="font-size:11.5px">${t.date}</td>
-    <td>${t.guests??'—'}</td>
-    <td>${tripBadge(t.status)}</td>
-    <td>${t.totalPrice?`<b style="color:var(--accent)">${fmtUSD(t.totalPrice)}</b>`:'—'}</td>
-    <td><div class="actions-cell">
-      <button class="btn btn-secondary btn-sm" onclick="editTrip('${t.id}','${t.destination.replace(/'/g,"\\'")}','${t.status}')"><i class="fa-solid fa-pen"></i></button>
-      <button class="btn btn-danger btn-sm" onclick="confirmDel('trip','${t.id}','${t.destination.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
-    </div></td>
-  </tr>`).join('');
+  tb.innerHTML=rows.map(t=>listRow([
+    {label:'Điểm đến', val:t.destination, cls:'w-1/3'},
+    {label:'Ngày đi', val:t.date},
+    {label:'Khách', val:t.guests??'—'},
+    {label:'Trạng thái', val:`<span class="px-3 py-1 bg-silver text-ink rounded-full text-[10px] uppercase">${t.status}</span>`}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-primary hover:text-white text-ink transition-all flex items-center justify-center" onclick="openTripSchedule('${t.id}')"><i class="fa-solid fa-calendar-alt"></i></button>
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editTrip('${t.id}')"><i class="fa-solid fa-eye"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('trip','${t.id}','${t.destination.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
 }
-function editTrip(id,dest,status){
-  document.getElementById('tr-id').value=id;
-  document.getElementById('tr-dest').value=dest;
-  document.getElementById('tr-status').value=status;
+function editTrip(id){
+  const t = data.trips.find(x=>x.id===id);
+  document.getElementById('tr-id').value=id; 
+  document.getElementById('tr-dest-disp').textContent=t.destination;
+  document.getElementById('tr-price-disp').textContent=t.totalPrice ? fmtUSD(t.totalPrice) : 'Chưa có';
+  document.getElementById('tr-flight-disp').textContent=t.flightId || 'Không có';
+  document.getElementById('tr-hotel-disp').textContent=t.hotelId || 'Không có';
+  document.getElementById('tr-status').value=t.status; 
   openModal('modal-trip');
 }
 async function saveTripStatus(){
-  const id=document.getElementById('tr-id').value;
-  const status=document.getElementById('tr-status').value;
-  const isUpcoming=!['Đã đi','Đã hủy'].includes(status);
-  try{
-    await req(`/api/admin/trips/${id}`,'PUT',{status,isUpcoming});
-    closeModal('modal-trip');await loadTrips();
-    toast('Đã cập nhật trạng thái','success');
-  }catch(e){toast('Lỗi: '+e.message,'error');}
+  const id=document.getElementById('tr-id').value, status=document.getElementById('tr-status').value;
+  try{ await req(`/api/admin/trips/${id}`,'PUT',{status,isUpcoming:!['Đã đi','Đã hủy'].includes(status)}); closeModal('modal-trip'); await loadTrips(); toast('Cập nhật thành công','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── CATEGORIES ─────────────────────────────────────────────────────────────
-async function loadCategories(){
-  data.categories=await req('/api/admin/categories');
-  renderCategories(data.categories);
+// ── TRIP SCHEDULE ──
+async function openTripSchedule(id) {
+  document.getElementById('ts-trip-id').value = id;
+  await loadTripSchedule(id);
+  openModal('modal-trip-schedule');
 }
-function renderCategories(rows){
-  const tb=document.getElementById('tb-categories'),em=document.getElementById('empty-categories');
-  if(!rows.length){tb.innerHTML='';em.style.display='flex';return;}
+
+async function loadTripSchedule(id) {
+  try {
+    const data = await req(`/api/admin/trips/${id}/schedule`);
+    renderTripSchedule(data.days);
+    renderTripUpdates(data.updates);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+function renderTripSchedule(days) {
+  const container = document.getElementById('ts-days-list');
+  if (!days || !days.length) {
+    container.innerHTML = `<div class="text-sm font-bold text-muted text-center py-10">Chuyến đi này chưa có lịch trình.</div>`;
+    return;
+  }
+  container.innerHTML = days.map(d => `
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-silver mb-4">
+      <div class="text-lg font-extrabold text-ink mb-4">Ngày ${d.dayNumber} ${d.title ? `- ${d.title}` : ''}</div>
+      <div class="flex flex-col gap-3">
+        ${d.items.map(item => `
+          <div class="flex items-center gap-4 bg-offwhite rounded-2xl p-4 border border-silver">
+            <div class="w-20 text-xs font-bold text-muted">${item.startTime}${item.endTime ? `<br>-<br>${item.endTime}` : ''}</div>
+            <div class="flex-1">
+              <div class="text-sm font-bold text-ink">${item.title}</div>
+              <div class="text-xs text-muted mt-1">${item.locationName || item.description || ''}</div>
+            </div>
+            <div class="flex flex-col gap-2 w-48">
+              <select class="text-xs bg-white border border-silver rounded-lg p-2 font-bold" onchange="updateScheduleItem('${item.id}', 'statusOverride', this.value)">
+                <option value="" ${!item.statusOverride ? 'selected' : ''}>-- Mặc định --</option>
+                <option value="pending" ${item.statusOverride==='pending'?'selected':''}>Chưa diễn ra</option>
+                <option value="ongoing" ${item.statusOverride==='ongoing'?'selected':''}>Đang diễn ra</option>
+                <option value="completed" ${item.statusOverride==='completed'?'selected':''}>Đã hoàn thành</option>
+                <option value="skipped" ${item.statusOverride==='skipped'?'selected':''}>Đã bỏ qua</option>
+              </select>
+              <input type="text" class="text-xs bg-white border border-silver rounded-lg p-2" placeholder="Ghi chú (VD: Dời lại 30p)" value="${item.note || ''}" onblur="updateScheduleItem('${item.id}', 'note', this.value)">
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTripUpdates(updates) {
+  const container = document.getElementById('ts-updates-list');
+  if (!updates || !updates.length) {
+    container.innerHTML = `<div class="text-xs text-muted">Chưa có cập nhật nào.</div>`;
+    return;
+  }
+  container.innerHTML = updates.map(u => `
+    <div class="bg-offwhite p-4 rounded-xl border border-silver">
+      <div class="text-[10px] text-muted font-bold mb-1">${new Date(u.createdAt).toLocaleString('vi-VN')}</div>
+      <div class="text-sm font-semibold text-ink">${u.message}</div>
+    </div>
+  `).join('');
+}
+
+async function updateScheduleItem(itemId, field, value) {
+  const tripId = document.getElementById('ts-trip-id').value;
+  try {
+    const body = {};
+    body[field] = value;
+    await req(`/api/admin/trips/${tripId}/schedule/items/${itemId}`, 'PUT', body);
+    toast('Đã lưu thay đổi', 'success');
+  } catch (e) {
+    toast('Lỗi cập nhật: ' + e.message, 'error');
+  }
+}
+
+async function sendTripUpdate() {
+  const tripId = document.getElementById('ts-trip-id').value;
+  const msgInput = document.getElementById('ts-update-msg');
+  const message = msgInput.value.trim();
+  if (!message) return;
+  try {
+    await req(`/api/admin/trips/${tripId}/schedule/updates`, 'POST', { message });
+    msgInput.value = '';
+    toast('Đã gửi thông báo!', 'success');
+    loadTripSchedule(tripId);
+  } catch (e) {
+    toast('Lỗi gửi thông báo: ' + e.message, 'error');
+  }
+}
+
+// ── USERS ──
+async function loadUsers(){ data.users=await req('/api/admin/users'); renderUsers(data.users); }
+function renderUsers(rows){
+  const tb=document.getElementById('tb-users'), em=document.getElementById('empty-users');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
   em.style.display='none';
-  tb.innerHTML=rows.map(c=>`<tr>
-    <td style="font-size:10.5px;color:var(--text-muted);font-family:monospace">${c.id}</td>
-    <td class="td-name">${c.name}</td>
-    <td><button class="btn btn-danger btn-sm" onclick="confirmDel('category','${c.id}','${c.name}')"><i class="fa-solid fa-trash"></i></button></td>
-  </tr>`).join('');
+  tb.innerHTML=rows.map(u=>listRow([
+    {label:'Tên', val:u.name, cls:'w-1/3'},
+    {label:'Email', val:u.email},
+    {label:'Ngày tạo', val:new Date(u.createdAt).toLocaleDateString('vi-VN')}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('user','${u.id}','${u.name}')"><i class="fa-solid fa-ban"></i></button>
+  `)).join('');
 }
-async function saveCategory(){
-  const name=document.getElementById('cat-name').value.trim();
-  if(!name){toast('Vui lòng nhập tên danh mục','error');return;}
-  try{
-    await req('/api/admin/categories','POST',{name});
-    closeModal('modal-category');await loadCategories();
-    toast('Đã thêm danh mục','success');
-  }catch(e){toast('Lỗi: '+e.message,'error');}
+function openUserModal(){ document.getElementById('u-name').value=''; document.getElementById('u-email').value=''; document.getElementById('u-pass').value=''; openModal('modal-user'); }
+async function saveUser(){
+  try{ await req('/api/admin/users','POST',{name:v('u-name'), email:v('u-email'), password:v('u-pass')}); closeModal('modal-user'); await loadUsers(); toast('Đã tạo User','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── PROFILE ────────────────────────────────────────────────────────────────
-async function loadProfile(){
-  try{
-    const p=await req('/api/profile');
-    if(p){
-      document.getElementById('pf-name-disp').textContent=p.name;
-      document.getElementById('pf-email-disp').textContent=p.email;
-      document.getElementById('pf-name').value=p.name;
-      document.getElementById('pf-email').value=p.email;
-    }
-  }catch(e){toast('Lỗi tải hồ sơ','error');}
+// ── DOCUMENTS ──
+async function loadDocuments(){ data.documents=await req('/api/admin/documents'); renderDocuments(data.documents); }
+function renderDocuments(rows){
+  const tb=document.getElementById('tb-documents'), em=document.getElementById('empty-documents');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=rows.map(d=>listRow([
+    {label:'Icon', val:`<i class="fa-solid ${d.icon} ${d.color} text-xl"></i>`},
+    {label:'Tiêu đề', val:d.title, cls:'w-1/3'},
+    {label:'Mô tả', val:d.description}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editDocument('${d.id}')"><i class="fa-solid fa-pen"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('document','${d.id}','${d.title}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
 }
-async function saveProfile(){
-  try{
-    const p=await req('/api/profile','PUT',{name:v('pf-name'),email:v('pf-email')});
-    document.getElementById('pf-name-disp').textContent=p.name;
-    document.getElementById('pf-email-disp').textContent=p.email;
-    toast('Đã lưu hồ sơ','success');
-  }catch(e){toast('Lỗi: '+e.message,'error');}
+function openDocumentModal(doc=null){
+  document.getElementById('mdoc-title').textContent=doc?'Sửa Tài Liệu':'Thêm Tài Liệu';
+  document.getElementById('d-id').value=doc?.id??'';
+  ['title','icon','color','desc'].forEach(k=>document.getElementById(`d-${k}`).value=doc?.[k==='desc'?'description':k]??'');
+  openModal('modal-document');
+}
+function editDocument(id){openDocumentModal(data.documents.find(x=>x.id===id));}
+async function saveDocument(){
+  const id=document.getElementById('d-id').value;
+  const body={title:v('d-title'), icon:v('d-icon'), color:v('d-color'), description:v('d-desc')};
+  try{ if(id)await req(`/api/admin/documents/${id}`,'PUT',body); else await req('/api/admin/documents','POST',body); closeModal('modal-document'); await loadDocuments(); toast('Lưu thành công','success'); }catch(e){toast(e.message,'error');}
 }
 
-// ── DELETE ─────────────────────────────────────────────────────────────────
+// ── CATEGORIES & MISC ──
+
+// ── DESTINATIONS ──
+async function loadDestinations(){ data.destinations=await req('/api/admin/destinations'); renderDestinations(data.destinations); }
+function renderDestinations(rows){
+  const tb=document.getElementById('tb-destinations'), em=document.getElementById('empty-destinations');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=rows.map(d=>listRow([
+    {label:'Tên', val:d.name, cls:'w-1/3'},
+    {label:'Vị trí', val:d.location},
+    {label:'Danh mục', val:d.category},
+    {label:'Tags', val:(d.isFavorite?'<span class="px-2 py-1 bg-red-100 text-red-500 rounded-full text-xs mr-2"><i class="fa-solid fa-heart"></i></span>':'')+(d.isRecommended?'<span class="px-2 py-1 bg-blue-100 text-blue-500 rounded-full text-xs"><i class="fa-solid fa-thumbs-up"></i></span>':'')}
+  ], `
+    <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="editDestination('${d.id}')"><i class="fa-solid fa-pen"></i></button>
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('destination','${d.id}','${d.name.replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
+}
+function openDestinationModal(dest=null){
+  document.getElementById('mdest-title').textContent=dest?'Cập nhật Điểm đến':'Thêm Điểm đến';
+  document.getElementById('ds-id').value=dest?.id??'';
+  document.getElementById('ds-slug').value=dest?.id??'';
+  document.getElementById('ds-slug').disabled=!!dest;
+  ['name','loc','cat','rating','desc'].forEach(k=>document.getElementById(`ds-${k}`).value=dest?.[k==='loc'?'location':k==='cat'?'category':k==='desc'?'description':k]??'');
+  setImg('ds-img', dest?.imagePath??'');
+  document.getElementById('ds-fav').checked=dest?.isFavorite??false;
+  document.getElementById('ds-rec').checked=dest?.isRecommended??false;
+  openModal('modal-destination');
+}
+function editDestination(id){openDestinationModal(data.destinations.find(x=>x.id===id));}
+async function saveDestination(){
+  const id=document.getElementById('ds-id').value;
+  const body={ id:id||v('ds-slug')||`dest-${Date.now()}`, name:v('ds-name'), location:v('ds-loc'), category:v('ds-cat'), rating:v('ds-rating'), imagePath:v('ds-img'), description:v('ds-desc'), isFavorite:document.getElementById('ds-fav').checked, isRecommended:document.getElementById('ds-rec').checked };
+  try{ if(id)await req(`/api/admin/destinations/${id}`,'PUT',body); else await req('/api/admin/destinations','POST',body); closeModal('modal-destination'); await loadDestinations(); toast(id?'Đã cập nhật':'Đã thêm mới','success'); }catch(e){toast(e.message,'error');}
+}
+
+async function loadCategories(){ data.categories=await req('/api/admin/categories'); renderCategories(data.categories); }
+function renderCategories(rows){
+  const tb=document.getElementById('tb-categories'), em=document.getElementById('empty-categories');
+  if(!rows.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=rows.map(c=>listRow([ {label:'ID', val:c.id, cls:'font-mono text-muted'}, {label:'Tên danh mục', val:c.name, cls:'w-1/2'} ], `
+    <button class="w-10 h-10 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center" onclick="confirmDel('category','${c.id}','${c.name}')"><i class="fa-solid fa-trash"></i></button>
+  `)).join('');
+}
+async function saveCategory(){ try{ await req('/api/admin/categories','POST',{name:v('cat-name')}); closeModal('modal-category'); await loadCategories(); toast('Đã thêm','success'); }catch(e){toast(e.message,'error');} }
+
 function confirmDel(type,id,name){
-  document.getElementById('confirm-msg').textContent=`Bạn có chắc muốn xóa "${name}" không? Hành động này không thể hoàn tác.`;
+  document.getElementById('confirm-msg').textContent=`Chắc chắn xóa "${name}"?`;
   document.getElementById('confirm-ok').onclick = async ()=>{
-    const pathMap={destination:`/api/admin/destinations/${id}`,hotel:`/api/admin/hotels/${id}`,
-      flight:`/api/admin/flights/${id}`,tour:`/api/admin/tours/${id}`,
-      trip:`/api/admin/trips/${id}`,category:`/api/admin/categories/${id}`};
-    try{
-      await req(pathMap[type],'DELETE');
-      closeModal('modal-confirm');
-      await loadPage(curPage);
-      toast('Đã xóa thành công','success');
-    }catch(e){toast('Lỗi xóa: '+e.message,'error');}
+    let path=`/api/admin/${type}s/${id}`;
+    if(type==='room') path=`/api/admin/hotels/${document.getElementById('h-id').value}/rooms/${id}`;
+    try{ await req(path,'DELETE'); closeModal('modal-confirm'); if(type==='room'){await loadHotels(); editHotel(document.getElementById('h-id').value);}else await loadPage(curPage); toast('Đã xóa','success'); }catch(e){toast(e.message,'error');}
   };
   openModal('modal-confirm');
 }
 
-// ── FILTER ─────────────────────────────────────────────────────────────────
-function filterTable(type){
-  const q=document.getElementById(`search-${type}`).value.toLowerCase();
-  if(type==='destinations') renderDestinations(data.destinations.filter(d=>d.name.toLowerCase().includes(q)||d.location.toLowerCase().includes(q)));
-  if(type==='hotels') renderHotels(data.hotels.filter(h=>h.name.toLowerCase().includes(q)||h.location.toLowerCase().includes(q)));
-  if(type==='flights') renderFlights(data.flights.filter(f=>f.airline.toLowerCase().includes(q)||f.departure.toLowerCase().includes(q)||f.arrival.toLowerCase().includes(q)));
-  if(type==='tours') renderTours(data.tours.filter(t=>t.name.toLowerCase().includes(q)));
-  if(type==='trips') renderTrips(data.trips.filter(t=>t.destination.toLowerCase().includes(q)||t.location.toLowerCase().includes(q)));
-}
-
-// ── MODAL ──────────────────────────────────────────────────────────────────
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
-
-// ── TOAST ──────────────────────────────────────────────────────────────────
 function toast(msg,type='info'){
-  const icons={success:'fa-circle-check',error:'fa-circle-xmark',info:'fa-circle-info'};
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.innerHTML=`<i class="fa-solid ${icons[type]}"></i>${msg}`;
+  const el=document.createElement('div'); el.className=`toast`;
+  el.innerHTML=`<div class="w-2 h-2 rounded-full ${type==='error'?'bg-red-500':'bg-primary'}"></div><span class="text-ink">${msg}</span>`;
   document.getElementById('toasts').appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(28px)';el.style.transition='all 0.3s';setTimeout(()=>el.remove(),300);},3000);
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(20px)';setTimeout(()=>el.remove(),600);},3000);
 }
+const v=id=>document.getElementById(id).value.trim();
+const fmtUSD=p=>p!=null?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(p):'—';
 
-// ── HELPERS ────────────────────────────────────────────────────────────────
-const v = id => document.getElementById(id).value.trim();
-const fmtUSD = p => p!=null ? new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(p) : '—';
-function tripBadge(s){
-  const m={'Sắp tới':'bg-blue','Đã xác nhận':'bg-green','Chờ thanh toán':'bg-orange','Đã đi':'bg-gray','Đã hủy':'bg-red'};
-  return `<span class="badge ${m[s]||'bg-gray'}">${s}</span>`;
-}
-
-// ── INIT ───────────────────────────────────────────────────────────────────
-checkHealth();
-loadDashboard();
-setInterval(checkHealth, 30000);
+checkHealth(); loadDashboard(); setInterval(checkHealth, 30000);
 </script>
 </body>
 </html>
