@@ -94,7 +94,9 @@ class _FoodScreenState extends ConsumerState<FoodScreen> {
           ),
         ],
       ),
-      body: Consumer(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Consumer(
         builder: (context, ref, _) {
           final searchQuery = ref.watch(searchQueryProvider);
           final foods = _getFilteredAndSorted(ref.watch(foodDestinationsProvider), searchQuery);
@@ -187,6 +189,7 @@ class _FoodScreenState extends ConsumerState<FoodScreen> {
             ],
           );
         },
+      ),
       ),
     );
   }

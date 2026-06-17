@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../models/trip.dart';
 import '../../../models/trip_schedule.dart';
 import '../../../providers/trip_schedule_provider.dart';
+import '../../../widgets/shimmer_loading.dart';
 
 class TripScheduleTimeline extends ConsumerStatefulWidget {
   final Trip trip;
@@ -25,13 +26,23 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
   bool _showSimulatePanel = false;
 
   Timer? _refreshTimer;
+  int _lastUpdateMinute = -1;
 
   @override
   void initState() {
     super.initState();
-    // Auto-refresh tick for realtime status update
-    _refreshTimer = Timer.periodic(const Duration(seconds: 60), (timer) {
-      if (mounted) {
+    _startRefreshTimer();
+  }
+
+  void _startRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (!mounted) return;
+      final now = TimeOfDay.now();
+      final currentMinute = now.hour * 60 + now.minute;
+      // Only rebuild when minute changes (status might have changed)
+      if (currentMinute != _lastUpdateMinute) {
+        _lastUpdateMinute = currentMinute;
         setState(() {});
       }
     });
@@ -284,7 +295,10 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: TimelineShimmer(),
+      ),
       error: (e, st) => Center(child: Text('Lỗi khi tải lịch trình: $e')),
     );
   }

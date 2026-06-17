@@ -100,7 +100,9 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
               ),
             );
           }
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('Error parsing schedule coordinates: $e');
+        }
       }
     } else {
       try {
@@ -119,7 +121,9 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
             ),
           );
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Error parsing destination coordinates: $e');
+      }
     }
 
     final LatLng centerPoint;

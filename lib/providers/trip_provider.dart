@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/constants/app_constants.dart';
 import '../models/trip.dart';
 import 'app_state_provider.dart';
 import 'api_provider.dart';
@@ -90,15 +91,26 @@ final tripsProvider = NotifierProvider<TripNotifier, List<Trip>>(TripNotifier.ne
 // Derived Providers
 final ongoingTripsProvider = Provider<List<Trip>>((ref) {
   final trips = ref.watch(tripsProvider);
-  return trips.where((t) => t.status.toLowerCase() == 'đang diễn ra' || t.status.toLowerCase() == 'ongoing').toList();
+  return trips.where((t) => 
+    t.status.toLowerCase() == AppConstants.statusOngoing.toLowerCase() || 
+    t.status.toLowerCase() == AppConstants.statusOngoingEn.toLowerCase()
+  ).toList();
 });
 
 final upcomingTripsProvider = Provider<List<Trip>>((ref) {
   final trips = ref.watch(tripsProvider);
-  return trips.where((t) => t.isUpcoming && t.status.toLowerCase() != 'đang diễn ra' && t.status.toLowerCase() != 'ongoing').toList();
+  return trips.where((t) => 
+    t.isUpcoming && 
+    t.status.toLowerCase() != AppConstants.statusOngoing.toLowerCase() && 
+    t.status.toLowerCase() != AppConstants.statusOngoingEn.toLowerCase()
+  ).toList();
 });
 
 final historyTripsProvider = Provider<List<Trip>>((ref) {
   final trips = ref.watch(tripsProvider);
-  return trips.where((t) => !t.isUpcoming && t.status.toLowerCase() != 'đang diễn ra' && t.status.toLowerCase() != 'ongoing').toList();
+  return trips.where((t) => 
+    !t.isUpcoming && 
+    t.status.toLowerCase() != AppConstants.statusOngoing.toLowerCase() && 
+    t.status.toLowerCase() != AppConstants.statusOngoingEn.toLowerCase()
+  ).toList();
 });

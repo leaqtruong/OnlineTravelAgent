@@ -8,7 +8,15 @@ import '../../providers/destination_provider.dart';
 import '../../providers/hotel_provider.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
+
+const _mockFlights = [
+  {'id': 'f1', 'airline': 'Vietnam Airlines', 'price': 150.0, 'code': 'VN-234', 'logoColor': Color(0xFF0F2C59), 'time': '06:00 - 08:15'},
+  {'id': 'f2', 'airline': 'Bamboo Airways', 'price': 120.0, 'code': 'QH-102', 'logoColor': Color(0xFF1E5128), 'time': '09:30 - 11:45'},
+  {'id': 'f3', 'airline': 'Vietjet Air', 'price': 80.0, 'code': 'VJ-381', 'logoColor': Color(0xFFD80032), 'time': '14:15 - 16:30'},
+  {'id': 'f4', 'airline': 'Vietnam Airlines', 'price': 170.0, 'code': 'VN-789', 'logoColor': Color(0xFF0F2C59), 'time': '18:00 - 20:15'},
+];
 
 class CustomTourStepperScreen extends ConsumerStatefulWidget {
   const CustomTourStepperScreen({super.key});
@@ -417,6 +425,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                                   child: Image.asset(
                                     dest.imagePath,
                                     fit: BoxFit.cover,
+                                    cacheWidth: (MediaQuery.sizeOf(context).width / 2 * MediaQuery.devicePixelRatioOf(context)).round(),
                                     errorBuilder: (context, e, s) => Container(
                                       color: Colors.grey.shade200,
                                       child: Icon(Icons.image, color: Colors.grey.shade400, size: 40),
@@ -520,13 +529,6 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
 
   // --- Step 2: Flight Tickets View ---
   Widget _buildFlightStep() {
-    final mockFlights = [
-      {'id': 'f1', 'airline': 'Vietnam Airlines', 'price': 150.0, 'code': 'VN-234', 'logoColor': const Color(0xFF0F2C59), 'time': '06:00 - 08:15'},
-      {'id': 'f2', 'airline': 'Bamboo Airways', 'price': 120.0, 'code': 'QH-102', 'logoColor': const Color(0xFF1E5128), 'time': '09:30 - 11:45'},
-      {'id': 'f3', 'airline': 'Vietjet Air', 'price': 80.0, 'code': 'VJ-381', 'logoColor': const Color(0xFFD80032), 'time': '14:15 - 16:30'},
-      {'id': 'f4', 'airline': 'Vietnam Airlines', 'price': 170.0, 'code': 'VN-789', 'logoColor': const Color(0xFF0F2C59), 'time': '18:00 - 20:15'},
-    ];
-
     if (_selectedDestinations.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -641,7 +643,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                 ),
 
                 // Flight options for this leg
-                ...mockFlights.map((flight) {
+                ..._mockFlights.map((flight) {
                   final logoColor = flight['logoColor'] as Color;
                   final isSelected = selectedId == flight['id'];
                   return GestureDetector(
@@ -1260,9 +1262,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
 
   void _submitCustomTour() {
     if (!ref.read(authProvider).isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
-      );
+      showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
       return;
     }

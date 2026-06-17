@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import 'place_trip_detail_screen.dart';
 import 'tour_trip_detail_screen.dart';
 import 'widgets/trip_card.dart';
+import '../../widgets/app_placeholder_card.dart';
 
 class MyTripsScreen extends ConsumerStatefulWidget {
   const MyTripsScreen({super.key});
@@ -42,7 +43,28 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
           builder: (context, ref, child) {
             final authState = ref.watch(authProvider);
             if (!authState.isLoggedIn) {
-              return _buildLoginPrompt();
+              return const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 24),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      "Chuyến đi của tôi",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textBlack,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: RequireLoginPlaceholder(
+                      subtitle: "Bạn cần đăng nhập để xem danh sách các chuyến đi và lịch sử đặt chỗ của mình.",
+                    ),
+                  ),
+                ],
+              );
             }
 
             final ongoing = ref.watch(ongoingTripsProvider);
@@ -253,178 +275,16 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.explore_rounded,
-                size: 80,
-                color: AppTheme.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              "Bắt đầu hành trình mới",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textBlack,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Bạn chưa có chuyến đi nào được lên lịch. Hãy bắt đầu lên kế hoạch cho hành trình tiếp theo của bạn ngay hôm nay để nhận những ưu đãi hấp dẫn nhất.",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-                height: 1.6,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              height: 48,
-              width: 180,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Navigate back to MainScreen (Home tab)
-                  Navigator.pushReplacementNamed(context, '/main');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryBlue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 2,
-                  shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Khám phá ngay",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppPlaceholderCard(
+      icon: Icons.explore_rounded,
+      title: "Bắt đầu hành trình mới",
+      subtitle: "Bạn chưa có chuyến đi nào được lên lịch. Hãy bắt đầu lên kế hoạch cho hành trình tiếp theo của bạn ngay hôm nay để nhận những ưu đãi hấp dẫn nhất.",
+      actionText: "Khám phá ngay",
+      actionIcon: Icons.arrow_forward_rounded,
+      onActionTap: () {
+        Navigator.pushReplacementNamed(context, '/main');
+      },
     );
   }
 
-  Widget _buildLoginPrompt() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 24),
-          const Text(
-            "Chuyến đi của tôi",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textBlack,
-            ),
-          ),
-          const Spacer(),
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.lock_person_rounded,
-                    size: 80,
-                    color: AppTheme.primaryBlue,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  "Vui lòng đăng nhập",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textBlack,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Text(
-                    "Bạn cần đăng nhập để xem danh sách các chuyến đi và lịch sử đặt chỗ của mình.",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      height: 1.6,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  height: 48,
-                  width: 200,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/login');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryBlue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 2,
-                      shadowColor: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Đăng nhập ngay",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(Icons.login_rounded, color: Colors.white, size: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(flex: 2),
-        ],
-      ),
-    );
-  }
 }

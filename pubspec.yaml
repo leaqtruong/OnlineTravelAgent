@@ -17,6 +17,9 @@ dependencies:
   google_fonts: ^8.1.0
   flutter_staggered_animations: ^1.1.1
   shimmer: ^3.0.0
+  animated_text_kit: ^4.3.0
+  drawing_animation: ^1.0.1
+  path_drawing: ^1.0.1
 dev_dependencies:
   flutter_test:
     sdk: flutter

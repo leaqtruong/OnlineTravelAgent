@@ -1,13 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/document_item.dart';
+import '../../../providers/profile_provider.dart';
 
-class DocumentCard extends StatelessWidget {
+class DocumentCard extends ConsumerWidget {
   final DocumentItem doc;
 
   const DocumentCard({super.key, required this.doc});
 
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text("Xóa giấy tờ?"),
+        content: Text("Xác nhận xóa \"${doc.title}\"?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Hủy"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Xóa"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      final ok = await ref.read(documentsProvider.notifier).deleteDocument(doc.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ok ? "Đã xóa giấy tờ" : "Xóa thất bại"),
+            backgroundColor: ok ? Colors.green : Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -39,7 +75,11 @@ class DocumentCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          IconButton(
+            onPressed: () => _confirmDelete(context, ref),
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+            tooltip: "Xóa",
+          ),
         ],
       ),
     );

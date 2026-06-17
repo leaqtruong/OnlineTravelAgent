@@ -1,6 +1,9 @@
 import multer from "multer";
 import path from "path";
 
+const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|pdf|doc|docx/;
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/uploads");
@@ -11,4 +14,18 @@ const storage = multer.diskStorage({
   },
 });
 
-export const upload = multer({ storage });
+const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const extname = ALLOWED_TYPES.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = ALLOWED_TYPES.test(file.mimetype);
+  if (extname && mimetype) {
+    cb(null, true);
+  } else {
+    cb(new Error("File type not allowed. Allowed: jpeg, jpg, png, gif, webp, pdf, doc, docx"));
+  }
+};
+
+export const upload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE },
+  fileFilter,
+});

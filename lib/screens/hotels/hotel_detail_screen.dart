@@ -6,6 +6,7 @@ import '../../models/hotel.dart';
 import '../../models/room.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 import '../../widgets/review_section.dart';
 
@@ -49,6 +50,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   child: Image.asset(
                     widget.hotel.imagePath,
                     fit: BoxFit.cover,
+                    cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                     errorBuilder: (context, error, stackTrace) => Container(
                       color: Colors.grey[300],
                       child: const Icon(Icons.image, size: 50, color: Colors.grey),
@@ -306,9 +308,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
     if (_selectedRoom == null) return;
 
     if (!ref.read(authProvider).isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
-      );
+      showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
       return;
     }

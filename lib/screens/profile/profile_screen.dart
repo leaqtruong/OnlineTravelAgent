@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import 'widgets/document_card.dart';
 import 'contact_special_screen.dart';
+import '../../widgets/app_placeholder_card.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -104,7 +105,11 @@ class ProfileScreen extends ConsumerWidget {
                             borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
                           ),
                         ),
-                        validator: (value) => value == null || value.trim().isEmpty ? "Vui lòng nhập email" : null,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) return "Vui lòng nhập email";
+                          if (!RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$').hasMatch(value.trim())) return "Email không hợp lệ";
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 28),
                       SizedBox(
@@ -471,94 +476,89 @@ class ProfileScreen extends ConsumerWidget {
                     ],
 
                     // Special Request Banner
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppTheme.primaryBlue,
-                            AppTheme.primaryBlue.withValues(alpha: 0.85),
+                    if (authState.isLoggedIn) ...[
+                      Container(
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryBlue,
+                              AppTheme.primaryBlue.withValues(alpha: 0.85),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.3),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
                           ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.diamond_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.diamond_rounded,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  "Yêu Cầu Đặc Biệt?",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Yêu Cầu Đặc Biệt?",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  "Đặt đoàn lớn hoặc sự kiện VIP",
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.85),
-                                    fontSize: 12,
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    "Đặt đoàn lớn hoặc sự kiện VIP",
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(alpha: 0.85),
+                                      fontSize: 12,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (!authState.isLoggedIn) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Vui lòng đăng nhập để gửi yêu cầu!')),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const ContactSpecialScreen()),
                                 );
-                                Navigator.pushNamed(context, '/login');
-                                return;
-                              }
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const ContactSpecialScreen()),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: AppTheme.primaryBlue,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppTheme.primaryBlue,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text(
+                                "Liên hệ",
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                              ),
                             ),
-                            child: const Text(
-                              "Liên hệ",
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
+                      const SizedBox(height: 28),
+                    ],
 
                     // Documents Section Header
                     Row(
@@ -680,142 +680,21 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   Widget _buildLoginPrompt(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.lock_person_rounded,
-                size: 48,
-                color: AppTheme.primaryBlue.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Đăng nhập để tiếp tục",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textBlack,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Quản lý giấy tờ cá nhân và\nđặt vé nhanh chóng hơn",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.withValues(alpha: 0.7),
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/login'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryBlue,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-                child: const Text(
-                  "Đăng nhập",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return const RequireLoginPlaceholder(
+      title: "Đăng nhập để tiếp tục",
+      subtitle: "Quản lý giấy tờ cá nhân và\nđặt vé nhanh chóng hơn",
     );
   }
 
   Widget _buildEmptyDocuments(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.folder_open_rounded,
-                size: 48,
-                color: AppTheme.primaryBlue.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Chưa có giấy tờ nào",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textBlack,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "Thêm CMND/CCCD hoặc Hộ chiếu\nđể đặt vé nhanh chóng hơn",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey.withValues(alpha: 0.7),
-                fontSize: 14,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: () => _showAddDocumentSheet(context, ref),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text("Thêm giấy tờ"),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryBlue,
-                side: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return AppPlaceholderCard(
+      icon: Icons.folder_open_rounded,
+      title: "Chưa có giấy tờ nào",
+      subtitle: "Thêm CMND/CCCD hoặc Hộ chiếu\nđể đặt vé nhanh chóng hơn",
+      actionText: "Thêm giấy tờ",
+      actionIcon: Icons.add_rounded,
+      isOutlinedButton: true,
+      onActionTap: () => _showAddDocumentSheet(context, ref),
     );
   }
 }

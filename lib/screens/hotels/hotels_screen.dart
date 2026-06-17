@@ -7,6 +7,7 @@ import '../../providers/hotel_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import 'hotel_detail_screen.dart';
 import '../../utils/app_utils.dart';
+import '../../widgets/app_placeholder_card.dart';
 
 class HotelsScreen extends ConsumerStatefulWidget {
   const HotelsScreen({super.key});
@@ -107,7 +108,9 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
           ),
         ],
       ),
-      body: Consumer(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Consumer(
         builder: (context, ref, _) {
           final searchQuery = ref.watch(hotelSearchQueryProvider);
           final finalHotels = _getFilteredAndSorted(ref.watch(hotelsProvider), searchQuery);
@@ -253,6 +256,7 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
         ],
       );
         },
+      ),
       ),
     );
   }
@@ -422,68 +426,21 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.05),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.hotel_outlined,
-                size: 64,
-                color: AppTheme.primaryBlue,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Không tìm thấy khách sạn',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Chúng tôi không tìm thấy khách sạn nào phù hợp với bộ lọc hiện tại. Vui lòng thử tìm kiếm khác.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () {
-                _searchController.clear();
-                ref.read(hotelSearchQueryProvider.notifier).update('');
-                setState(() {
-                  _selectedCity = 'Tất cả';
-                  _sortBy = 'Popular';
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Đặt lại bộ lọc',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 40),
+      child: AppPlaceholderCard(
+        icon: Icons.hotel_outlined,
+        title: 'Không tìm thấy khách sạn',
+        subtitle: 'Chúng tôi không tìm thấy khách sạn nào phù hợp với bộ lọc hiện tại. Vui lòng thử tìm kiếm khác.',
+        actionText: 'Đặt lại bộ lọc',
+        onActionTap: () {
+          _searchController.clear();
+          ref.read(hotelSearchQueryProvider.notifier).update('');
+          setState(() {
+            _selectedCity = 'Tất cả';
+            _sortBy = 'Popular';
+          });
+        },
       ),
     );
   }

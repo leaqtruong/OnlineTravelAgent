@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/constants/app_constants.dart';
 import '../services/travel_api_service.dart';
 import 'api_provider.dart';
 import 'auth_provider.dart';
@@ -25,16 +26,14 @@ final bootstrapSyncProvider = Provider<void>((ref) {
 final categoriesProvider = Provider<List<String>>((ref) {
   final bootstrap = ref.watch(bootstrapProvider).value;
   if (bootstrap == null || bootstrap.categories.isEmpty) {
-    return ['Tất cả', 'Địa điểm', 'Khách sạn', 'Máy bay', 'Ẩm thực'];
+    return AppConstants.defaultCategories;
   }
   
   // Replicate the filtering logic from the old travel_provider
-  final defaultCategories = ['Tất cả', 'Địa điểm', 'Khách sạn', 'Máy bay', 'Ẩm thực'];
-  final hiddenCategories = {'Bãi biển'};
-  final remaining = bootstrap.categories.where((c) => !hiddenCategories.contains(c)).toSet();
+  final remaining = bootstrap.categories.where((c) => !AppConstants.hiddenCategories.contains(c)).toSet();
   
   final result = <String>[];
-  for (final category in defaultCategories) {
+  for (final category in AppConstants.defaultCategories) {
     if (remaining.remove(category)) {
       result.add(category);
     }

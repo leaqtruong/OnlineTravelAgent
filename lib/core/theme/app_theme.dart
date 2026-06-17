@@ -32,6 +32,20 @@ class AppTheme {
   static const double spacingXLarge = 24.0;
   static const double spacingXXLarge = 32.0;
 
+  // Common BoxShadows
+  static const List<BoxShadow> shadowSmall = [
+    BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
+  ];
+  static const List<BoxShadow> shadowMedium = [
+    BoxShadow(color: Color(0x0D000000), blurRadius: 12, offset: Offset(0, 4)),
+  ];
+  static const List<BoxShadow> shadowLarge = [
+    BoxShadow(color: Color(0x14000000), blurRadius: 20, offset: Offset(0, 8)),
+  ];
+  static const List<BoxShadow> shadowPrimary = [
+    BoxShadow(color: Color(0x4D176FF2), blurRadius: 16, offset: Offset(0, 8)),
+  ];
+
   // API timeout
   static const Duration apiTimeout = Duration(seconds: 10);
 

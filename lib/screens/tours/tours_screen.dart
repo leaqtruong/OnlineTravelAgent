@@ -90,9 +90,11 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Elegant Search Input
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -195,6 +197,7 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
           ),
         ],
       ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           Navigator.push(
@@ -255,6 +258,7 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                         child: Image.asset(
                           tour.imagePath,
                           fit: BoxFit.cover,
+                          cacheWidth: (MediaQuery.sizeOf(context).width / 2 * MediaQuery.devicePixelRatioOf(context)).round(),
                           errorBuilder: (context, error, stackTrace) =>
                               Container(
                             color: Colors.grey[200],

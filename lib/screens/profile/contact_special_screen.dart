@@ -132,6 +132,7 @@ class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
             Image.asset(
               'assets/images/phuquoc_image.jpg', // Using premium beach image
               fit: BoxFit.cover,
+              cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
               errorBuilder: (context, error, stackTrace) => Container(
                 color: Colors.grey[300],
                 child: const Icon(Icons.image, size: 50, color: Colors.grey),

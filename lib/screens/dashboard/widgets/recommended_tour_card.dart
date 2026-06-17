@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../models/destination.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../models/tour_package.dart';
 
-class RecommendedDestinationCard extends StatelessWidget {
-  final Destination destination;
+class RecommendedTourCard extends StatelessWidget {
+  final TourPackage tour;
   final VoidCallback onClick;
 
-  const RecommendedDestinationCard({
-    super.key,
-    required this.destination,
-    required this.onClick,
-  });
+  const RecommendedTourCard({super.key, required this.tour, required this.onClick});
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +38,17 @@ class RecommendedDestinationCard extends StatelessWidget {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
-                      destination.imagePath,
+                      tour.imagePath,
                       height: 96,
                       width: double.infinity,
                       fit: BoxFit.cover,
                       cacheWidth: cacheWidth,
                       filterQuality: FilterQuality.low,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 96,
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.image, color: Colors.grey),
+                      ),
                     ),
                   ),
                   Positioned(
@@ -55,7 +56,9 @@ class RecommendedDestinationCard extends StatelessWidget {
                     right: 8,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.darkGray,
                         shape: BoxShape.rectangle,
@@ -63,11 +66,12 @@ class RecommendedDestinationCard extends StatelessWidget {
                         border: Border.all(color: Colors.white, width: 2),
                       ),
                       child: Text(
-                        destination.duration,
+                        tour.duration,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -78,27 +82,63 @@ class RecommendedDestinationCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                destination.name,
+                tour.name,
                 style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppTheme.textBlack),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textBlack,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(height: 4),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Row(
                 children: [
-                  Icon(Icons.trending_up, color: Colors.blueAccent, size: 16),
-                  SizedBox(width: 4),
+                  const Icon(
+                    Icons.flight_takeoff,
+                    color: Colors.blueAccent,
+                    size: 14,
+                  ),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      "Ưu đãi đặc biệt",
-                      style: TextStyle(fontSize: 12, color: Colors.blueGrey),
+                      'Từ ${tour.departure}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.blueGrey,
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '\$${tour.price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryBlue,
+                    ),
+                  ),
+                  if (tour.originalPrice != null)
+                    Text(
+                      '\$${tour.originalPrice!.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
                 ],
               ),
             ),

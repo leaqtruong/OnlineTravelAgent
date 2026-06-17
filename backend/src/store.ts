@@ -1,20 +1,10 @@
+import crypto from "crypto";
+import { Prisma } from "@prisma/client";
 import prisma from "./config/prisma.js";
 import { scheduleService } from "./services/schedule.service.js";
 
-function formatDate(date: Date): string {
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = (date.getMonth() + 1).toString().padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-function durationToDays(duration: string): number {
-  const match = duration.match(/^(\d+)N/);
-  if (!match) {
-    return 2;
-  }
-  const days = Number.parseInt(match[1], 10);
-  return Number.isNaN(days) ? 2 : Math.max(days, 1);
+function generateId(prefix: string = ""): string {
+  return prefix ? `${prefix}-${crypto.randomUUID()}` : crypto.randomUUID();
 }
 
 const categoryDisplayOrder = [
@@ -78,7 +68,7 @@ export const store = {
   },
 
   async getHotels(location?: string) {
-    const where = location ? { location: { contains: location, mode: "insensitive" as any } } : {};
+    const where: Prisma.HotelWhereInput = location ? { location: { contains: location, mode: "insensitive" } } : {};
     return prisma.hotel.findMany({ where });
   },
 
@@ -93,14 +83,14 @@ export const store = {
     return prisma.hotel.findMany({
       where: {
         OR: [
-          { name: { contains: query, mode: "insensitive" as any } },
-          { location: { contains: query, mode: "insensitive" as any } },
+          { name: { contains: query, mode: "insensitive" } },
+          { location: { contains: query, mode: "insensitive" } },
         ],
       },
     });
   },
 
-  async bookHotel(userId: string, roomId: string, checkIn: string, checkOut: string, guests: string) {
+  async bookHotel(userId: string | undefined, roomId: string, checkIn: string, checkOut: string, guests: string) {
     const room = await prisma.room.findUnique({
       where: { id: roomId },
       include: { hotel: true },
@@ -111,7 +101,7 @@ export const store = {
 
     return prisma.trip.create({
       data: {
-        id: `trip-hotel-${Date.now()}`,
+        id: generateId("trip-hotel"),
         userId,
         destination: room.hotel.name,
         location: room.hotel.location,
@@ -132,11 +122,11 @@ export const store = {
     return prisma.tourPackage.findUnique({ where: { id } });
   },
 
-  async bookTour(userId: string, tourId: string, date: string, guests: string, totalPrice?: number) {
+  async bookTour(userId: string | undefined, tourId: string, date: string, guests: string, totalPrice?: number) {
     const tour = await prisma.tourPackage.findUnique({ where: { id: tourId } });
     if (!tour) return null;
 
-    const tripId = `trip_tour_${Date.now()}`;
+    const tripId = generateId("trip-tour");
     const trip = await prisma.trip.create({
       data: {
         id: tripId,
@@ -166,8 +156,8 @@ export const store = {
     return trip;
   },
 
-  async createCustomTour(userId: string, data: { destinations: string[]; date: string; guests: string; location: string; imagePath: string; totalPrice?: number }) {
-    const tripId = `trip_custom_${Date.now()}`;
+  async createCustomTour(userId: string | undefined, data: { destinations: string[]; date: string; guests: string; location: string; imagePath: string; totalPrice?: number }) {
+    const tripId = generateId("trip-custom");
     const trip = await prisma.trip.create({
       data: {
         id: tripId,
@@ -205,11 +195,11 @@ export const store = {
     });
   },
 
-  async createTrip(userId: string, destinationId: string, date: string, guests: string, totalPrice?: number) {
+  async createTrip(userId: string | undefined, destinationId: string, date: string, guests: string, totalPrice?: number) {
     const destination = await prisma.destination.findUnique({ where: { id: destinationId } });
     if (!destination) return null;
 
-    const tripId = `trip_dest_${Date.now()}`;
+    const tripId = generateId("trip-dest");
     const trip = await prisma.trip.create({
       data: {
         id: tripId,
@@ -240,7 +230,7 @@ export const store = {
   },
 
   async searchFlights(departure?: string, arrival?: string) {
-    const where: Record<string, unknown> = {};
+    const where: Prisma.FlightWhereInput = {};
 
     if (departure) {
       where.departure = { equals: departure, mode: "insensitive" };
@@ -252,13 +242,13 @@ export const store = {
     return prisma.flight.findMany({ where });
   },
 
-  async bookFlightTrip(userId: string, flightId: string, date: string, guests: string) {
+  async bookFlightTrip(userId: string | undefined, flightId: string, date: string, guests: string) {
     const flight = await prisma.flight.findUnique({ where: { id: flightId } });
     if (!flight) {
       return null;
     }
 
-    const tripId = `trip_flight_${Date.now()}`;
+    const tripId = generateId("trip-flight");
     return prisma.trip.create({
       data: {
         id: tripId,
@@ -274,8 +264,8 @@ export const store = {
     });
   },
 
-  async getTrips(userId: string, type?: string) {
-    const where: any = { userId };
+  async getTrips(userId: string | undefined, type?: string) {
+    const where: Prisma.TripWhereInput = userId ? { userId } : {};
     if (type === "upcoming") where.isUpcoming = true;
     if (type === "past") where.isUpcoming = false;
     return prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
@@ -288,13 +278,17 @@ export const store = {
   async createDocument(title: string, description: string, icon: string, color: string) {
     return prisma.documentItem.create({
       data: {
-        id: `doc-${Date.now()}`,
+        id: generateId("doc"),
         title,
         description,
         icon,
         color,
       },
     });
+  },
+
+  async deleteDocument(id: string) {
+    return prisma.documentItem.delete({ where: { id } });
   },
 
   // --- Reviews ---
@@ -311,15 +305,15 @@ export const store = {
     return { reviews, total, avgRating: Math.round(avgRating * 10) / 10 };
   },
 
-  async createReview(userId: string, targetType: string, targetId: string, rating: number, comment: string) {
+  async createReview(userId: string | undefined, targetType: string, targetId: string, rating: number, comment: string) {
     const review = await prisma.review.create({
-      data: { userId, targetType, targetId, rating, comment },
+      data: { userId: userId || "", targetType, targetId, rating, comment },
       include: { user: { select: { id: true, name: true } } },
     });
     return review;
   },
 
-  async deleteReview(userId: string, reviewId: string) {
+  async deleteReview(userId: string | undefined, reviewId: string) {
     const review = await prisma.review.findUnique({ where: { id: reviewId } });
     if (!review || review.userId !== userId) return null;
     await prisma.review.delete({ where: { id: reviewId } });

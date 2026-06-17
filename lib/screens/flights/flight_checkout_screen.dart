@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 
 class FlightCheckoutScreen extends ConsumerStatefulWidget {
@@ -42,10 +43,12 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
 
   void _navigateToPayment() {
     if (!ref.read(authProvider).isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
-      );
+      showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
+      return;
+    }
+    if (_adults < 1) {
+      showErrorSnackBar(context, 'Phải có ít nhất 1 người lớn');
       return;
     }
 
@@ -74,87 +77,145 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: AppTheme.backgroundGray,
       appBar: AppBar(
-        title: const Text('Thanh toán vé máy bay'),
+        title: const Text('Thanh toán vé máy bay', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildFlightSummary(),
-            const SizedBox(height: 24),
-            _buildPassengerSection(),
-            const SizedBox(height: 24),
-            _buildClassOptions(),
-            const SizedBox(height: 24),
-            _buildBaggageOptions(),
-            const SizedBox(height: 100), // Space for bottom bar
-          ],
-        ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 140),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildFlightSummary(),
+                const SizedBox(height: 28),
+                _buildPassengerSection(),
+                const SizedBox(height: 28),
+                _buildClassOptions(),
+                const SizedBox(height: 28),
+                _buildBaggageOptions(),
+              ],
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: _buildBottomBar(),
+            ),
+          ),
+        ],
       ),
-      bottomSheet: _buildBottomBar(),
     );
   }
 
   Widget _buildFlightSummary() {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppTheme.primaryBlue,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Image.asset(widget.flight.airlineLogo, width: 24, height: 24, fit: BoxFit.contain, errorBuilder: (context, error, stackTrace) => const Icon(Icons.flight, size: 24)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      widget.flight.airline,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    ),
+                  ],
+                ),
+                Text(
+                  widget.date,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Stack(
             children: [
-              Text(
-                widget.flight.airline,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              Text(
-                widget.date,
-                style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600),
+              Container(height: 1, color: Colors.transparent), // Layout dummy
+              Row(
+                children: [
+                  Container(width: 12, height: 24, decoration: const BoxDecoration(color: AppTheme.backgroundGray, borderRadius: BorderRadius.only(topRight: Radius.circular(12), bottomRight: Radius.circular(12)))),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Flex(
+                          direction: Axis.horizontal,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: List.generate(
+                            (constraints.constrainWidth() / 8).floor(),
+                            (index) => const SizedBox(width: 4, height: 1.5, child: DecoratedBox(decoration: BoxDecoration(color: Colors.grey))),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Container(width: 12, height: 24, decoration: const BoxDecoration(color: AppTheme.backgroundGray, borderRadius: BorderRadius.only(topLeft: Radius.circular(12), bottomLeft: Radius.circular(12)))),
+                ],
               ),
             ],
           ),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildTimeLocation(widget.flight.departureTime, widget.flight.departure),
-              Column(
-                children: [
-                  const Icon(Icons.flight_takeoff, color: AppTheme.primaryBlue),
-                  const SizedBox(height: 4),
-                  Text(widget.flight.duration, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                ],
-              ),
-              _buildTimeLocation(widget.flight.arrivalTime, widget.flight.arrival),
-            ],
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildTimeLocation(widget.flight.departureTime, widget.flight.departure, CrossAxisAlignment.start),
+                Column(
+                  children: [
+                    const Icon(Icons.flight_takeoff_rounded, color: AppTheme.primaryBlue, size: 28),
+                    const SizedBox(height: 8),
+                    Text(widget.flight.duration, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                _buildTimeLocation(widget.flight.arrivalTime, widget.flight.arrival, CrossAxisAlignment.end),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTimeLocation(String time, String location) {
+  Widget _buildTimeLocation(String time, String location, CrossAxisAlignment alignment) {
     return Column(
+      crossAxisAlignment: alignment,
       children: [
-        Text(time, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+        Text(time, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 24)),
         const SizedBox(height: 4),
-        Text(location, style: const TextStyle(color: Colors.grey, fontSize: 16)),
+        Text(location, style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -165,25 +226,40 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
       children: [
         const Text(
           'Hành khách',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
-        _buildCounterRow(
-          title: 'Người lớn',
-          subtitle: 'Từ 12 tuổi trở lên',
-          value: _adults,
-          onChanged: (val) {
-            if (val >= 1) setState(() => _adults = val);
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildCounterRow(
-          title: 'Trẻ em',
-          subtitle: 'Dưới 12 tuổi',
-          value: _children,
-          onChanged: (val) {
-            if (val >= 0) setState(() => _children = val);
-          },
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade100),
+          ),
+          child: Column(
+            children: [
+              _buildCounterRow(
+                title: 'Người lớn',
+                subtitle: 'Từ 12 tuổi trở lên',
+                value: _adults,
+                onChanged: (val) {
+                  if (val >= 1) setState(() => _adults = val);
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1, color: Colors.grey.shade100),
+              ),
+              _buildCounterRow(
+                title: 'Trẻ em',
+                subtitle: 'Dưới 12 tuổi',
+                value: _children,
+                onChanged: (val) {
+                  if (val >= 0) setState(() => _children = val);
+                },
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -201,22 +277,32 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
           ],
         ),
         Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              color: value > 0 ? AppTheme.primaryBlue : Colors.grey,
-              onPressed: () => onChanged(value - 1),
+            GestureDetector(
+              onTap: () => onChanged(value - 1),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: value > 0 ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.grey.shade100, borderRadius: BorderRadius.circular(8)),
+                child: Icon(Icons.remove, size: 16, color: value > 0 ? AppTheme.primaryBlue : Colors.grey),
+              ),
             ),
-            Text('$value', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              color: AppTheme.primaryBlue,
-              onPressed: () => onChanged(value + 1),
+            SizedBox(
+              width: 36,
+              child: Text('$value', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            ),
+            GestureDetector(
+              onTap: () => onChanged(value + 1),
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(color: AppTheme.primaryBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                child: const Icon(Icons.add, size: 16, color: AppTheme.primaryBlue),
+              ),
             ),
           ],
         ),
@@ -230,7 +316,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
       children: [
         const Text(
           'Hạng ghế',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
         Row(
@@ -238,46 +324,47 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
             Expanded(
               child: GestureDetector(
                 onTap: () => setState(() => _isBusinessClass = false),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: !_isBusinessClass ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.white,
-                    border: Border.all(color: !_isBusinessClass ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.3)),
-                    borderRadius: BorderRadius.circular(12),
+                    color: !_isBusinessClass ? Colors.white : Colors.white.withValues(alpha: 0.5),
+                    border: Border.all(color: !_isBusinessClass ? AppTheme.primaryBlue : Colors.grey.shade300, width: !_isBusinessClass ? 2 : 1),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: !_isBusinessClass ? [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))] : [],
                   ),
-                  child: Center(
-                    child: Text(
-                      'Phổ thông\n(Tiêu chuẩn)',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: !_isBusinessClass ? AppTheme.primaryBlue : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.event_seat_rounded, color: !_isBusinessClass ? AppTheme.primaryBlue : Colors.grey),
+                      const SizedBox(height: 8),
+                      Text('Phổ thông', style: TextStyle(color: !_isBusinessClass ? AppTheme.primaryBlue : Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('Tiêu chuẩn', style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
+                    ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: GestureDetector(
                 onTap: () => setState(() => _isBusinessClass = true),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: _isBusinessClass ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.white,
-                    border: Border.all(color: _isBusinessClass ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.3)),
-                    borderRadius: BorderRadius.circular(12),
+                    gradient: _isBusinessClass ? const LinearGradient(colors: [Color(0xFF1E293B), Color(0xFF0F172A)], begin: Alignment.topLeft, end: Alignment.bottomRight) : null,
+                    color: _isBusinessClass ? null : Colors.white.withValues(alpha: 0.5),
+                    border: Border.all(color: _isBusinessClass ? Colors.transparent : Colors.grey.shade300, width: 1),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: _isBusinessClass ? [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4))] : [],
                   ),
-                  child: Center(
-                    child: Text(
-                      'Thương gia\n(Giá x2)',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: _isBusinessClass ? AppTheme.primaryBlue : Colors.grey,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.airline_seat_recline_extra_rounded, color: _isBusinessClass ? const Color(0xFFFBBF24) : Colors.grey),
+                      const SizedBox(height: 8),
+                      Text('Thương gia', style: TextStyle(color: _isBusinessClass ? const Color(0xFFFBBF24) : Colors.grey.shade600, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('Giá x2', style: TextStyle(color: _isBusinessClass ? Colors.grey.shade400 : Colors.grey.shade500, fontSize: 11)),
+                    ],
                   ),
                 ),
               ),
@@ -293,42 +380,52 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Hành lý ký gửi bổ sung',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          'Hành lý ký gửi',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
-        _buildBaggageOption('Không mang thêm (Chỉ 7kg xách tay)', 0, 0),
-        const SizedBox(height: 8),
-        _buildBaggageOption('+15 kg hành lý ký gửi', 15, 20),
-        const SizedBox(height: 8),
-        _buildBaggageOption('+20 kg hành lý ký gửi', 20, 30),
+        _buildBaggageOption('7kg Xách tay', 'Không ký gửi', 0, 0),
+        const SizedBox(height: 12),
+        _buildBaggageOption('Mua thêm 15kg', 'Phù hợp du lịch ngắn ngày', 15, 20),
+        const SizedBox(height: 12),
+        _buildBaggageOption('Mua thêm 20kg', 'Phù hợp chuyến đi xa', 20, 30),
       ],
     );
   }
 
-  Widget _buildBaggageOption(String title, int value, int price) {
+  Widget _buildBaggageOption(String title, String subtitle, int value, int price) {
     final isSelected = _extraBaggage == value;
     return GestureDetector(
       onTap: () => setState(() => _extraBaggage = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
-          border: Border.all(color: isSelected ? AppTheme.primaryBlue : Colors.grey.withValues(alpha: 0.3)),
-          borderRadius: BorderRadius.circular(12),
+          color: Colors.white,
+          border: Border.all(color: isSelected ? AppTheme.primaryBlue : Colors.grey.shade200, width: isSelected ? 2 : 1),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSelected ? [BoxShadow(color: AppTheme.primaryBlue.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, 4))] : [],
         ),
         child: Row(
           children: [
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-              color: isSelected ? AppTheme.primaryBlue : Colors.grey,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.1) : Colors.grey.shade50, borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.luggage_rounded, color: isSelected ? AppTheme.primaryBlue : Colors.grey.shade400),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
-              child: Text(title, style: TextStyle(fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: isSelected ? AppTheme.primaryBlue : Colors.black87)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                ],
+              ),
             ),
             if (price > 0)
-              Text('+\$$price', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+              Text('+\$$price', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.primaryBlue)),
           ],
         ),
       ),
@@ -337,61 +434,57 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
 
   Widget _buildBottomBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: const Color(0xFF1E293B).withValues(alpha: 0.3),
             blurRadius: 20,
-            offset: const Offset(0, -5),
+            offset: const Offset(0, 10),
           ),
         ],
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
       ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Tổng cộng',
-                  style: TextStyle(color: Colors.grey, fontSize: 14),
-                ),
-                Text(
-                  '\$${_totalPrice.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primaryBlue,
-                  ),
-                ),
-              ],
-            ),
-            ElevatedButton(
-              onPressed: _navigateToPayment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryBlue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tổng thanh toán',
+                style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
-              child: const Text(
-                'Thanh toán',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              Text(
+                '\$${_totalPrice.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
               ),
+            ],
+          ),
+          ElevatedButton(
+            onPressed: _navigateToPayment,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
             ),
-          ],
-        ),
+            child: const Text(
+              'Thanh toán',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }

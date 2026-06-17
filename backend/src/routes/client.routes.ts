@@ -33,6 +33,7 @@ clientRouter.get("/flights/search", clientController.searchFlights);
 // Documents
 clientRouter.get("/documents", clientController.getDocuments);
 clientRouter.post("/documents", validate(documentSchema), clientController.createDocument);
+clientRouter.delete("/documents/:id", clientController.deleteDocument);
 
 // Hotels
 clientRouter.get("/hotels", clientController.getHotels);

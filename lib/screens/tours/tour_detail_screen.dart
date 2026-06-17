@@ -10,6 +10,7 @@ import '../../providers/trip_provider.dart';
 import '../../providers/tour_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_utils.dart';
+import '../../utils/dialog_utils.dart';
 import '../../widgets/review_section.dart';
 
 class TourDetailScreen extends ConsumerStatefulWidget {
@@ -258,6 +259,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                         child: Image.asset(
                           widget.tour.imagePath,
                           fit: BoxFit.cover,
+                          cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: Colors.grey[300],
                             child: const Icon(Icons.image, size: 50, color: Colors.grey),
@@ -1035,9 +1037,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
 
   void _bookTour() async {
     if (!ref.read(authProvider).isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để đặt!')),
-      );
+      showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
       return;
     }
@@ -1055,21 +1055,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
 
       if (mounted) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đặt tour thành công!')),
-          );
+          showSuccessSnackBar(context, 'Đặt tour thành công!');
           Navigator.pop(context);
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Đặt tour thất bại.')),
-          );
+          showErrorSnackBar(context, 'Đặt tour thất bại.');
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi đặt tour: $e')),
-        );
+        showErrorSnackBar(context, 'Lỗi đặt tour: $e');
       }
     }
   }

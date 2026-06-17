@@ -35,6 +35,16 @@ class DocumentsNotifier extends Notifier<List<DocumentItem>> {
     }
   }
 
+  Future<bool> deleteDocument(String documentId) async {
+    try {
+      await ref.read(apiProvider).deleteDocument(documentId);
+      state = state.where((d) => d.id != documentId).toList();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   void updateFromBootstrap(List<DocumentItem> documents) {
     state = documents;
   }

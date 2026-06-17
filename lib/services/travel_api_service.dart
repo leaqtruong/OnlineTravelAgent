@@ -103,12 +103,13 @@ class TravelApiService {
   }
 
   Future<Trip> bookTrip({required String destinationId, String? date, String? guests, double? totalPrice}) async {
-    final data = await _postJson('/api/trips/book', {
+    final body = <String, dynamic>{
       'destinationId': destinationId,
       'date': date,
       'guests': guests,
-      'totalPrice': ?totalPrice,
-    });
+    };
+    if (totalPrice != null) body['totalPrice'] = totalPrice;
+    final data = await _postJson('/api/trips/book', body);
     return Trip.fromJson(data);
   }
 
@@ -141,6 +142,12 @@ class TravelApiService {
     return DocumentItem.fromJson(data);
   }
 
+  Future<bool> deleteDocument(String documentId) async {
+    final response = await http.delete(_uri('/api/documents/$documentId'), headers: _headers).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
+    return true;
+  }
+
   Future<ReviewResponse> getReviews({required String targetType, required String targetId}) async {
     final data = await _getJson('/api/reviews?targetType=$targetType&targetId=$targetId');
     return ReviewResponse.fromJson(data);
@@ -170,10 +177,11 @@ class TravelApiService {
   }
 
   Future<Trip> bookTour({required String tourId, required String date, required String guests, double? totalPrice}) async {
-    final data = await _postJson('/api/tours/book', {
+    final body = <String, dynamic>{
       'tourId': tourId, 'date': date, 'guests': guests,
-      'totalPrice': ?totalPrice,
-    });
+    };
+    if (totalPrice != null) body['totalPrice'] = totalPrice;
+    final data = await _postJson('/api/tours/book', body);
     return Trip.fromJson(data);
   }
 
@@ -182,14 +190,15 @@ class TravelApiService {
     required String guests, required String imagePath,
     List<String>? flightIds, List<String>? hotelIds, String? roomId, double? totalPrice,
   }) async {
-    final data = await _postJson('/api/trips/custom-tour', {
+    final body = <String, dynamic>{
       'destination': destination, 'location': location, 'date': date,
       'guests': guests, 'imagePath': imagePath,
-      'flightIds': ?flightIds,
-      'hotelIds': ?hotelIds,
-      'roomId': ?roomId,
-      'totalPrice': ?totalPrice,
-    });
+    };
+    if (flightIds != null) body['flightIds'] = flightIds;
+    if (hotelIds != null) body['hotelIds'] = hotelIds;
+    if (roomId != null) body['roomId'] = roomId;
+    if (totalPrice != null) body['totalPrice'] = totalPrice;
+    final data = await _postJson('/api/trips/custom-tour', body);
     return Trip.fromJson(data);
   }
 

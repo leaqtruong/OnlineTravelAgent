@@ -7,6 +7,9 @@ import '../../models/destination.dart';
 import '../../providers/trip_provider.dart';
 import '../../widgets/guest_counter.dart';
 import 'payment_method_screen.dart';
+import 'widgets/summary_card.dart';
+import 'widgets/transport_selection.dart';
+import 'widgets/guide_option.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final Destination destination;
@@ -76,6 +79,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
       return;
     }
+    if (_adults < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phải có ít nhất 1 người lớn')),
+      );
+      return;
+    }
 
     // Calculate end date based on duration (simple logic)
     int days = 2;
@@ -135,12 +144,30 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           _buildGuestSelection(),
           const SizedBox(height: 24),
           _buildRoomSelection(),
-           const SizedBox(height: 24),
-           _buildTransportSelection(),
-           const SizedBox(height: 16),
-           _buildGuideOption(),
-           const SizedBox(height: 24),
-           _buildSummaryCard(),
+          const SizedBox(height: 24),
+          TransportSelection(
+            selectedTransport: _selectedTransport,
+            onTransportSelected: (value) => setState(() => _selectedTransport = value),
+          ),
+          const SizedBox(height: 16),
+          GuideOption(
+            includeGuide: _includeGuide,
+            guideFee: _guideFee,
+            onGuideToggled: (value) => setState(() => _includeGuide = value),
+          ),
+          const SizedBox(height: 24),
+          SummaryCard(
+            adults: _adults,
+            children: _children,
+            basePrice: _basePrice,
+            isVip: _isVip,
+            totalGuests: _totalGuests,
+            selectedTransport: _selectedTransport,
+            transportPrices: _transportPrices,
+            subtotal: _subtotal,
+            tax: _tax,
+            total: _total,
+          ),
           const SizedBox(height: 32),
           _buildConfirmButton(),
         ],
@@ -342,143 +369,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTransportSelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Phương tiện di chuyển', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        _buildTransportOption('Tự túc', Icons.directions_walk, 0),
-        const SizedBox(height: 8),
-        _buildTransportOption('Xe giường nằm', Icons.directions_bus, 20),
-        const SizedBox(height: 8),
-        _buildTransportOption('Tàu hoả', Icons.train, 35),
-        const SizedBox(height: 8),
-        _buildTransportOption('Máy bay', Icons.flight, 100),
-      ],
-    );
-  }
-
-  Widget _buildGuideOption() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('Hướng dẫn viên', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: const Text('Bao gồm hướng dẫn viên (phí cố định)', style: TextStyle(fontSize: 14)),
-              ),
-              Switch(
-                value: _includeGuide,
-                onChanged: (v) => setState(() => _includeGuide = v),
-                activeThumbColor: AppTheme.primaryBlue,
-              ),
-              const SizedBox(width: 8),
-              Text('\$${_guideFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTransportOption(String title, IconData icon, int price) {
-    final isSelected = _selectedTransport == title;
-    return InkWell(
-      onTap: () => setState(() => _selectedTransport = title),
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.primaryBlue.withValues(alpha: 0.05) : Colors.white,
-          border: Border.all(color: isSelected ? AppTheme.primaryBlue : Colors.grey.shade300),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: isSelected ? AppTheme.primaryBlue : Colors.grey),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-              ),
-            ),
-            if (price > 0)
-              Text('+\$$price/người', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSummaryCard() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Chi tiết thanh toán', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 16),
-          _buildSummaryRow('Giá vé người lớn (x$_adults)', '\$${_basePrice * _adults}'),
-          if (_children > 0)
-            _buildSummaryRow('Giá vé trẻ em (x$_children)', '\$${(_basePrice * 0.5 * _children).toStringAsFixed(0)}'),
-          if (_isVip)
-            _buildSummaryRow('Phí VIP (x$_totalGuests)', '\$${50 * _totalGuests}'),
-          if (_transportPrices[_selectedTransport]! > 0)
-            _buildSummaryRow('$_selectedTransport (x$_totalGuests)', '\$${_transportPrices[_selectedTransport]! * _totalGuests}'),
-          const Divider(height: 24),
-          _buildSummaryRow('Tạm tính', '\$${_subtotal.toStringAsFixed(0)}'),
-          _buildSummaryRow('Thuế (10%)', '\$${_tax.toStringAsFixed(0)}'),
-          const Divider(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Tổng cộng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(
-                '\$${_total.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryRow(String title, String amount) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-          Text(amount, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-        ],
       ),
     );
   }

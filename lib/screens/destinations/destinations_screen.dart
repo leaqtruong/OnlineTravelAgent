@@ -125,7 +125,9 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
             ),
           ],
         ),
-        body: Consumer(
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Consumer(
           builder: (context, ref, _) {
             final sortedList = _getSortedAndFiltered(ref.watch(filteredDestinationsProvider));
             return Column(
@@ -229,6 +231,7 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
           ],
         );
           },
+        ),
         ),
       ),
     );

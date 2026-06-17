@@ -7,6 +7,8 @@ import '../widgets/star_rating.dart';
 import '../providers/auth_provider.dart';
 import '../providers/api_provider.dart';
 import '../utils/app_utils.dart';
+import 'shimmer_loading.dart';
+import '../utils/dialog_utils.dart';
 
 /// A reusable review section widget that displays reviews and allows users
 /// to submit new reviews. Used across tour, hotel, and destination detail screens.
@@ -72,9 +74,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
 
   void _showReviewSheet() {
     if (!ref.read(authProvider).isLoggedIn) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng đăng nhập để đánh giá!')),
-      );
+      showErrorSnackBar(context, 'Vui lòng đăng nhập để đánh giá!');
       Navigator.pushNamed(context, '/login');
       return;
     }
@@ -137,11 +137,9 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
         ),
         const SizedBox(height: 20),
         if (_isLoadingReviews)
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          const Padding(
+            padding: EdgeInsets.all(12),
+            child: ReviewCardShimmer(),
           )
         else if (_reviews.isEmpty)
           Container(

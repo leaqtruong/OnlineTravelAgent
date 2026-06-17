@@ -152,9 +152,10 @@
         </div>
       </nav>
 
-      <div class="mt-4 p-4 rounded-[1rem] bg-offwhite flex items-center gap-3">
+      <div class="mt-4 p-4 rounded-[1rem] bg-offwhite flex items-center gap-3 cursor-pointer hover:bg-silver transition-all" onclick="sessionStorage.removeItem('adminAuth');location.reload();">
         <div class="w-2 h-2 rounded-full bg-emerald-500" id="statusDot"></div>
         <span class="text-xs font-bold text-ink uppercase tracking-widest" id="statusText">Online</span>
+        <span class="text-[10px] text-muted ml-auto">Logout</span>
       </div>
     </div>
   </div>
@@ -576,10 +577,18 @@ let curPage='dashboard';
 let data={destinations:[],hotels:[],flights:[],tours:[],trips:[],categories:[],users:[],documents:[]};
 const API='http://localhost:3000';
 
+function getAuth(){
+  return sessionStorage.getItem('adminAuth')||'';
+}
+
 async function req(path,method='GET',body=null){
   const opt={method,headers:{}};
+  const auth=getAuth();
+  if(auth) opt.headers['Authorization']='Basic '+auth;
   if(body){opt.headers['Content-Type']='application/json';opt.body=JSON.stringify(body);}
+  console.log('[REQ]',method,API+path,auth?'(with auth)':'(no auth)');
   const r=await fetch(API+path,opt);
+  console.log('[RES]',r.status,r.statusText);
   if(!r.ok) throw new Error(await r.text()||r.statusText);
   return r.json();
 }
@@ -590,6 +599,11 @@ async function checkHealth(){
     document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.8)]';
     document.getElementById('statusText').textContent='Online';
   }catch(e){
+    if(e.message.includes('401')||e.message.includes('Unauthorized')){
+      sessionStorage.removeItem('adminAuth');
+      location.reload();
+      return;
+    }
     document.getElementById('statusDot').className='w-2 h-2 rounded-full bg-red-500';
     document.getElementById('statusText').textContent='Offline';
   }
@@ -611,15 +625,21 @@ function navigate(page){
 }
 
 function loadPage(page){
-  if(page==='dashboard') loadDashboard();
-  if(page==='destinations') loadDestinations();
-  if(page==='hotels') loadHotels();
-  if(page==='flights') loadFlights();
-  if(page==='tours') loadTours();
-  if(page==='trips') loadTrips();
-  if(page==='categories') loadCategories();
-  if(page==='users') loadUsers();
-  if(page==='documents') loadDocuments();
+  const loaders={
+    dashboard:loadDashboard, destinations:loadDestinations, hotels:loadHotels,
+    flights:loadFlights, tours:loadTours, trips:loadTrips,
+    categories:loadCategories, users:loadUsers, documents:loadDocuments
+  };
+  if(loaders[page]) loaders[page]().catch(e=>{
+    console.error('Load error:',e);
+    if(e.message.includes('401')||e.message.includes('Unauthorized')){
+      sessionStorage.removeItem('adminAuth');
+      toast('Phiên hết hạn, đang tải lại...','error');
+      setTimeout(()=>location.reload(),1500);
+    }else{
+      toast('Lỗi tải dữ liệu: '+e.message,'error');
+    }
+  });
 }
 function refreshData(){loadPage(curPage);}
 function openAddModal(){
@@ -644,14 +664,12 @@ const listRow = (cols, actions) => `
 
 // ── DASHBOARD ──
 async function loadDashboard(){
-  try{
-    const st = await req('/api/admin/stats');
-    document.getElementById('st-dest').textContent=st.destinations;
-    document.getElementById('st-hotel').textContent=st.hotels;
-    document.getElementById('st-flight').textContent=st.flights;
-    document.getElementById('st-tour').textContent=st.tours;
-    document.getElementById('st-upcoming').textContent=st.tripsUpcoming;
-  }catch(e){}
+  const st = await req('/api/admin/stats');
+  document.getElementById('st-dest').textContent=st.destinations;
+  document.getElementById('st-hotel').textContent=st.hotels;
+  document.getElementById('st-flight').textContent=st.flights;
+  document.getElementById('st-tour').textContent=st.tours;
+  document.getElementById('st-upcoming').textContent=st.tripsUpcoming;
 }
 
 // ── HOTELS & ROOMS ──
@@ -1046,7 +1064,42 @@ function toast(msg,type='info'){
 const v=id=>document.getElementById(id).value.trim();
 const fmtUSD=p=>p!=null?new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(p):'—';
 
-checkHealth(); loadDashboard(); setInterval(checkHealth, 30000);
+function promptLogin(){
+  const user=prompt('Admin Username:');
+  if(user===null) return false;
+  const pass=prompt('Admin Password:');
+  if(pass===null) return false;
+  sessionStorage.setItem('adminAuth',btoa(user+':'+pass));
+  return true;
+}
+
+async function initAdmin(){
+  // Try load without auth first
+  try{
+    await req('/api/admin/stats');
+    console.log('[INIT] No auth needed');
+    checkHealth(); loadDashboard(); setInterval(checkHealth, 30000);
+    return;
+  }catch(e){ console.log('[INIT] Need auth:', e.message); }
+  
+  // Need auth
+  if(!getAuth()){
+    if(!promptLogin()){ document.body.innerHTML='<div class="flex items-center justify-center h-screen"><p class="text-xl font-bold">Cần đăng nhập để truy cập Admin Panel</p></div>'; return; }
+  }
+  
+  console.log('[INIT] Trying with auth:', getAuth().substring(0,10)+'...');
+  try{
+    await req('/api/admin/stats');
+    console.log('[INIT] Auth success');
+    checkHealth(); loadDashboard(); setInterval(checkHealth, 30000);
+  }catch(e){
+    console.log('[INIT] Auth failed:', e.message);
+    sessionStorage.removeItem('adminAuth');
+    alert('Sai thông tin đăng nhập!');
+    location.reload();
+  }
+}
+initAdmin();
 </script>
 </body>
 </html>
