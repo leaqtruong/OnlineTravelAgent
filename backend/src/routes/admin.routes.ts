@@ -58,6 +58,11 @@ adminRouter.put("/trips/:id", validate(adminTripSchema), adminController.updateT
 adminRouter.delete("/trips/:id", adminController.deleteTrip);
 adminRouter.get("/trips/:id/schedule", adminController.getTripSchedule);
 adminRouter.put("/trips/:id/schedule/items/:itemId", adminController.updateTripScheduleItem);
+adminRouter.post("/trips/:id/schedule/items", adminController.createTripScheduleItem);
+adminRouter.delete("/trips/:id/schedule/items/:itemId", adminController.deleteTripScheduleItem);
+adminRouter.post("/trips/:id/schedule/days", adminController.createTripScheduleDay);
+adminRouter.put("/trips/:id/schedule/days/:dayId", adminController.updateTripScheduleDay);
+adminRouter.delete("/trips/:id/schedule/days/:dayId", adminController.deleteTripScheduleDay);
 adminRouter.post("/trips/:id/schedule/updates", adminController.createTripScheduleUpdate);
 
 // Categories

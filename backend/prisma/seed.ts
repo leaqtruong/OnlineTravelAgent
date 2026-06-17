@@ -921,6 +921,7 @@ async function main() {
   // --- Schedule Templates ---
   const dalatTemplate = await prisma.scheduleTemplate.create({
     data: {
+      name: "Tour Đà Lạt 3N2Đ",
       sourceType: "tour",
       tourPackageId: "tour-dalat-3n2d",
       days: {
@@ -935,7 +936,7 @@ async function main() {
                   endTime: "09:00",
                   title: "Đón khách và ăn sáng",
                   description: "Xe và HDV đón khách tại điểm hẹn. Dùng điểm tâm sáng.",
-                  location: "Trung tâm TP.HCM",
+                  locationName: "Trung tâm TP.HCM",
                 },
                 {
                   sortOrder: 2,
@@ -943,7 +944,7 @@ async function main() {
                   endTime: "13:00",
                   title: "Ăn trưa và nhận phòng",
                   description: "Dùng cơm trưa tại nhà hàng địa phương, sau đó nhận phòng khách sạn nghỉ ngơi.",
-                  location: "Khách sạn Mường Thanh Đà Lạt",
+                  locationName: "Khách sạn Mường Thanh Đà Lạt",
                 },
                 {
                   sortOrder: 3,
@@ -951,7 +952,7 @@ async function main() {
                   endTime: "17:30",
                   title: "Tham quan Thác Datanla",
                   description: "Trải nghiệm máng trượt xuyên rừng thông và ngắm vẻ đẹp hùng vĩ của Thác Datanla.",
-                  location: "Thác Datanla",
+                  locationName: "Thác Datanla",
                   latitude: 11.9022,
                   longitude: 108.4497,
                 },
@@ -961,7 +962,7 @@ async function main() {
                   endTime: "20:00",
                   title: "Ăn tối Buffet Rau",
                   description: "Thưởng thức Buffet Rau Léguda đặc sản Đà Lạt.",
-                  location: "Nhà hàng Léguda",
+                  locationName: "Nhà hàng Léguda",
                 }
               ]
             }
@@ -976,7 +977,7 @@ async function main() {
                   endTime: "11:30",
                   title: "Chinh phục đỉnh Langbiang",
                   description: "Di chuyển bằng xe Jeep lên đỉnh Langbiang ngắm toàn cảnh Đà Lạt sương mờ.",
-                  location: "Khu du lịch Langbiang",
+                  locationName: "Khu du lịch Langbiang",
                 },
                 {
                   sortOrder: 2,
@@ -984,7 +985,7 @@ async function main() {
                   endTime: "16:00",
                   title: "Chèo thuyền Kayak Hồ Tuyền Lâm",
                   description: "Trải nghiệm chèo thuyền Kayak ngắm hoàng hôn trên Hồ Tuyền Lâm.",
-                  location: "Hồ Tuyền Lâm",
+                  locationName: "Hồ Tuyền Lâm",
                 },
                 {
                   sortOrder: 3,
@@ -992,7 +993,7 @@ async function main() {
                   endTime: "21:00",
                   title: "Tiệc BBQ rừng thông",
                   description: "Giao lưu lửa trại và thưởng thức tiệc BBQ giữa rừng thông.",
-                  location: "Rừng thông Đà Lạt",
+                  locationName: "Rừng thông Đà Lạt",
                 }
               ]
             }
@@ -1004,6 +1005,7 @@ async function main() {
 
   const phuquocTemplate = await prisma.scheduleTemplate.create({
     data: {
+      name: "Tour Phú Quốc 4N3Đ",
       sourceType: "tour",
       tourPackageId: "tour-phuquoc-4n3d",
       days: {
@@ -1012,8 +1014,8 @@ async function main() {
             dayNumber: 1,
             items: {
               create: [
-                { sortOrder: 1, startTime: "09:00", endTime: "11:00", title: "Bay đến Phú Quốc", description: "Đón sân bay và di chuyển đến resort.", location: "Sân bay Phú Quốc" },
-                { sortOrder: 2, startTime: "14:00", endTime: "18:00", title: "Khám phá VinWonders", description: "Vui chơi không giới hạn tại công viên giải trí lớn nhất Việt Nam.", location: "VinWonders Phú Quốc" }
+                { sortOrder: 1, startTime: "09:00", endTime: "11:00", title: "Bay đến Phú Quốc", description: "Đón sân bay và di chuyển đến resort.", locationName: "Sân bay Phú Quốc" },
+                { sortOrder: 2, startTime: "14:00", endTime: "18:00", title: "Khám phá VinWonders", description: "Vui chơi không giới hạn tại công viên giải trí lớn nhất Việt Nam.", locationName: "VinWonders Phú Quốc" }
               ]
             }
           },
@@ -1021,8 +1023,8 @@ async function main() {
             dayNumber: 2,
             items: {
               create: [
-                { sortOrder: 1, startTime: "08:00", endTime: "16:00", title: "Tour 4 Đảo hoang sơ", description: "Đi cano thám hiểm 4 hòn đảo đẹp nhất Nam Đảo, lặn ngắm san hô.", location: "Quần đảo An Thới" },
-                { sortOrder: 2, startTime: "18:30", endTime: "21:00", title: "Ăn tối chợ đêm", description: "Tự do thưởng thức hải sản tại Chợ Đêm Phú Quốc.", location: "Chợ Đêm Phú Quốc" }
+                { sortOrder: 1, startTime: "08:00", endTime: "16:00", title: "Tour 4 Đảo hoang sơ", description: "Đi cano thám hiểm 4 hòn đảo đẹp nhất Nam Đảo, lặn ngắm san hô.", locationName: "Quần đảo An Thới" },
+                { sortOrder: 2, startTime: "18:30", endTime: "21:00", title: "Ăn tối chợ đêm", description: "Tự do thưởng thức hải sản tại Chợ Đêm Phú Quốc.", locationName: "Chợ Đêm Phú Quốc" }
               ]
             }
           }
@@ -1035,9 +1037,9 @@ async function main() {
 
   // Create real schedule for trip-7 (Đang diễn ra)
   const d = new Date();
-  const dStr = d.toISOString().split('T')[0];
+  const dStr = d.toISOString();
   d.setDate(d.getDate() + 1);
-  const d2Str = d.toISOString().split('T')[0];
+  const d2Str = d.toISOString();
 
   await prisma.tripScheduleDay.create({
     data: {
@@ -1046,9 +1048,9 @@ async function main() {
       date: dStr,
       items: {
         create: [
-          { sortOrder: 1, startTime: "08:00", endTime: "09:00", title: "Đón khách và ăn sáng", description: "Xe và HDV đón khách tại điểm hẹn.", location: "Trung tâm TP.HCM", statusOverride: "completed" },
-          { sortOrder: 2, startTime: "12:00", endTime: "13:00", title: "Ăn trưa và nhận phòng", description: "Dùng cơm trưa tại nhà hàng địa phương.", location: "Khách sạn Mường Thanh Đà Lạt", statusOverride: "ongoing" },
-          { sortOrder: 3, startTime: "15:00", endTime: "17:30", title: "Tham quan Thác Datanla", description: "Trải nghiệm máng trượt xuyên rừng thông.", location: "Thác Datanla", statusOverride: "upcoming" }
+          { sortOrder: 1, startTime: "08:00", endTime: "09:00", title: "Đón khách và ăn sáng", description: "Xe và HDV đón khách tại điểm hẹn.", locationName: "Trung tâm TP.HCM", statusOverride: "completed" },
+          { sortOrder: 2, startTime: "12:00", endTime: "13:00", title: "Ăn trưa và nhận phòng", description: "Dùng cơm trưa tại nhà hàng địa phương.", locationName: "Khách sạn Mường Thanh Đà Lạt", statusOverride: "ongoing" },
+          { sortOrder: 3, startTime: "15:00", endTime: "17:30", title: "Tham quan Thác Datanla", description: "Trải nghiệm máng trượt xuyên rừng thông.", locationName: "Thác Datanla", statusOverride: "upcoming" }
         ]
       }
     }
@@ -1061,7 +1063,7 @@ async function main() {
       date: d2Str,
       items: {
         create: [
-          { sortOrder: 1, startTime: "08:00", endTime: "11:30", title: "Chinh phục đỉnh Langbiang", description: "Di chuyển bằng xe Jeep.", location: "Khu du lịch Langbiang", statusOverride: "upcoming" }
+          { sortOrder: 1, startTime: "08:00", endTime: "11:30", title: "Chinh phục đỉnh Langbiang", description: "Di chuyển bằng xe Jeep.", locationName: "Khu du lịch Langbiang", statusOverride: "upcoming" }
         ]
       }
     }

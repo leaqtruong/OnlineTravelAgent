@@ -138,8 +138,37 @@ export interface CreateReviewBody {
 }
 
 export interface UpdateScheduleItemBody {
-  statusOverride?: string;
-  note?: string;
+  startTime?: string;
+  endTime?: string | null;
+  title?: string;
+  description?: string | null;
+  locationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  sortOrder?: number;
+  statusOverride?: string | null;
+  note?: string | null;
+}
+
+export interface CreateScheduleItemBody {
+  dayId: string;
+  startTime: string;
+  endTime?: string | null;
+  title: string;
+  description?: string | null;
+  locationName?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  sortOrder?: number;
+}
+
+export interface CreateScheduleDayBody {
+  dayNumber: number;
+  title?: string | null;
+}
+
+export interface UpdateScheduleDayBody {
+  title?: string | null;
 }
 
 export interface CreateScheduleUpdateBody {
