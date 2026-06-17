@@ -511,10 +511,10 @@ async function handleUpload(fileInput, hiddenId, imgId){
 
 <!-- Trip Schedule Modal -->
 <div class="modal-overlay" id="modal-trip-schedule">
-  <div class="doppelrand modal-content w-full max-w-4xl">
+  <div class="doppelrand modal-content w-full max-w-5xl">
     <div class="doppelrand-inner flex flex-col max-h-[85vh]">
       <div class="p-8 border-b border-silver flex justify-between items-center bg-white z-10">
-        <h3 class="text-xl font-extrabold text-ink tracking-tight">Quản lý Lịch trình Real-time</h3>
+        <h3 class="text-xl font-extrabold text-ink tracking-tight">Quản lý Lịch trình</h3>
         <button class="w-10 h-10 rounded-full bg-offwhite hover:bg-silver text-ink transition-all flex items-center justify-center" onclick="closeModal('modal-trip-schedule')"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="flex-1 flex overflow-hidden">
@@ -522,6 +522,9 @@ async function handleUpload(fileInput, hiddenId, imgId){
         <div class="w-2/3 p-8 overflow-y-auto bg-offwhite/30 border-r border-silver">
           <input type="hidden" id="ts-trip-id">
           <div id="ts-days-list" class="flex flex-col gap-6"></div>
+          <button class="mt-4 w-full bg-white border-2 border-dashed border-silver hover:border-primary text-muted hover:text-primary font-bold py-3 rounded-2xl transition-all text-sm" onclick="addTripDay()">
+            <i class="fa-solid fa-plus mr-2"></i>Thêm ngày mới
+          </button>
         </div>
         <!-- Updates -->
         <div class="w-1/3 p-8 overflow-y-auto bg-white flex flex-col">
@@ -876,35 +879,52 @@ async function loadTripSchedule(id) {
 function renderTripSchedule(days) {
   const container = document.getElementById('ts-days-list');
   if (!days || !days.length) {
-    container.innerHTML = `<div class="text-sm font-bold text-muted text-center py-10">Chuyến đi này chưa có lịch trình.</div>`;
+    container.innerHTML = `<div class="text-sm font-bold text-muted text-center py-10">Chuyến đi này chưa có lịch trình. Nhấn "Thêm ngày mới" để bắt đầu.</div>`;
     return;
   }
   container.innerHTML = days.map(d => `
-    <div class="bg-white rounded-3xl p-6 shadow-sm border border-silver mb-4">
-      <div class="text-lg font-extrabold text-ink mb-4">Ngày ${d.dayNumber} ${d.title ? `- ${d.title}` : ''}</div>
-      <div class="flex flex-col gap-3">
-        ${d.items.map(item => `
-          <div class="flex items-center gap-4 bg-offwhite rounded-2xl p-4 border border-silver">
-            <div class="w-20 text-xs font-bold text-muted">${item.startTime}${item.endTime ? `<br>-<br>${item.endTime}` : ''}</div>
-            <div class="flex-1">
-              <div class="text-sm font-bold text-ink">${item.title}</div>
-              <div class="text-xs text-muted mt-1">${item.locationName || item.description || ''}</div>
-            </div>
-            <div class="flex flex-col gap-2 w-48">
-              <select class="text-xs bg-white border border-silver rounded-lg p-2 font-bold" onchange="updateScheduleItem('${item.id}', 'statusOverride', this.value)">
-                <option value="" ${!item.statusOverride ? 'selected' : ''}>-- Mặc định --</option>
-                <option value="pending" ${item.statusOverride==='pending'?'selected':''}>Chưa diễn ra</option>
-                <option value="ongoing" ${item.statusOverride==='ongoing'?'selected':''}>Đang diễn ra</option>
-                <option value="completed" ${item.statusOverride==='completed'?'selected':''}>Đã hoàn thành</option>
-                <option value="skipped" ${item.statusOverride==='skipped'?'selected':''}>Đã bỏ qua</option>
-              </select>
-              <input type="text" class="text-xs bg-white border border-silver rounded-lg p-2" placeholder="Ghi chú (VD: Dời lại 30p)" value="${item.note || ''}" onblur="updateScheduleItem('${item.id}', 'note', this.value)">
-            </div>
-          </div>
-        `).join('')}
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-silver mb-4" data-day-id="${d.id}">
+      <div class="flex items-center justify-between mb-4">
+        <div class="text-lg font-extrabold text-ink">Ngày ${d.dayNumber} ${d.title ? `- <input type="text" class="inline-block bg-transparent border-b border-silver focus:border-primary outline-none text-lg font-extrabold text-ink w-48" value="${d.title || ''}" onblur="updateDayTitle('${d.id}', this.value)" placeholder="Thêm tiêu đề...">` : `- <input type="text" class="inline-block bg-transparent border-b border-silver focus:border-primary outline-none text-lg font-extrabold text-ink w-48" value="" onblur="updateDayTitle('${d.id}', this.value)" placeholder="Thêm tiêu đề...">`}</div>
+        <button class="w-8 h-8 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center text-xs" onclick="deleteDay('${d.id}', ${d.dayNumber})"><i class="fa-solid fa-trash"></i></button>
       </div>
+      <div class="flex flex-col gap-3" id="day-items-${d.id}">
+        ${d.items.map((item, idx) => renderItemRow(item, idx)).join('')}
+      </div>
+      <button class="mt-3 w-full bg-offwhite hover:bg-primary/10 text-muted hover:text-primary font-bold py-2 rounded-xl transition-all text-xs border border-dashed border-silver hover:border-primary" onclick="addItemToDay('${d.id}')">
+        <i class="fa-solid fa-plus mr-1"></i>Thêm mục
+      </button>
     </div>
   `).join('');
+}
+
+function renderItemRow(item, idx) {
+  return `
+    <div class="flex items-start gap-3 bg-offwhite rounded-2xl p-4 border border-silver group" data-item-id="${item.id}">
+      <div class="flex flex-col gap-1 w-14 shrink-0">
+        <input type="text" class="w-full text-xs font-bold text-ink bg-white border border-silver rounded-lg p-1.5 text-center focus:border-primary outline-none" value="${item.startTime}" placeholder="08:00" onblur="updateItem('${item.id}','startTime',this.value)">
+        <input type="text" class="w-full text-[10px] font-bold text-muted bg-white border border-silver rounded-lg p-1.5 text-center focus:border-primary outline-none" value="${item.endTime || ''}" placeholder="--:--" onblur="updateItem('${item.id}','endTime',this.value)">
+      </div>
+      <div class="flex-1 flex flex-col gap-1.5">
+        <input type="text" class="w-full text-sm font-bold text-ink bg-white border border-silver rounded-lg px-3 py-1.5 focus:border-primary outline-none" value="${item.title}" placeholder="Tên hoạt động" onblur="updateItem('${item.id}','title',this.value)">
+        <div class="flex gap-2">
+          <input type="text" class="flex-1 text-xs text-muted bg-white border border-silver rounded-lg px-3 py-1.5 focus:border-primary outline-none" value="${item.locationName || ''}" placeholder="Địa điểm" onblur="updateItem('${item.id}','locationName',this.value)">
+          <input type="text" class="flex-1 text-xs text-muted bg-white border border-silver rounded-lg px-3 py-1.5 focus:border-primary outline-none" value="${item.description || ''}" placeholder="Mô tả" onblur="updateItem('${item.id}','description',this.value)">
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 shrink-0 w-36">
+        <select class="text-[10px] bg-white border border-silver rounded-lg p-1.5 font-bold" onchange="updateItem('${item.id}','statusOverride',this.value)">
+          <option value="" ${!item.statusOverride ? 'selected' : ''}>-- Mặc định --</option>
+          <option value="pending" ${item.statusOverride==='pending'?'selected':''}>Chưa diễn ra</option>
+          <option value="ongoing" ${item.statusOverride==='ongoing'?'selected':''}>Đang diễn ra</option>
+          <option value="completed" ${item.statusOverride==='completed'?'selected':''}>Đã hoàn thành</option>
+          <option value="skipped" ${item.statusOverride==='skipped'?'selected':''}>Đã bỏ qua</option>
+        </select>
+        <input type="text" class="text-[10px] bg-white border border-silver rounded-lg px-2 py-1.5" placeholder="Ghi chú" value="${item.note || ''}" onblur="updateItem('${item.id}','note',this.value)">
+      </div>
+      <button class="w-7 h-7 rounded-full bg-red-50 hover:bg-red-500 hover:text-white text-red-500 transition-all flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 shrink-0" onclick="deleteItem('${item.id}')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  `;
 }
 
 function renderTripUpdates(updates) {
@@ -921,15 +941,79 @@ function renderTripUpdates(updates) {
   `).join('');
 }
 
-async function updateScheduleItem(itemId, field, value) {
+async function updateItem(itemId, field, value) {
   const tripId = document.getElementById('ts-trip-id').value;
   try {
     const body = {};
-    body[field] = value;
+    body[field] = value || null;
     await req(`/api/admin/trips/${tripId}/schedule/items/${itemId}`, 'PUT', body);
-    toast('Đã lưu thay đổi', 'success');
+    toast('Đã lưu', 'success');
   } catch (e) {
-    toast('Lỗi cập nhật: ' + e.message, 'error');
+    toast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+async function deleteItem(itemId) {
+  const tripId = document.getElementById('ts-trip-id').value;
+  if (!confirm('Xóa mục này?')) return;
+  try {
+    await req(`/api/admin/trips/${tripId}/schedule/items/${itemId}`, 'DELETE');
+    toast('Đã xóa', 'success');
+    loadTripSchedule(tripId);
+  } catch (e) {
+    toast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+async function addItemToDay(dayId) {
+  const tripId = document.getElementById('ts-trip-id').value;
+  try {
+    await req(`/api/admin/trips/${tripId}/schedule/items`, 'POST', {
+      dayId,
+      startTime: '08:00',
+      title: 'Hoạt động mới',
+    });
+    toast('Đã thêm mục', 'success');
+    loadTripSchedule(tripId);
+  } catch (e) {
+    toast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+async function updateDayTitle(dayId, title) {
+  const tripId = document.getElementById('ts-trip-id').value;
+  try {
+    await req(`/api/admin/trips/${tripId}/schedule/days/${dayId}`, 'PUT', { title: title || null });
+  } catch (e) {
+    // silent
+  }
+}
+
+async function addTripDay() {
+  const tripId = document.getElementById('ts-trip-id').value;
+  try {
+    const data = await req(`/api/admin/trips/${tripId}/schedule`);
+    const maxDay = data.days.length ? Math.max(...data.days.map(d => d.dayNumber)) : 0;
+    await req(`/api/admin/trips/${tripId}/schedule/days`, 'POST', {
+      dayNumber: maxDay + 1,
+      title: '',
+    });
+    toast('Đã thêm ngày mới', 'success');
+    loadTripSchedule(tripId);
+  } catch (e) {
+    toast('Lỗi: ' + e.message, 'error');
+  }
+}
+
+async function deleteDay(dayId, dayNumber) {
+  const tripId = document.getElementById('ts-trip-id').value;
+  if (!confirm(`Xóa ngày ${dayNumber} và tất cả mục bên trong?`)) return;
+  try {
+    await req(`/api/admin/trips/${tripId}/schedule/days/${dayId}`, 'DELETE');
+    toast('Đã xóa ngày', 'success');
+    loadTripSchedule(tripId);
+  } catch (e) {
+    toast('Lỗi: ' + e.message, 'error');
   }
 }
 

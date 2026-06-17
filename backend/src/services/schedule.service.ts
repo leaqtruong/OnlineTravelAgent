@@ -353,4 +353,74 @@ export const scheduleService = {
     });
     return { ok: true };
   },
+
+  async addTripScheduleItem(tripId: string, input: ScheduleItemInput & { dayId: string }) {
+    const day = await prisma.tripScheduleDay.findFirst({ where: { id: input.dayId, tripId } });
+    if (!day) return null;
+    assertClockTime(input.startTime, "startTime");
+    if (input.endTime) assertClockTime(input.endTime, "endTime");
+    if (!input.title?.trim()) throw new Error("title is required");
+
+    const maxSort = await prisma.tripScheduleItem.aggregate({
+      where: { dayId: input.dayId },
+      _max: { sortOrder: true },
+    });
+    const nextSort = (maxSort._max.sortOrder ?? -1) + 1;
+
+    const item = await prisma.tripScheduleItem.create({
+      data: {
+        dayId: input.dayId,
+        startTime: input.startTime,
+        endTime: input.endTime ?? null,
+        title: input.title,
+        description: input.description ?? null,
+        locationName: input.locationName ?? null,
+        latitude: input.latitude ?? null,
+        longitude: input.longitude ?? null,
+        sortOrder: input.sortOrder ?? nextSort,
+        statusOverride: input.statusOverride ?? null,
+        note: input.note ?? null,
+      },
+    });
+    return item;
+  },
+
+  async deleteTripScheduleItem(tripId: string, itemId: string) {
+    const item = await prisma.tripScheduleItem.findFirst({
+      where: { id: itemId, day: { tripId } },
+    });
+    if (!item) return null;
+    await prisma.tripScheduleItem.delete({ where: { id: itemId } });
+    return { ok: true };
+  },
+
+  async addTripScheduleDay(tripId: string, input: ScheduleDayInput) {
+    const trip = await prisma.trip.findUnique({ where: { id: tripId }, select: { id: true } });
+    if (!trip) return null;
+    if (!Number.isInteger(input.dayNumber) || input.dayNumber < 1) {
+      throw new Error("dayNumber must be a positive integer");
+    }
+
+    const existing = await prisma.tripScheduleDay.findUnique({
+      where: { tripId_dayNumber: { tripId, dayNumber: input.dayNumber } },
+    });
+    if (existing) throw new Error(`Day ${input.dayNumber} already exists`);
+
+    const day = await prisma.tripScheduleDay.create({
+      data: {
+        tripId,
+        dayNumber: input.dayNumber,
+        title: input.title ?? null,
+      },
+    });
+    return day;
+  },
+
+  async deleteTripScheduleDay(tripId: string, dayId: string) {
+    const day = await prisma.tripScheduleDay.findFirst({ where: { id: dayId, tripId } });
+    if (!day) return null;
+    await prisma.tripScheduleItem.deleteMany({ where: { dayId } });
+    await prisma.tripScheduleDay.delete({ where: { id: dayId } });
+    return { ok: true };
+  },
 };
