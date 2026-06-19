@@ -312,18 +312,18 @@ class _DestinationDetailScreenState
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Giá từ",
-                      style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  Text(
-                    "\$${d.price}",
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlue,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text("Giá từ",
+                        style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    Text(
+                      formatVND(parsePrice(d.price)),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                      ),
                     ),
-                  ),
                 ],
               ),
               const SizedBox(width: 24),

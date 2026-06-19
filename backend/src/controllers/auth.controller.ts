@@ -23,7 +23,7 @@ export const authController = {
 
     const { password: _, ...userWithoutPassword } = user;
     const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ user: userWithoutPassword, token });
   },
 
@@ -53,7 +53,23 @@ export const authController = {
 
     const { password: _, ...userWithoutPassword } = user;
     const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ user: userWithoutPassword, token });
   },
+
+  becomePartner: async (req: Request, res: Response) => {
+    const userId = (req as any).userId;
+    if (!userId) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: { role: 'PARTNER' }
+    });
+    const { password: _, ...userWithoutPassword } = user;
+    const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
+    const token = jwt.sign({ userId: user.id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ user: userWithoutPassword, token });
+  }
 };

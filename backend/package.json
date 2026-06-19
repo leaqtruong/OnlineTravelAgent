@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "prisma db push && tsx watch src/server.ts",
+    "dev": "prisma db push && concurrently \"tsx watch src/server.ts\" \"prisma studio\"",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "db:generate": "prisma generate",
@@ -30,6 +30,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/node": "^25.9.1",
+    "concurrently": "^10.0.3",
     "prisma": "^6.9.0",
     "tsx": "^4.22.3",
     "typescript": "^5.8.3"

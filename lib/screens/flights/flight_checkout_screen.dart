@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 
@@ -27,6 +28,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
   int _children = 0;
   bool _isBusinessClass = false;
   int _extraBaggage = 0; // 0, 15, 20 kg
+  bool _isProcessing = false;
 
   double get _totalPrice {
     final basePrice = widget.flight.price.toDouble();
@@ -41,7 +43,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
     return (adultPrice + childPrice) * classMultiplier + baggagePrice;
   }
 
-  void _navigateToPayment() {
+  void _navigateToPayment() async {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
@@ -52,26 +54,32 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
       return;
     }
 
+    setState(() => _isProcessing = true);
+
     final String guestsStr = '$_adults Người lớn, $_children Trẻ em'
         '${_isBusinessClass ? ' (Thương gia)' : ' (Phổ thông)'}';
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentMethodScreen(
-          totalPrice: _totalPrice,
-          onPaymentSuccess: () async {
-            if (!mounted) return false;
-            final notifier = ref.read(tripsProvider.notifier);
-            return await notifier.bookFlight(
-              flightId: widget.flight.id,
-              date: widget.date,
-              guests: guestsStr,
-            );
-          },
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentMethodScreen(
+            totalPrice: _totalPrice,
+            onPaymentSuccess: () async {
+              if (!mounted) return false;
+              final notifier = ref.read(tripsProvider.notifier);
+              return await notifier.bookFlight(
+                flightId: widget.flight.id,
+                date: widget.date,
+                guests: guestsStr,
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   @override
@@ -459,7 +467,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
                 style: TextStyle(color: Colors.white70, fontSize: 12),
               ),
               Text(
-                '\$${_totalPrice.toStringAsFixed(0)}',
+                formatVND(_totalPrice),
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -469,7 +477,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
             ],
           ),
           ElevatedButton(
-            onPressed: _navigateToPayment,
+            onPressed: _isProcessing ? null : _navigateToPayment,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primaryBlue,
               foregroundColor: Colors.white,
@@ -479,10 +487,19 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Thanh toán',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
+            child: _isProcessing
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Thanh toán',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
           ),
         ],
       ),

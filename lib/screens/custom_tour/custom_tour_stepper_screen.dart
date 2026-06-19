@@ -8,6 +8,7 @@ import '../../providers/destination_provider.dart';
 import '../../providers/hotel_provider.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 
@@ -40,7 +41,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
   // Per-leg option to self-book flights (true = user will handle booking for that leg)
   final Map<int, bool> _selfBookPerLeg = {};
   
-  DateTime _selectedDate = DateTime(2026, 12, 15);
+  DateTime _selectedDate = DateTime.now().add(const Duration(days: 14));
   int _guests = 2;
   // Custom tours always include a guide (fixed fee per tour)
   static const double _guideFee = 50.0;
@@ -636,7 +637,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                           ),
                         ),
                         if (selectedPrice > 0)
-                          Text('\$${selectedPrice.toStringAsFixed(0)} / khách', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                          Text('${formatVND(selectedPrice)} / khách', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -687,7 +688,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                               Text('Mã: ${flight['code']} • ${flight['time']}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                             ]),
                           ),
-                          Text('\$${(flight['price'] as double).toStringAsFixed(0)} / khách', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                          Text('${formatVND(flight['price'] as double)} / khách', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     ),
@@ -793,7 +794,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                               ),
                             ),
                             if (selected != null)
-                              Text('\$${selected.priceFrom.toStringAsFixed(0)} / đêm', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                              Text('${formatVND(selected.priceFrom)} / đêm', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -834,7 +835,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                                   Text(hotel.location, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
                                 ]),
                               ),
-                              Text('\$${hotel.priceFrom.toStringAsFixed(0)}', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+                              Text(formatVND(hotel.priceFrom), style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -1072,7 +1073,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
               _buildReviewRowDetail(
                 title: 'Chuyến bay:',
                 value: selectedFlightLegCount == 0 ? 'Không đặt qua app' : 'Đã chọn $selectedFlightLegCount chuyến',
-                subtitle: selectedFlightLegCount == 0 ? null : '\$${(selectedFlightsTotalPrice * _guests).toStringAsFixed(0)} ($_guests khách)',
+                subtitle: selectedFlightLegCount == 0 ? null : '${formatVND(selectedFlightsTotalPrice * _guests)} ($_guests khách)',
                 icon: Icons.flight_takeoff,
                 iconColor: Colors.teal,
               ),
@@ -1080,7 +1081,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
               _buildReviewRowDetail(
                 title: 'Khách sạn:',
                 value: _selectedHotelsPerDestination.values.where((h) => h != null).isEmpty ? 'Không đặt qua app' : '${_selectedHotelsPerDestination.values.where((h) => h != null).length} nơi lưu trú đã chọn',
-                subtitle: _selectedHotelsPerDestination.values.where((h) => h != null).isEmpty ? null : '\$${(_selectedHotelsPerDestination.values.where((h) => h != null).map((h) => h!.priceFrom).fold<double>(0.0, (p, e) => p + e) * _guests).toStringAsFixed(0)} ($_guests đêm)',
+                subtitle: _selectedHotelsPerDestination.values.where((h) => h != null).isEmpty ? null : '${formatVND(_selectedHotelsPerDestination.values.where((h) => h != null).map((h) => h!.priceFrom).fold<double>(0.0, (p, e) => p + e) * _guests)} ($_guests đêm)',
                 icon: Icons.hotel_outlined,
                 iconColor: Colors.orange,
               ),
@@ -1172,7 +1173,7 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '\$${_totalPrice.toStringAsFixed(0)}',
+                      formatVND(_totalPrice),
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,

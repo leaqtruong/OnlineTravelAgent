@@ -1,0 +1,1 @@
+document.write(renderUploadField('Ảnh Điểm đến', 'ds-img', 'ds-img-preview'))

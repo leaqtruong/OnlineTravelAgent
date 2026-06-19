@@ -256,7 +256,7 @@ class _FoodScreenState extends ConsumerState<FoodScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '\$${destination.price}',
+                        formatVND(parsePrice(destination.price)),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

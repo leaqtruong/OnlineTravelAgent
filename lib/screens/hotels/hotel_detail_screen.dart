@@ -6,6 +6,7 @@ import '../../models/hotel.dart';
 import '../../models/room.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 import '../../widgets/review_section.dart';
@@ -21,17 +22,78 @@ class HotelDetailScreen extends ConsumerStatefulWidget {
 
 class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
   Room? _selectedRoom;
-  final String _checkInDate = '20/05/2026';
-  final String _checkOutDate = '23/05/2026';
+  DateTime _checkInDate = DateTime.now().add(const Duration(days: 7));
+  DateTime _checkOutDate = DateTime.now().add(const Duration(days: 10));
 
   @override
   void initState() {
     super.initState();
+    // Set default check-out to 3 days after check-in
+    _checkOutDate = _checkInDate.add(const Duration(days: 3));
   }
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  void _pickCheckInDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _checkInDate,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryBlue,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textBlack,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _checkInDate = picked;
+        // Ensure check-out is at least 1 day after check-in
+        if (_checkOutDate.isBefore(_checkInDate.add(const Duration(days: 1)))) {
+          _checkOutDate = _checkInDate.add(const Duration(days: 1));
+        }
+      });
+    }
+  }
+
+  void _pickCheckOutDate() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _checkOutDate,
+      firstDate: _checkInDate.add(const Duration(days: 1)),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppTheme.primaryBlue,
+              onPrimary: Colors.white,
+              onSurface: AppTheme.textBlack,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _checkOutDate = picked);
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
   @override
@@ -153,6 +215,31 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   ),
                   const SizedBox(height: 24),
                   const Text(
+                    'Chọn ngày',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDateCard(
+                          label: 'Nhận phòng',
+                          date: _formatDate(_checkInDate),
+                          onTap: _pickCheckInDate,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildDateCard(
+                          label: 'Trả phòng',
+                          date: _formatDate(_checkOutDate),
+                          onTap: _pickCheckOutDate,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
                     'Chọn phòng',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
@@ -195,7 +282,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   Text(
                     _selectedRoom == null
                         ? 'Chưa chọn phòng'
-                        : '\$${_selectedRoom!.price.toStringAsFixed(0)}',
+                        : formatVND(_selectedRoom!.price),
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -224,6 +311,46 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDateCard({
+    required String label,
+    required String date,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundGray,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Icon(Icons.calendar_month, color: AppTheme.primaryBlue, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  date,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -285,7 +412,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${room.price.toStringAsFixed(0)} / đêm',
+                    '${formatVND(room.price)} / đêm',
                     style: const TextStyle(
                       color: AppTheme.primaryBlue,
                       fontWeight: FontWeight.bold,
@@ -322,8 +449,8 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
             if (!mounted) return false;
             final success = await ref.read(tripsProvider.notifier).bookHotel(
                   roomId: _selectedRoom!.id,
-                  checkIn: _checkInDate,
-                  checkOut: _checkOutDate,
+                  checkIn: _formatDate(_checkInDate),
+                  checkOut: _formatDate(_checkOutDate),
                   guests: '${_selectedRoom!.capacity} Người',
                 );
             return success;

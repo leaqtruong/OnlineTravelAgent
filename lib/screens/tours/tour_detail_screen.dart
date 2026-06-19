@@ -30,7 +30,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime(2026, 6, 25);
+    _selectedDate = DateTime.now().add(const Duration(days: 7));
     _guideToggle = widget.tour.includesGuide;
   }
 
@@ -549,7 +549,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '+ \$${widget.tour.guideFee.toStringAsFixed(0)} / Khách',
+                                          '+ ${formatVND(widget.tour.guideFee)} / Khách',
                                           style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600, fontSize: 12),
                                         ),
                                       ],
@@ -930,7 +930,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           Row(
                             children: [
                               Text(
-                                '\$${widget.tour.price.toStringAsFixed(0)}',
+                                formatVND(widget.tour.price),
                                 style: const TextStyle(
                                   decoration: TextDecoration.lineThrough,
                                   color: Colors.grey,
@@ -946,7 +946,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '\$${_totalPrice.toStringAsFixed(0)}',
+                            formatVND(_totalPrice),
                             style: const TextStyle(
                               fontSize: 26,
                               fontWeight: FontWeight.bold,

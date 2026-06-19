@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../utils/app_utils.dart';
 import '../../../models/tour_package.dart';
 
 class RecommendedTourCard extends StatelessWidget {
@@ -119,27 +120,32 @@ class RecommendedTourCard extends StatelessWidget {
             const Spacer(),
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '\$${tour.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlue,
-                    ),
-                  ),
-                  if (tour.originalPrice != null)
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Row(
+                  children: [
                     Text(
-                      '\$${tour.originalPrice!.toStringAsFixed(0)}',
+                      formatVND(tour.price),
                       style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey,
-                        decoration: TextDecoration.lineThrough,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
                       ),
                     ),
-                ],
+                    if (tour.originalPrice != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        formatVND(tour.originalPrice!),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ],

@@ -3,7 +3,8 @@ import rateLimit from "express-rate-limit";
 import { clientRouter } from "./client.routes.js";
 import { adminRouter } from "./admin.routes.js";
 import { authRouter } from "./auth.routes.js";
-import { adminAuth } from "../middlewares/auth.js";
+import { partnerRouter } from "./partner.routes.js";
+import { adminAuth, partnerAuth } from "../middlewares/auth.js";
 
 export const routes = Router();
 
@@ -17,4 +18,5 @@ const authLimiter = rateLimit({
 
 routes.use("/", clientRouter);
 routes.use("/admin", adminAuth, adminRouter);
+routes.use("/partner", partnerAuth, partnerRouter);
 routes.use("/auth", authLimiter, authRouter);

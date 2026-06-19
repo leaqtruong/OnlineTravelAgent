@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/destination.dart';
+import '../../providers/app_state_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/destination_provider.dart';
 import '../../widgets/app_placeholder_card.dart';
@@ -16,10 +17,17 @@ class FavoritesScreen extends ConsumerWidget {
     final favorites = ref.watch(favoritesProvider);
     final authState = ref.watch(authProvider);
 
+    Future<void> onRefresh() async {
+      ref.invalidate(bootstrapProvider);
+      await ref.read(bootstrapProvider.future);
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
+        child: RefreshIndicator(
+          onRefresh: onRefresh,
+          child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,6 +73,7 @@ class FavoritesScreen extends ConsumerWidget {
                 ),
             ],
           ),
+        ),
         ),
       ),
     );

@@ -197,5 +197,19 @@ export const clientController = {
     } catch (error) {
       res.status(500).json({ message: "Failed to create custom tour" });
     }
+  }),
+
+  checkPromoCode: asyncHandler(async (req: Request, res: Response) => {
+    const code = req.query.code as string;
+    if (!code) {
+      res.status(400).json({ message: "Code is required" });
+      return;
+    }
+    const result = await store.checkPromoCode(code);
+    if (result.error) {
+      res.status(400).json({ message: result.error });
+      return;
+    }
+    res.json(result.promo);
   })
 };

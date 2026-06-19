@@ -7,6 +7,7 @@ import '../../providers/tour_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import '../custom_tour/custom_tour_stepper_screen.dart';
 import 'tour_detail_screen.dart';
+import '../../providers/app_state_provider.dart';
 import '../../utils/app_utils.dart';
 
 class ToursScreen extends ConsumerStatefulWidget {
@@ -56,6 +57,11 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
 
   String _getSortLabel() => getSortLabel(_sortBy);
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(bootstrapProvider);
+    await ref.read(bootstrapProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     final allTours = ref.watch(toursProvider);
@@ -92,7 +98,9 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
       ),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
-        child: Column(
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
           // Elegant Search Input
@@ -195,8 +203,9 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                     },
                   ),
           ),
-        ],
+                  ],
       ),
+          ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
@@ -285,7 +294,7 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '\$${tour.price.toStringAsFixed(0)}',
+                        formatVND(tour.price),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

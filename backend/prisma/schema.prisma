@@ -10,6 +10,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  PARTNER
+  ADMIN
+}
+
 model Category {
   id   String @id @default(cuid())
   name String @unique
@@ -58,6 +64,9 @@ model Trip {
 
   userId      String?  @map("user_id")
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  promoCode   String?  @map("promo_code")
+  discount    Float?   @default(0)
 
   createdAt   DateTime @default(now()) @map("created_at")
 
@@ -109,9 +118,13 @@ model Hotel {
   address     String
   amenities   String[]
   
+  partnerId   String? @map("partner_id")
+  partner     User?   @relation("PartnerHotels", fields: [partnerId], references: [id])
+
   rooms       Room[]
   
   @@index([location])
+  @@index([partnerId])
   @@map("hotels")
 }
 
@@ -147,11 +160,15 @@ model TourPackage {
   includesGuide Boolean  @default(true) @map("includes_guide")
   guideFee      Float    @default(50.0) @map("guide_fee")
   
+  partnerId     String?  @map("partner_id")
+  partner       User?    @relation("PartnerTours", fields: [partnerId], references: [id])
+
   createdAt     DateTime @default(now()) @map("created_at")
 
   scheduleTemplates ScheduleTemplate[]
   
   @@index([createdAt])
+  @@index([partnerId])
   @@map("tour_packages")
 }
 
@@ -160,10 +177,13 @@ model User {
   name      String
   email     String   @unique
   password  String
+  role      Role     @default(USER)
   createdAt DateTime @default(now()) @map("created_at")
 
   trips     Trip[]
   reviews   Review[]
+  hotels    Hotel[]       @relation("PartnerHotels")
+  tours     TourPackage[] @relation("PartnerTours")
 
   @@map("users")
 }
@@ -287,4 +307,17 @@ model TripScheduleUpdate {
   @@index([tripId])
   @@index([createdAt])
   @@map("trip_schedule_updates")
+}
+
+model PromoCode {
+  id                 String    @id @default(cuid())
+  code               String    @unique
+  discountPercentage Float?    @map("discount_percentage")
+  discountAmount     Float?    @map("discount_amount")
+  maxUses            Int       @default(100) @map("max_uses")
+  currentUses        Int       @default(0) @map("current_uses")
+  validUntil         DateTime? @map("valid_until")
+  isActive           Boolean   @default(true) @map("is_active")
+
+  @@map("promo_codes")
 }

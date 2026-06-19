@@ -30,7 +30,7 @@ app.use(helmet({
 }));
 
 // CORS whitelist
-const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://10.0.2.2:3000").split(",");
+const allowedOrigins = (process.env.CORS_ORIGINS ?? "http://localhost:3000,http://10.0.2.2:3000,http://localhost:5173").split(",");
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -59,8 +59,9 @@ app.get("/", (req, res) => {
   res.redirect("/admin");
 });
 
-// Serve admin panel at /admin (no auth for static files)
+// Serve admin panel at /admin (no auth for static files, UI handles login)
 app.use("/admin", express.static(join(__dirname, "../admin")));
+app.use("/partner", express.static(join(__dirname, "../partner")));
 
 // Serve uploads
 app.use("/uploads", express.static(join(__dirname, "../public/uploads")));
@@ -79,7 +80,13 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 const server = app.listen(port, () => {
-  console.log(`Backend running at http://localhost:${port}`);
+  console.log(`\n==============================================`);
+  console.log(`🚀 Backend running at http://localhost:${port}`);
+  console.log(`==============================================`);
+  console.log(`👉 Admin Portal:   http://localhost:${port}/admin`);
+  console.log(`👉 Partner Portal: http://localhost:${port}/partner`);
+  console.log(`👉 Prisma Studio:  http://localhost:5555`);
+  console.log(`==============================================\n`);
 });
 
 // Graceful shutdown

@@ -47,3 +47,17 @@ String getSortLabel(String sortBy) {
 double parsePrice(String price) {
   return double.tryParse(price.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 }
+
+/// Formats a price value to Vietnamese Dong (VND).
+/// Example: 1500000 -> "1.500.000₫"
+String formatVND(double value) {
+  final fixed = value.toStringAsFixed(0);
+  final buffer = StringBuffer();
+  for (int i = 0; i < fixed.length; i++) {
+    if (i > 0 && (fixed.length - i) % 3 == 0) {
+      buffer.write('.');
+    }
+    buffer.write(fixed[i]);
+  }
+  return '$buffer₫';
+}

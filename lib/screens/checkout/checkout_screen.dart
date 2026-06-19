@@ -10,6 +10,8 @@ import 'payment_method_screen.dart';
 import 'widgets/summary_card.dart';
 import 'widgets/transport_selection.dart';
 import 'widgets/guide_option.dart';
+import '../../utils/app_utils.dart';
+import '../../providers/api_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   final Destination destination;
@@ -29,6 +31,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   bool _includeGuide = false;
   static const double _guideFee = 50.0;
   String _selectedTransport = 'Tự túc';
+  bool _isProcessing = false;
+
+  final TextEditingController _promoController = TextEditingController();
+  double _promoDiscount = 0.0;
+  String? _promoError;
 
   final Map<String, int> _transportPrices = {
     'Tự túc': 0,
@@ -70,9 +77,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   double get _tax => _subtotal * 0.1;
 
-  double get _total => _subtotal + _tax;
+  double get _total => (_subtotal + _tax) - _promoDiscount;
 
-  void _onConfirm() {
+  Future<void> _checkPromo() async {
+    final code = _promoController.text.trim();
+    if (code.isEmpty) return;
+    setState(() { _promoError = null; });
+    try {
+      final api = ref.read(apiProvider);
+      final result = await api.checkPromoCode(code);
+      setState(() {
+        if (result['discountPercentage'] != null) {
+          _promoDiscount = (_subtotal + _tax) * (result['discountPercentage'] / 100);
+        } else if (result['discountAmount'] != null) {
+          _promoDiscount = result['discountAmount'].toDouble();
+        }
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Áp dụng mã thành công!')));
+      }
+    } catch (e) {
+      setState(() { _promoError = 'Mã không hợp lệ hoặc đã hết hạn'; });
+    }
+  }
+
+  void _onConfirm() async {
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng chọn ngày khởi hành')),
@@ -85,6 +114,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       );
       return;
     }
+
+    setState(() => _isProcessing = true);
 
     // Calculate end date based on duration (simple logic)
     int days = 2;
@@ -101,23 +132,27 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (_children > 0) guestParts.add('$_children Trẻ em');
     final guestString = '${guestParts.join(', ')} ($_selectedTransport)';
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PaymentMethodScreen(
-          totalPrice: _total,
-          onPaymentSuccess: () async {
-            if (!mounted) return false;
-            return await ref.read(tripsProvider.notifier).bookTrip(
-              destinationId: widget.destination.id,
-              date: dateString,
-              guests: guestString,
-              totalPrice: _includeGuide ? _total : null,
-            );
-          },
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PaymentMethodScreen(
+            totalPrice: _total,
+            onPaymentSuccess: () async {
+              if (!mounted) return false;
+              return await ref.read(tripsProvider.notifier).bookTrip(
+                destinationId: widget.destination.id,
+                date: dateString,
+                guests: guestString,
+                totalPrice: _includeGuide ? _total : null,
+              );
+            },
+          ),
         ),
-      ),
-    );
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
   @override
@@ -156,6 +191,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             onGuideToggled: (value) => setState(() => _includeGuide = value),
           ),
           const SizedBox(height: 24),
+          _buildPromoField(),
+          const SizedBox(height: 24),
           SummaryCard(
             adults: _adults,
             children: _children,
@@ -166,6 +203,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             transportPrices: _transportPrices,
             subtotal: _subtotal,
             tax: _tax,
+            promoDiscount: _promoDiscount,
             total: _total,
           ),
           const SizedBox(height: 32),
@@ -341,7 +379,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildServiceOption('VIP (+\$50/người)', true),
+              child: _buildServiceOption('VIP (+${formatVND(50)}/người)', true),
             ),
           ],
         ),
@@ -373,20 +411,68 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     );
   }
 
+  Widget _buildPromoField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Mã giảm giá', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 12),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _promoController,
+                decoration: InputDecoration(
+                  hintText: 'Nhập mã giảm giá...',
+                  errorText: _promoError,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _checkPromo,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryBlue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                child: const Text('Áp dụng', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget _buildConfirmButton() {
     return SizedBox(
       height: 56,
       child: ElevatedButton(
-        onPressed: _onConfirm,
+        onPressed: _isProcessing ? null : _onConfirm,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.primaryBlue,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
         ),
-        child: const Text(
-          'Xác nhận & Thanh toán',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        child: _isProcessing
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2.5,
+                ),
+              )
+            : const Text(
+                'Xác nhận & Thanh toán',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../providers/profile_provider.dart';
+import '../../utils/app_utils.dart';
 
 class ContactSpecialScreen extends ConsumerStatefulWidget {
   const ContactSpecialScreen({super.key});
@@ -18,7 +19,7 @@ class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
   // State Fields
   String _selectedCategory = 'Đoàn lớn (100+ khách)';
   double _guests = 120;
-  double _budget = 8000;
+  double _budget = 20000000;
 
   // Controllers
   final _nameController = TextEditingController();
@@ -371,7 +372,7 @@ class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
 
   // --- Budget Slider ---
   Widget _buildBudgetSlider() {
-    final budgetLabel = '\$${_budget.toInt().toString()}';
+    final budgetLabel = formatVND(_budget);
 
     return _buildSliderCard(
       title: 'Ngân sách linh hoạt',
@@ -390,14 +391,14 @@ class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
         ),
         child: Slider(
           value: _budget,
-          min: 1000,
-          max: 50000,
+          min: 1000000,
+          max: 50000000,
           divisions: 49,
           onChanged: (val) => setState(() => _budget = val),
         ),
       ),
-      minText: '\$1k',
-      maxText: '\$50k+',
+      minText: '1 triệu',
+      maxText: '50 triệu+',
     );
   }
 
@@ -670,7 +671,7 @@ class _ContactSpecialScreenState extends ConsumerState<ContactSpecialScreen> {
 
     // Call travel provider to register a new tracker document
     final docTitle = 'Đoàn: ${_nameController.text} (${_guests.toInt()} khách)';
-    final docDesc = 'Dịch vụ: $_selectedCategory. Ngân sách: \$${_budget.toInt()}. Mã số: #$reqId. Trạng thái: Đang xử lý.';
+    final docDesc = 'Dịch vụ: $_selectedCategory. Ngân sách: ${formatVND(_budget)}. Mã số: #$reqId. Trạng thái: Đang xử lý.';
 
     try {
       final success = await ref.read(documentsProvider.notifier).addDocument(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_theme.dart';
+import '../../utils/app_utils.dart';
 
 class PaymentMethod {
   final String id;
@@ -543,32 +544,59 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppTheme.primaryBlue,
+                            side: const BorderSide(color: AppTheme.primaryBlue),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
+                          child: const Text(
+                            'Về Trang Chủ',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
-                        elevation: 0,
                       ),
-                      onPressed: () {
-                        // Pop dialog
-                        Navigator.of(context).pop();
-                        // Pop payment method screen and checkout screens, back to Home/Dashboard
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      },
-                      child: const Text(
-                        'Về Trang Chủ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                            // Navigate to My Trips (index 1 in bottom nav)
+                            Navigator.pushNamed(context, '/my-trips');
+                          },
+                          child: const Text(
+                            'Xem Chuyến Đi',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -805,7 +833,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 ),
               ),
               Text(
-                '\$${widget.totalPrice.toStringAsFixed(0)}',
+                formatVND(widget.totalPrice),
                 style: const TextStyle(
                   color: AppTheme.primaryBlue,
                   fontSize: 24,

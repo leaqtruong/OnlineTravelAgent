@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
+import '../../utils/app_utils.dart';
 import '../../models/tour_package.dart';
 import '../../providers/destination_provider.dart';
 import '../../providers/tour_provider.dart';
@@ -13,7 +14,6 @@ import 'widgets/booking_status_timeline.dart';
 import 'widgets/trip_action_buttons.dart';
 import 'widgets/trip_section_header.dart';
 import 'widgets/trip_schedule_timeline.dart';
-import '../../utils/app_utils.dart';
 
 class TourTripDetailScreen extends ConsumerStatefulWidget {
   final Trip trip;
@@ -590,7 +590,7 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
             Row(
               children: [
                 Text(
-                  '\$${originalPrice.toStringAsFixed(0)}',
+                  formatVND(originalPrice),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey[500],
@@ -630,7 +630,7 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
                 ),
               ),
               Text(
-                '\$${price.toStringAsFixed(0)}',
+                formatVND(price),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -655,7 +655,7 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
                   ),
                 ),
                 Text(
-                  '\$${widget.trip.totalPrice!.toStringAsFixed(0)}',
+                  formatVND(widget.trip.totalPrice!),
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../utils/app_utils.dart';
 
 class SummaryCard extends StatelessWidget {
   final int adults;
@@ -11,6 +12,7 @@ class SummaryCard extends StatelessWidget {
   final Map<String, int> transportPrices;
   final double subtotal;
   final double tax;
+  final double promoDiscount;
   final double total;
 
   const SummaryCard({
@@ -24,6 +26,7 @@ class SummaryCard extends StatelessWidget {
     required this.transportPrices,
     required this.subtotal,
     required this.tax,
+    required this.promoDiscount,
     required this.total,
   });
 
@@ -47,23 +50,25 @@ class SummaryCard extends StatelessWidget {
         children: [
           const Text('Chi tiết thanh toán', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          _buildSummaryRow('Giá vé người lớn (x$adults)', '\$${basePrice * adults}'),
+          _buildSummaryRow('Giá vé người lớn (x$adults)', formatVND((basePrice * adults).toDouble())),
           if (children > 0)
-            _buildSummaryRow('Giá vé trẻ em (x$children)', '\$${(basePrice * 0.5 * children).toStringAsFixed(0)}'),
+            _buildSummaryRow('Giá vé trẻ em (x$children)', formatVND(basePrice * 0.5 * children)),
           if (isVip)
-            _buildSummaryRow('Phí VIP (x$totalGuests)', '\$${50 * totalGuests}'),
+            _buildSummaryRow('Phí VIP (x$totalGuests)', formatVND((50 * totalGuests).toDouble())),
           if (transportPrices[selectedTransport]! > 0)
-            _buildSummaryRow('$selectedTransport (x$totalGuests)', '\$${transportPrices[selectedTransport]! * totalGuests}'),
+            _buildSummaryRow('$selectedTransport (x$totalGuests)', formatVND((transportPrices[selectedTransport]! * totalGuests).toDouble())),
           const Divider(height: 24),
-          _buildSummaryRow('Tạm tính', '\$${subtotal.toStringAsFixed(0)}'),
-          _buildSummaryRow('Thuế (10%)', '\$${tax.toStringAsFixed(0)}'),
+          _buildSummaryRow('Tạm tính', formatVND(subtotal)),
+          _buildSummaryRow('Thuế (10%)', formatVND(tax)),
+          if (promoDiscount > 0)
+            _buildSummaryRow('Giảm giá', '-${formatVND(promoDiscount)}'),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Tổng cộng', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Text(
-                '\$${total.toStringAsFixed(0)}',
+                formatVND(total),
                 style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppTheme.primaryBlue),
               ),
             ],

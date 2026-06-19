@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/trip.dart';
+import '../../../utils/app_utils.dart';
 
 class BookingInfoCard extends StatelessWidget {
   final Trip trip;
@@ -25,7 +26,7 @@ class BookingInfoCard extends StatelessWidget {
           if (trip.totalPrice != null) ...[
             const SizedBox(height: 14),
             _row(Icons.payments_outlined, 'Tổng thanh toán',
-                '\$${trip.totalPrice!.toStringAsFixed(0)}'),
+                formatVND(trip.totalPrice!)),
           ],
         ],
       ),

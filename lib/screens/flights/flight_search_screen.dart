@@ -7,6 +7,7 @@ import '../../models/flight.dart';
 import '../../providers/flight_provider.dart';
 import '../../widgets/app_placeholder_card.dart';
 import '../../widgets/shimmer_loading.dart';
+import '../../utils/app_utils.dart';
 import 'flight_checkout_screen.dart';
 
 class FlightSearchScreen extends ConsumerStatefulWidget {
@@ -356,10 +357,10 @@ class _FlightSearchScreenState extends ConsumerState<FlightSearchScreen> {
                         ),
                       ],
                     ),
-                    Text(
-                      '\$${flight.price}',
-                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
-                    ),
+                      Text(
+                        formatVND(flight.price.toDouble()),
+                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.primaryBlue),
+                      ),
                   ],
                 ),
               ),

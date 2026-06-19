@@ -1,0 +1,1 @@
+document.write(renderUploadField('Logo Hãng Bay', 'f-logo', 'f-logo-preview'))

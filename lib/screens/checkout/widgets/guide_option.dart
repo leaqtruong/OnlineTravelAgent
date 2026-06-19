@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../utils/app_utils.dart';
 
 class GuideOption extends StatelessWidget {
   final bool includeGuide;
@@ -38,7 +39,7 @@ class GuideOption extends StatelessWidget {
                 activeThumbColor: AppTheme.primaryBlue,
               ),
               const SizedBox(width: 8),
-              Text('\$${guideFee.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
+              Text(formatVND(guideFee), style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primaryBlue)),
             ],
           ),
         ),

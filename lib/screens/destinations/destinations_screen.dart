@@ -6,6 +6,7 @@ import '../../models/destination.dart';
 import '../../providers/destination_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import '../destination_detail/destination_detail_screen.dart';
+import '../../providers/app_state_provider.dart';
 import '../../utils/app_utils.dart';
 
 class DestinationsScreen extends ConsumerStatefulWidget {
@@ -38,6 +39,11 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onRefresh() async {
+    ref.invalidate(bootstrapProvider);
+    await ref.read(bootstrapProvider.future);
   }
 
   double _parseReviewsCount(String reviewsCount) => parseReviewsCount(reviewsCount);
@@ -130,7 +136,9 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
           child: Consumer(
           builder: (context, ref, _) {
             final sortedList = _getSortedAndFiltered(ref.watch(filteredDestinationsProvider));
-            return Column(
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Elegant Search Input
@@ -229,7 +237,8 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
                     ),
             ),
           ],
-        );
+        ),
+            );
           },
         ),
         ),
@@ -314,7 +323,7 @@ class _DestinationsScreenState extends ConsumerState<DestinationsScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '\$${destination.price}',
+                        formatVND(parsePrice(destination.price)),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,

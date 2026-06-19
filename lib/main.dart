@@ -5,6 +5,7 @@ import 'screens/welcome/welcome_screen.dart';
 import 'screens/main/main_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/partner/partner_dashboard_screen.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/app_state_provider.dart';
 
@@ -31,6 +32,7 @@ class OnlineTravelAgentApp extends ConsumerWidget {
         '/main': (context) => const MainScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
+        '/partner-dashboard': (context) => const PartnerDashboardScreen(),
       },
     );
   }

@@ -457,10 +457,12 @@ class ProfileScreen extends ConsumerWidget {
                         children: [
                           _buildQuickAction(
                             context,
-                            icon: Icons.star_rounded,
-                            label: "Điểm thưởng",
-                            value: "2,450",
-                            onTap: () {},
+                            icon: Icons.store_rounded,
+                            label: "Đối tác",
+                            value: "Quản lý",
+                            onTap: () {
+                              Navigator.pushNamed(context, '/partner-dashboard');
+                            },
                           ),
                           const SizedBox(width: 12),
                           _buildQuickAction(

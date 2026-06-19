@@ -20,6 +20,9 @@ clientRouter.get("/bootstrap", optionalAuth, clientController.getBootstrap);
 clientRouter.get("/favorites", clientAuth, clientController.getFavorites);
 clientRouter.patch("/destinations/:id/favorite", clientAuth, clientController.updateFavorite);
 
+// Promo Codes
+clientRouter.get("/promo-codes/check", clientAuth, clientController.checkPromoCode);
+
 // Trips
 clientRouter.get("/trips", clientAuth, clientController.getTrips);
 clientRouter.get("/trips/:id/schedule", optionalAuth, clientController.getTripSchedule);

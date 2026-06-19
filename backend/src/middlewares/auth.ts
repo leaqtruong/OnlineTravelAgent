@@ -42,11 +42,30 @@ export const clientAuth = (req: express.Request, res: express.Response, next: ex
   }
 };
 
+// Partner Auth
+export const partnerAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const token = extractToken(req);
+  if (!token) {
+    res.status(401).json({ message: "Unauthorized - Token missing" });
+    return;
+  }
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string, role: string };
+    if (decoded.role !== 'PARTNER' && decoded.role !== 'ADMIN') {
+      res.status(403).json({ message: "Forbidden - Partner role required" });
+      return;
+    }
+    (req as any).userId = decoded.userId;
+    next();
+  } catch (err) {
+    res.status(401).json({ message: "Unauthorized - Invalid token" });
+  }
+};
+
 // Admin Basic Auth Middleware
 export const adminAuth = (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
     res.status(401).send('Unauthorized');
     return;
   }
@@ -58,11 +77,9 @@ export const adminAuth = (req: express.Request, res: express.Response, next: exp
     if (user === 'admin' && pass === (process.env.ADMIN_PASSWORD || 'admin123')) {
       next();
     } else {
-      res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
       res.status(401).send('Unauthorized');
     }
   } catch (err) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Admin Panel"');
     res.status(401).send('Unauthorized');
   }
 };

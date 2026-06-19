@@ -6,6 +6,7 @@ import '../../models/hotel.dart';
 import '../../providers/hotel_provider.dart';
 import '../../widgets/sort_bottom_sheet.dart';
 import 'hotel_detail_screen.dart';
+import '../../providers/app_state_provider.dart';
 import '../../utils/app_utils.dart';
 import '../../widgets/app_placeholder_card.dart';
 
@@ -78,6 +79,11 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
 
   String _getSortLabel() => getSortLabel(_sortBy);
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(bootstrapProvider);
+    await ref.read(bootstrapProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,13 +114,15 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
           ),
         ],
       ),
-      body: GestureDetector(
+        body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Consumer(
         builder: (context, ref, _) {
           final searchQuery = ref.watch(hotelSearchQueryProvider);
           final finalHotels = _getFilteredAndSorted(ref.watch(hotelsProvider), searchQuery);
-          return Column(
+          return RefreshIndicator(
+            onRefresh: _onRefresh,
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Elegant Search Input
@@ -254,7 +262,8 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
                   ),
           ),
         ],
-      );
+      ),
+          );
         },
       ),
       ),
@@ -324,7 +333,7 @@ class _HotelsScreenState extends ConsumerState<HotelsScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            '\$${hotel.priceFrom.toStringAsFixed(0)}',
+                            formatVND(hotel.priceFrom),
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

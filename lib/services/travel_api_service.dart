@@ -64,6 +64,12 @@ class TravelApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  Future<List<dynamic>> _getList(String path) async {
+    final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
+    return jsonDecode(response.body) as List<dynamic>;
+  }
+
   Future<Map<String, dynamic>> _postJson(String path, Map<String, dynamic> body) async {
     final response = await http.post(
       _uri(path),
@@ -207,6 +213,12 @@ class TravelApiService {
     return TripSchedule.fromJson(data);
   }
 
+  Future<Map<String, dynamic>> checkPromoCode(String code) async {
+    final response = await http.get(_uri('/api/promo-codes/check?code=$code'), headers: _headers).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
   // ── Auth ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login({required String email, required String password}) async {
@@ -215,6 +227,30 @@ class TravelApiService {
 
   Future<Map<String, dynamic>> register({required String name, required String email, required String password}) async {
     return await _postJson('/api/auth/register', {'name': name, 'email': email, 'password': password});
+  }
+
+  Future<Map<String, dynamic>> becomePartner() async {
+    return await _postJson('/api/auth/become-partner', {});
+  }
+
+  Future<List<Hotel>> getPartnerHotels() async {
+    final data = await _getList('/api/partner/hotels');
+    return _parseList(data, Hotel.fromJson);
+  }
+
+  Future<Hotel> createPartnerHotel(Map<String, dynamic> data) async {
+    final res = await _postJson('/api/partner/hotels', data);
+    return Hotel.fromJson(res);
+  }
+
+  Future<List<TourPackage>> getPartnerTours() async {
+    final data = await _getList('/api/partner/tours');
+    return _parseList(data, TourPackage.fromJson);
+  }
+
+  Future<TourPackage> createPartnerTour(Map<String, dynamic> data) async {
+    final res = await _postJson('/api/partner/tours', data);
+    return TourPackage.fromJson(res);
   }
 
   static List<T> _parseList<T>(dynamic raw, T Function(Map<String, dynamic>) fromJson) {

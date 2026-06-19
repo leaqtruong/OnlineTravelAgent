@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
+import '../../providers/app_state_provider.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/auth_provider.dart';
 import 'place_trip_detail_screen.dart';
@@ -34,18 +35,25 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
     super.dispose();
   }
 
+  Future<void> _onRefresh() async {
+    ref.invalidate(bootstrapProvider);
+    await ref.read(bootstrapProvider.future);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundGray,
       body: SafeArea(
-        child: Consumer(
+        child: RefreshIndicator(
+          onRefresh: _onRefresh,
+          child: Consumer(
           builder: (context, ref, child) {
             final authState = ref.watch(authProvider);
             if (!authState.isLoggedIn) {
-              return const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              return ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: const [
                   SizedBox(height: 24),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
@@ -58,7 +66,9 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
                       ),
                     ),
                   ),
-                  Expanded(
+                  SizedBox(height: 24),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
                     child: RequireLoginPlaceholder(
                       subtitle: "Bạn cần đăng nhập để xem danh sách các chuyến đi và lịch sử đặt chỗ của mình.",
                     ),
@@ -73,68 +83,72 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 24),
-                  
-                  // A. Custom Header
-                  const Text(
-                    "Chuyến đi của tôi",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textBlack,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 24),
+                  ),
+                  const SliverToBoxAdapter(
+                    child: Text(
+                      "Chuyến đi của tôi",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textBlack,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // B. Capsule Styled Pill TabBar
-                  Container(
-                    height: 52,
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.02),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: TabBar(
-                      controller: _tabController,
-                      indicator: BoxDecoration(
-                        color: AppTheme.primaryBlue,
-                        borderRadius: BorderRadius.circular(12),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 20),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Container(
+                      height: 52,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.25),
-                            blurRadius: 8,
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      labelColor: Colors.white,
-                      unselectedLabelColor: Colors.grey[500],
-                      labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      dividerColor: Colors.transparent,
-                      tabs: const [
-                        Tab(text: "Đang diễn ra"),
-                        Tab(text: "Sắp tới"),
-                        Tab(text: "Lịch sử"),
-                      ],
+                      child: TabBar(
+                        controller: _tabController,
+                        indicator: BoxDecoration(
+                          color: AppTheme.primaryBlue,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.grey[500],
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        dividerColor: Colors.transparent,
+                        tabs: const [
+                          Tab(text: "Đang diễn ra"),
+                          Tab(text: "Sắp tới"),
+                          Tab(text: "Lịch sử"),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // C. Tab Contents View
-                  Expanded(
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: 16),
+                  ),
+                  SliverFillRemaining(
                     child: TabBarView(
                       controller: _tabController,
                       children: [
@@ -148,6 +162,7 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
               ),
             );
           },
+        ),
         ),
       ),
     );
