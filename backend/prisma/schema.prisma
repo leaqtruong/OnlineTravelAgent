@@ -68,6 +68,11 @@ model Trip {
   promoCode   String?  @map("promo_code")
   discount    Float?   @default(0)
 
+  paymentMethod   String?  @map("payment_method")
+  paymentStatus   String?  @default("pending") @map("payment_status")
+  paymentTxnRef   String?  @map("payment_txn_ref")
+  paymentTxnNumber String? @map("payment_txn_number")
+
   createdAt   DateTime @default(now()) @map("created_at")
 
   scheduleDays    TripScheduleDay[]

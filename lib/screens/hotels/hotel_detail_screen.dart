@@ -446,14 +446,13 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
         builder: (context) => PaymentMethodScreen(
           totalPrice: _selectedRoom!.price,
           onPaymentSuccess: () async {
-            if (!mounted) return false;
-            final success = await ref.read(tripsProvider.notifier).bookHotel(
+            if (!mounted) return null;
+            return await ref.read(tripsProvider.notifier).bookHotel(
                   roomId: _selectedRoom!.id,
                   checkIn: _formatDate(_checkInDate),
                   checkOut: _formatDate(_checkOutDate),
                   guests: '${_selectedRoom!.capacity} Người',
                 );
-            return success;
           },
         ),
       ),

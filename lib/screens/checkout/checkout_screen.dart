@@ -139,7 +139,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           builder: (context) => PaymentMethodScreen(
             totalPrice: _total,
             onPaymentSuccess: () async {
-              if (!mounted) return false;
+              if (!mounted) return null;
               return await ref.read(tripsProvider.notifier).bookTrip(
                 destinationId: widget.destination.id,
                 date: dateString,
