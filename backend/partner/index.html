@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TravelAgent Admin | Awwwards</title>
+  <title>TravelAgent Partner | Portal</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -106,8 +106,8 @@
   <div class="doppelrand w-full max-w-sm">
     <div class="doppelrand-inner p-10 flex flex-col items-center">
       <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white text-2xl mb-6 shadow-xl"><i class="fa-solid fa-plane"></i></div>
-      <h2 class="text-2xl font-extrabold text-ink mb-2 text-center" id="login-title">Admin Portal</h2>
-      <p class="text-sm text-muted mb-8 text-center" id="login-subtitle">Vui lòng đăng nhập để tiếp tục</p>
+      <h2 class="text-2xl font-extrabold text-ink mb-2 text-center" id="login-title">Partner Portal</h2>
+      <p class="text-sm text-muted mb-8 text-center" id="login-subtitle">Đăng nhập tài khoản đối tác để tiếp tục</p>
       
       <div class="w-full mb-4">
         <input type="text" id="login-user" class="w-full bg-silver/30 border border-silver rounded-xl px-5 py-3 text-sm font-semibold outline-none focus:border-primary transition-colors" placeholder="Email / Username" />
@@ -117,7 +117,7 @@
       </div>
       
       <button id="login-btn" class="w-full bg-primary hover:bg-ink text-white font-bold py-4 rounded-xl transition-all shadow-glass" onclick="doLogin()">
-        Đăng nhập <i class="fa-solid fa-arrow-right ml-2"></i>
+        Đăng nhập đối tác <i class="fa-solid fa-arrow-right ml-2"></i>
       </button>
     </div>
   </div>
@@ -135,7 +135,7 @@
         </div>
         <div>
           <h1 class="text-lg font-bold tracking-tight text-ink">TravelAgent</h1>
-          <p class="text-[11px] uppercase tracking-widest text-muted font-bold">Workspace</p>
+          <p class="text-[11px] uppercase tracking-widest text-muted font-bold">Partner Workspace</p>
         </div>
       </div>
 
@@ -1068,7 +1068,7 @@ async function sendTripUpdate() {
       const d = await r.json();
       if(!r.ok) throw new Error(d.message || 'Sai thông tin đăng nhập');
       if(d.user.role !== 'partner' && d.user.role !== 'PARTNER' && d.user.role !== 'admin' && d.user.role !== 'ADMIN') {
-        throw new Error('Tài khoản không có quyền đối tác');
+        throw new Error('Tài khoản này không có quyền đối tác');
       }
       localStorage.setItem('partner_token', d.token);
       
@@ -1078,7 +1078,7 @@ async function sendTripUpdate() {
       
       checkHealth(); loadDashboard(); setInterval(checkHealth, 30000);
     } catch (e) {
-      document.getElementById('login-btn').innerHTML = 'Đăng nhập <i class="fa-solid fa-arrow-right ml-2"></i>';
+      document.getElementById('login-btn').innerHTML = 'Đăng nhập đối tác <i class="fa-solid fa-arrow-right ml-2"></i>';
       toast(e.message, 'error');
     }
   }

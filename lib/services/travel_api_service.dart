@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../core/exceptions.dart';
 import '../core/theme/app_theme.dart';
 import '../models/destination.dart';
 import '../models/document_item.dart';
@@ -10,6 +11,7 @@ import '../models/flight.dart';
 import '../models/trip.dart';
 import '../models/hotel.dart';
 import '../models/review.dart';
+import '../models/room.dart';
 import '../models/tour_package.dart';
 import '../models/trip_schedule.dart';
 
@@ -88,6 +90,21 @@ class TravelApiService {
     ).timeout(AppTheme.apiTimeout);
     _throwIfError(response);
     return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>> _putJson(String path, Map<String, dynamic> body) async {
+    final response = await http.put(
+      _uri(path),
+      headers: _headers,
+      body: jsonEncode(body),
+    ).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
+    return jsonDecode(response.body) as Map<String, dynamic>;
+  }
+
+  Future<void> _delete(String path) async {
+    final response = await http.delete(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
+    _throwIfError(response);
   }
 
   Future<BootstrapData> fetchBootstrap() async {
@@ -253,6 +270,46 @@ class TravelApiService {
     return TourPackage.fromJson(res);
   }
 
+  Future<Hotel> updatePartnerHotel(String id, Map<String, dynamic> data) async {
+    final res = await _putJson('/api/partner/hotels/$id', data);
+    return Hotel.fromJson(res);
+  }
+
+  Future<void> deletePartnerHotel(String id) async {
+    await _delete('/api/partner/hotels/$id');
+  }
+
+  Future<TourPackage> updatePartnerTour(String id, Map<String, dynamic> data) async {
+    final res = await _putJson('/api/partner/tours/$id', data);
+    return TourPackage.fromJson(res);
+  }
+
+  Future<void> deletePartnerTour(String id) async {
+    await _delete('/api/partner/tours/$id');
+  }
+
+  Future<Map<String, dynamic>> getPartnerStats() async {
+    return await _getJson('/api/partner/stats');
+  }
+
+  Future<List<Room>> getPartnerHotelRooms(String hotelId) async {
+    final data = await _getList('/api/partner/hotels/$hotelId/rooms');
+    return data.whereType<Map<String, dynamic>>().map(Room.fromJson).toList();
+  }
+
+  Future<Room> createPartnerRoom(String hotelId, Map<String, dynamic> data) async {
+    final res = await _postJson('/api/partner/hotels/$hotelId/rooms', data);
+    return Room.fromJson(res);
+  }
+
+  Future<void> updatePartnerRoom(String hotelId, String roomId, Map<String, dynamic> data) async {
+    await _putJson('/api/partner/hotels/$hotelId/rooms/$roomId', data);
+  }
+
+  Future<void> deletePartnerRoom(String hotelId, String roomId) async {
+    await _delete('/api/partner/hotels/$hotelId/rooms/$roomId');
+  }
+
   static List<T> _parseList<T>(dynamic raw, T Function(Map<String, dynamic>) fromJson) {
     return ((raw as List?) ?? [])
         .whereType<Map<String, dynamic>>()
@@ -262,6 +319,13 @@ class TravelApiService {
 
   static void _throwIfError(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
-    throw Exception('API error ${response.statusCode}: ${response.body}');
+    String message;
+    try {
+      final body = jsonDecode(response.body);
+      message = body['message']?.toString() ?? 'Lỗi không xác định (${response.statusCode})';
+    } catch (_) {
+      message = 'Lỗi server (${response.statusCode})';
+    }
+    throw ApiException(response.statusCode, message);
   }
 }

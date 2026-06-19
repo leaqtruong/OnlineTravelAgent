@@ -61,6 +61,11 @@ class AuthNotifier extends Notifier<AuthState> {
     ref.read(apiProvider).token = null;
     state = const AuthState();
   }
+
+  void updateToken(String newToken) {
+    ref.read(apiProvider).token = newToken;
+    state = state.copyWith(token: newToken);
+  }
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthState>(AuthNotifier.new);

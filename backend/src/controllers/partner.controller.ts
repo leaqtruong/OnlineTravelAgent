@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import crypto from "crypto";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import prisma from "../config/prisma.js";
 
@@ -31,7 +32,7 @@ export const partnerController = {
     
     const hotel = await prisma.hotel.create({
       data: {
-        id: `hotel-${Date.now()}`,
+        id: `hotel-${crypto.randomUUID()}`,
         partnerId,
         name,
         location,
@@ -58,7 +59,7 @@ export const partnerController = {
     
     const tour = await prisma.tourPackage.create({
       data: {
-        id: `tour-${Date.now()}`,
+        id: `tour-${crypto.randomUUID()}`,
         partnerId,
         name,
         description,
@@ -137,7 +138,7 @@ export const partnerController = {
     const { name, description, price, capacity, imagePath, amenities } = req.body;
     const room = await prisma.room.create({
       data: {
-        id: `room-${Date.now()}`,
+        id: `room-${crypto.randomUUID()}`,
         hotelId,
         name,
         description: description || "",

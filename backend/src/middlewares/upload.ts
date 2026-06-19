@@ -1,12 +1,18 @@
 import multer from "multer";
 import path from "path";
+import fs from "fs";
 
 const ALLOWED_TYPES = /jpeg|jpg|png|gif|webp|pdf|doc|docx/;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+const UPLOAD_DIR = "public/uploads";
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "public/uploads");
+    if (!fs.existsSync(UPLOAD_DIR)) {
+      fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    }
+    cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

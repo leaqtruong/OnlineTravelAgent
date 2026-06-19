@@ -29,6 +29,8 @@
 /backend/node_modules/
 /backend/dist/
 /backend/.env
+/backend/public/uploads/*
+!/backend/public/uploads/.gitkeep
 
 # Temp SVG
 /temp_svg/node_modules/
