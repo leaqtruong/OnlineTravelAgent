@@ -212,14 +212,17 @@ class _SkeletonLoading extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(width: 100, height: 14, color: Colors.white),
-                  const SizedBox(height: 8),
-                  Container(width: 200, height: 32, color: Colors.white),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(width: 100, height: 14, color: Colors.white),
+                    const SizedBox(height: 8),
+                    Container(width: 200, height: 32, color: Colors.white),
+                  ],
+                ),
               ),
+              const SizedBox(width: 16),
               Container(width: 40, height: 40, decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
             ],
           ),

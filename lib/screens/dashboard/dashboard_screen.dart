@@ -87,21 +87,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Xin chào, User!',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyLarge?.color,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Xin chào, User!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
                 ),
-              ),
-              Text(
-                'Bạn muốn đi đâu?',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 32),
-              ),
-            ],
+                Text(
+                  'Bạn muốn đi đâu?',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 32),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
