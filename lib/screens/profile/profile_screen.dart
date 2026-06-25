@@ -164,9 +164,14 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _showAddDocumentSheet(BuildContext context, WidgetRef ref) async {
+  Future<void> _showAddDocumentSheet(
+    BuildContext context, 
+    WidgetRef ref, {
+    required String title,
+    required String iconName,
+    required String colorHex,
+  }) async {
     final formKey = GlobalKey<FormState>();
-    final titleController = TextEditingController();
     final descriptionController = TextEditingController();
 
     try {
@@ -210,24 +215,28 @@ class ProfileScreen extends ConsumerWidget {
                         style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 24),
-                      TextFormField(
-                        controller: titleController,
-                        decoration: InputDecoration(
-                          labelText: "Tiêu đề",
-                          prefixIcon: const Icon(Icons.description_outlined, size: 20),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppTheme.primaryBlue, width: 1.5),
-                          ),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
                         ),
-                        validator: (value) => value == null || value.trim().isEmpty ? "Vui lòng nhập tiêu đề" : null,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.description_outlined, size: 20, color: AppTheme.primaryBlue),
+                            const SizedBox(width: 12),
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryBlue,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -267,8 +276,10 @@ class ProfileScreen extends ConsumerWidget {
                                   setState(() => isLoading = true);
 
                                   final ok = await ref.read(documentsProvider.notifier).addDocument(
-                                        title: titleController.text.trim(),
+                                        title: title,
                                         description: descriptionController.text.trim(),
+                                        icon: iconName,
+                                        color: colorHex,
                                       );
 
                                   if (!sheetContext.mounted) return;
@@ -298,7 +309,6 @@ class ProfileScreen extends ConsumerWidget {
         },
       );
     } finally {
-      titleController.dispose();
       descriptionController.dispose();
     }
   }
@@ -308,6 +318,13 @@ class ProfileScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final documents = ref.watch(documentsProvider);
     final isLoggedIn = ref.watch(authProvider.select((state) => state.isLoggedIn));
+
+    final requiredDocs = [
+      {'title': 'CCCD / Passport', 'iconName': 'verified_user', 'colorHex': '#176FF2'},
+      {'title': 'Visa', 'iconName': 'assignment', 'colorHex': '#34A853'},
+      {'title': 'Vé máy bay', 'iconName': 'flight_takeoff', 'colorHex': '#EA4335'},
+      {'title': 'Bảo hiểm du lịch', 'iconName': 'verified_user', 'colorHex': '#FBBC05'},
+    ];
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundGray,
@@ -570,19 +587,6 @@ class ProfileScreen extends ConsumerWidget {
                           "Giấy tờ của tôi",
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        if (isLoggedIn)
-                          TextButton.icon(
-                            onPressed: () => _showAddDocumentSheet(context, ref),
-                            icon: const Icon(Icons.add_circle_outline, size: 18, color: AppTheme.primaryBlue),
-                            label: const Text(
-                              "Thêm",
-                              style: TextStyle(
-                                color: AppTheme.primaryBlue,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -595,19 +599,109 @@ class ProfileScreen extends ConsumerWidget {
             SliverToBoxAdapter(
               child: !isLoggedIn
                   ? _buildLoginPrompt(context)
-                  : documents.isEmpty
-                      ? _buildEmptyDocuments(context, ref)
-                      : Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            children: documents.map((doc) {
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: DocumentCard(doc: doc),
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        children: requiredDocs.map((reqDoc) {
+                          final title = reqDoc['title']!;
+                          final iconName = reqDoc['iconName']!;
+                          final colorHex = reqDoc['colorHex']!;
+                          
+                          // Check if user has added this document
+                          try {
+                            final existingDoc = documents.firstWhere((d) => d.title == title);
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: DocumentCard(doc: existingDoc),
+                            );
+                          } catch (_) {
+                            // User hasn't added this document, show placeholder
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: GestureDetector(
+                                onTap: () => _showAddDocumentSheet(
+                                  context, 
+                                  ref, 
+                                  title: title, 
+                                  iconName: iconName, 
+                                  colorHex: colorHex,
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2), style: BorderStyle.solid),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.02),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: const Icon(Icons.description_outlined, color: Colors.grey),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              title,
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              "Chưa cập nhật",
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.grey.withValues(alpha: 0.8),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () => _showAddDocumentSheet(
+                                          context, 
+                                          ref, 
+                                          title: title, 
+                                          iconName: iconName, 
+                                          colorHex: colorHex,
+                                        ),
+                                        icon: const Icon(Icons.add_circle_outline, size: 16, color: AppTheme.primaryBlue),
+                                        label: const Text(
+                                          "Thêm",
+                                          style: TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold),
+                                        ),
+                                        style: TextButton.styleFrom(
+                                          backgroundColor: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+                        }).toList(),
+                      ),
+                    ),
             ),
 
             // Bottom padding
@@ -685,18 +779,6 @@ class ProfileScreen extends ConsumerWidget {
     return const RequireLoginPlaceholder(
       title: "Đăng nhập để tiếp tục",
       subtitle: "Quản lý giấy tờ cá nhân và\nđặt vé nhanh chóng hơn",
-    );
-  }
-
-  Widget _buildEmptyDocuments(BuildContext context, WidgetRef ref) {
-    return AppPlaceholderCard(
-      icon: Icons.folder_open_rounded,
-      title: "Chưa có giấy tờ nào",
-      subtitle: "Thêm CMND/CCCD hoặc Hộ chiếu\nđể đặt vé nhanh chóng hơn",
-      actionText: "Thêm giấy tờ",
-      actionIcon: Icons.add_rounded,
-      isOutlinedButton: true,
-      onActionTap: () => _showAddDocumentSheet(context, ref),
     );
   }
 }
