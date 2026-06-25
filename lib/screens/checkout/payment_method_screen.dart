@@ -55,7 +55,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
         id: 'vnpay',
         name: 'VNPAY',
         type: 'vnpay',
-        description: 'Thanh toán qua VNPAY (QR, ATM, Visa/Mastercard)',
+        description: 'Thanh toán qua mã QR, thẻ ATM, Visa',
         logo: _buildVnpayLogo(),
       ),
       PaymentMethod(
