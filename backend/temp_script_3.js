@@ -1,1 +1,0 @@
-document.write(renderUploadField('Ảnh đại diện', 'h-img', 'h-img-preview'))

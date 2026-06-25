@@ -1,1 +1,0 @@
-document.write(renderUploadField('Ảnh Bìa Tour', 't-img', 't-img-preview'))

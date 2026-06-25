@@ -1,1 +1,0 @@
-document.write(renderUploadField('Ảnh Phòng', 'r-img', 'r-img-preview'))
