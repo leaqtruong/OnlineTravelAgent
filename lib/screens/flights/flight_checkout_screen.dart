@@ -66,7 +66,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
           builder: (context) => PaymentMethodScreen(
             totalPrice: _totalPrice,
             onPaymentSuccess: () async {
-              if (!mounted) return false;
+              if (!mounted) return null;
               final notifier = ref.read(tripsProvider.notifier);
               return await notifier.bookFlight(
                 flightId: widget.flight.id,

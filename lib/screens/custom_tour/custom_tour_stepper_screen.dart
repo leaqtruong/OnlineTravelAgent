@@ -1274,21 +1274,19 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
         builder: (context) => PaymentMethodScreen(
           totalPrice: _totalPrice,
           onPaymentSuccess: () async {
-            if (!mounted) return false;
+            if (!mounted) return null;
 
-            // Collect selected flight ids for legs where user picked a flight
             final selectedFlightIds = _selectedFlightsPerLeg.entries
                 .where((e) => e.value.isNotEmpty && (_selfBookPerLeg[e.key] != true))
                 .map((e) => e.value)
                 .toList();
 
-            // Collect selected hotel ids (one per selected destination) to send to API
             final selectedHotelIds = _selectedHotelsPerDestination.values
                 .where((h) => h != null)
                 .map((h) => h!.id)
                 .toList();
 
-            final success = await ref.read(tripsProvider.notifier).createCustomTour(
+            return await ref.read(tripsProvider.notifier).createCustomTour(
                   destination: _selectedDestinations.map((d) => d.name).join(', '),
                   location: _selectedDestinations.map((d) => d.location).toSet().join(', '),
                   date: _formattedDate,
@@ -1298,8 +1296,6 @@ class _CustomTourStepperScreenState extends ConsumerState<CustomTourStepperScree
                   hotelIds: selectedHotelIds.isEmpty ? null : selectedHotelIds,
                   totalPrice: _totalPrice,
                 );
-
-            return success;
           },
         ),
       ),

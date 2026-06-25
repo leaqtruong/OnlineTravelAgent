@@ -4,6 +4,7 @@ import { clientRouter } from "./client.routes.js";
 import { adminRouter } from "./admin.routes.js";
 import { authRouter } from "./auth.routes.js";
 import { partnerRouter } from "./partner.routes.js";
+import { paymentRouter } from "./payment.routes.js";
 import { adminAuth, partnerAuth } from "../middlewares/auth.js";
 
 export const routes = Router();
@@ -17,6 +18,7 @@ const authLimiter = rateLimit({
 });
 
 routes.use("/", clientRouter);
+routes.use("/payment", paymentRouter);
 routes.use("/admin", adminAuth, adminRouter);
 routes.use("/partner", partnerAuth, partnerRouter);
 routes.use("/auth", authLimiter, authRouter);

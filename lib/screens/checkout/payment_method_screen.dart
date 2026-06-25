@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
+import '../../providers/api_provider.dart';
 import '../../utils/app_utils.dart';
+import 'vnpay_payment_screen.dart';
 
 class PaymentMethod {
   final String id;
   final String name;
-  final String type; // 'mastercard', 'visa', 'paypal', 'applepay', 'custom'
+  final String type;
   final String? last4;
   final Widget logo;
+  final String? description;
 
   PaymentMethod({
     required this.id,
@@ -16,12 +21,13 @@ class PaymentMethod {
     required this.type,
     this.last4,
     required this.logo,
+    this.description,
   });
 }
 
-class PaymentMethodScreen extends StatefulWidget {
+class PaymentMethodScreen extends ConsumerStatefulWidget {
   final double totalPrice;
-  final Future<bool> Function() onPaymentSuccess;
+  final Future<String?> Function() onPaymentSuccess;
   final String initialMethodId;
 
   const PaymentMethodScreen({
@@ -32,10 +38,10 @@ class PaymentMethodScreen extends StatefulWidget {
   });
 
   @override
-  State<PaymentMethodScreen> createState() => _PaymentMethodScreenState();
+  ConsumerState<PaymentMethodScreen> createState() => _PaymentMethodScreenState();
 }
 
-class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
+class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
   late List<PaymentMethod> _methods;
   String _selectedMethodId = 'mastercard';
   bool _isProcessing = false;
@@ -45,6 +51,20 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     super.initState();
     _selectedMethodId = widget.initialMethodId;
     _methods = [
+      PaymentMethod(
+        id: 'vnpay',
+        name: 'VNPAY',
+        type: 'vnpay',
+        description: 'Thanh toán qua VNPAY (QR, ATM, Visa/Mastercard)',
+        logo: _buildVnpayLogo(),
+      ),
+      PaymentMethod(
+        id: 'momo',
+        name: 'Ví MoMo',
+        type: 'momo',
+        description: 'Thanh toán qua ví MoMo',
+        logo: _buildMomoLogo(),
+      ),
       PaymentMethod(
         id: 'mastercard',
         name: 'Master Card',
@@ -56,6 +76,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         name: 'Visa',
         type: 'visa',
         logo: _buildVisaLogo(),
+      ),
+      PaymentMethod(
+        id: 'bank_transfer',
+        name: 'Chuyển khoản ngân hàng',
+        type: 'bank_transfer',
+        description: 'Chuyển khoản qua tài khoản ngân hàng',
+        logo: _buildBankTransferLogo(),
       ),
       PaymentMethod(
         id: 'paypal',
@@ -79,6 +106,64 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   // --- LOGO BUILDERS ---
+
+  Widget _buildVnpayLogo() {
+    return Container(
+      width: 44,
+      height: 28,
+      decoration: BoxDecoration(
+        color: const Color(0xFFDA251D),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'VNPAY',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 9,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMomoLogo() {
+    return Container(
+      width: 44,
+      height: 28,
+      decoration: BoxDecoration(
+        color: const Color(0xFFA50064),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: const Text(
+        'MoMo',
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 9,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBankTransferLogo() {
+    return Container(
+      width: 44,
+      height: 28,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E3A5F),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: const Icon(
+        Icons.account_balance,
+        color: Colors.white,
+        size: 16,
+      ),
+    );
+  }
+
   Widget _buildMasterCardLogo() {
     return SizedBox(
       width: 44,
@@ -148,11 +233,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
       alignment: Alignment.center,
       child: RichText(
         text: const TextSpan(
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            fontStyle: FontStyle.italic,
-          ),
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic),
           children: [
             TextSpan(text: 'Pay', style: TextStyle(color: Color(0xFF003087))),
             TextSpan(text: 'Pal', style: TextStyle(color: Color(0xFF0079C1))),
@@ -176,14 +257,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         children: [
           Icon(Icons.apple, color: Colors.white, size: 14),
           SizedBox(width: 1),
-          Text(
-            'Pay',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 10,
-            ),
-          ),
+          Text('Pay', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 10)),
         ],
       ),
     );
@@ -199,11 +273,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         border: Border.all(color: const Color(0xFFC8E6C9)),
       ),
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.payments_rounded,
-        color: Color(0xFF4CAF50),
-        size: 16,
-      ),
+      child: const Icon(Icons.payments_rounded, color: Color(0xFF4CAF50), size: 16),
     );
   }
 
@@ -217,251 +287,27 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
       ),
       alignment: Alignment.center,
-      child: const Icon(
-        Icons.credit_card,
-        color: AppTheme.primaryBlue,
-        size: 16,
-      ),
+      child: const Icon(Icons.credit_card, color: AppTheme.primaryBlue, size: 16),
     );
   }
 
   // --- ACTIONS ---
-  void _addNewCard() {
-    final nameController = TextEditingController();
-    final numberController = TextEditingController();
-    final expiryController = TextEditingController();
-    final cvvController = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Thêm thẻ mới',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textBlack,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          nameController.dispose();
-                          numberController.dispose();
-                          expiryController.dispose();
-                          cvvController.dispose();
-                          Navigator.pop(context);
-                        },
-                        icon: const Icon(Icons.close, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  // Cardholder Name
-                  TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(
-                      labelText: 'Tên trên thẻ',
-                      hintText: 'NGUYEN VAN A',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.person_outline),
-                    ),
-                    textCapitalization: TextCapitalization.characters,
-                    validator: (val) {
-                      if (val == null || val.trim().isEmpty) {
-                        return 'Vui lòng nhập tên';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Card Number
-                  TextFormField(
-                    controller: numberController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Số thẻ',
-                      hintText: '4211 0000 0000 0000',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.credit_card_outlined),
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                      LengthLimitingTextInputFormatter(16),
-                      _CardNumberFormatter(),
-                    ],
-                    validator: (val) {
-                      if (val == null || val.replaceAll(' ', '').length < 16) {
-                        return 'Số thẻ không hợp lệ (16 số)';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Expiration & CVV
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: expiryController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Hạn dùng',
-                            hintText: 'MM/YY',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(Icons.calendar_today_outlined),
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(4),
-                            _ExpiryFormatter(),
-                          ],
-                          validator: (val) {
-                            if (val == null || val.length < 5) {
-                              return 'Hạn dùng MM/YY';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextFormField(
-                          controller: cvvController,
-                          keyboardType: TextInputType.number,
-                          obscureText: true,
-                          decoration: InputDecoration(
-                            labelText: 'Mã CVV',
-                            hintText: '***',
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            prefixIcon: const Icon(Icons.lock_outline),
-                          ),
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(3),
-                          ],
-                          validator: (val) {
-                            if (val == null || val.length < 3) {
-                              return 'CVV gồm 3 số';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryBlue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          final numStr = numberController.text.replaceAll(' ', '');
-                          final last4 = numStr.substring(numStr.length - 4);
-                          
-                          // Determine card type based on number prefix
-                          String type = 'custom';
-                          String name = 'Thẻ liên kết';
-                          Widget logo;
-                          
-                          if (numStr.startsWith('4')) {
-                            type = 'visa';
-                            name = 'Visa';
-                            logo = _buildVisaLogo();
-                          } else if (numStr.startsWith('5')) {
-                            type = 'mastercard';
-                            name = 'Master Card';
-                            logo = _buildMasterCardLogo();
-                          } else {
-                            logo = _buildGenericCardLogo(name);
-                          }
-
-                          final newId = 'card_${DateTime.now().millisecondsSinceEpoch}';
-                          final newCard = PaymentMethod(
-                            id: newId,
-                            name: '$name (••• $last4)',
-                            type: type,
-                            last4: last4,
-                            logo: logo,
-                          );
-
-                          setState(() {
-                            _methods.add(newCard);
-                            _selectedMethodId = newId;
-                          });
-
-                          nameController.dispose();
-                          numberController.dispose();
-                          expiryController.dispose();
-                          cvvController.dispose();
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Đã thêm thẻ thành công!')),
-                          );
-                        }
-                      },
-                      child: const Text(
-                        'Thêm thẻ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 
   void _handlePay() async {
     setState(() => _isProcessing = true);
+
     try {
-      final success = await widget.onPaymentSuccess();
+      final selectedMethod = _methods.firstWhere((m) => m.id == _selectedMethodId);
+
+      if (selectedMethod.type == 'vnpay' || selectedMethod.type == 'momo') {
+        await _handleDigitalPayment(selectedMethod.type);
+        return;
+      }
+
+      final tripId = await widget.onPaymentSuccess();
       setState(() => _isProcessing = false);
-      if (success && mounted) {
-        _showSuccessDialog();
+      if (tripId != null && mounted) {
+        _showSuccessDialog(tripId);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Thanh toán thất bại, vui lòng thử lại')),
@@ -477,7 +323,89 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     }
   }
 
-  void _showSuccessDialog() {
+  Future<void> _handleDigitalPayment(String method) async {
+    try {
+      final tripId = await widget.onPaymentSuccess();
+      if (tripId == null) {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể tạo đơn hàng')),
+          );
+        }
+        return;
+      }
+
+      final api = ref.read(apiProvider);
+
+      if (method == 'vnpay') {
+        final result = await api.createVnpayPayment(
+          tripId: tripId,
+          amount: widget.totalPrice,
+        );
+
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+
+        final paymentUrl = result['paymentUrl'] as String;
+        final txnRef = result['txnRef'] as String;
+
+        final paymentSuccess = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VnpayPaymentScreen(
+              tripId: tripId,
+              amount: widget.totalPrice,
+              paymentUrl: paymentUrl,
+              txnRef: txnRef,
+            ),
+          ),
+        );
+
+        if (paymentSuccess == true && mounted) {
+          _showSuccessDialog(tripId);
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Thanh toán VNPAY chưa hoàn tất')),
+          );
+        }
+      } else if (method == 'momo') {
+        final result = await api.createMomoPayment(
+          tripId: tripId,
+          amount: widget.totalPrice,
+        );
+
+        if (!mounted) return;
+        setState(() => _isProcessing = false);
+
+        final payUrl = result['payUrl'] as String?;
+        if (payUrl != null) {
+          final uri = Uri.parse(payUrl);
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Vui lòng thanh toán qua MoMo, sau đó quay lại kiểm tra')),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Không thể tạo thanh toán MoMo')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
+  }
+
+  void _showSuccessDialog(String tripId) {
     showGeneralDialog(
       context: context,
       barrierDismissible: false,
@@ -497,9 +425,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           child: FadeTransition(
             opacity: opacity,
             child: AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               contentPadding: const EdgeInsets.all(28),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -513,22 +439,12 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       border: Border.all(color: const Color(0xFFC2EED7), width: 2),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.check_circle_rounded,
-                      color: Color(0xFF07D95A),
-                      size: 64,
-                    ),
+                    child: const Icon(Icons.check_circle_rounded, color: Color(0xFF07D95A), size: 64),
                   ),
                   const SizedBox(height: 24),
-                  Text(
-                    _selectedMethodId == 'cash'
-                        ? 'Đặt tour thành công!'
-                        : 'Thanh toán thành công!',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textBlack,
-                    ),
+                  const Text(
+                    'Đặt tour thành công!',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.textBlack),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
@@ -536,11 +452,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     _selectedMethodId == 'cash'
                         ? 'Yêu cầu đặt tour của bạn đã được ghi nhận. Quý khách vui lòng chuẩn bị thanh toán bằng tiền mặt khi khởi hành chuyến đi.'
                         : 'Yêu cầu dịch vụ của bạn đã được xác nhận thành công. Bạn có thể kiểm tra chi tiết trong mục Chuyến đi.',
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
+                    style: const TextStyle(color: Colors.grey, fontSize: 14, height: 1.4),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
@@ -552,21 +464,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                             foregroundColor: AppTheme.primaryBlue,
                             side: const BorderSide(color: AppTheme.primaryBlue),
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           onPressed: () {
                             Navigator.of(context).pop();
                             Navigator.of(context).popUntil((route) => route.isFirst);
                           },
-                          child: const Text(
-                            'Về Trang Chủ',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: const Text('Về Trang Chủ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -576,24 +480,15 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                             backgroundColor: AppTheme.primaryBlue,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             elevation: 0,
                           ),
                           onPressed: () {
                             Navigator.of(context).pop();
                             Navigator.of(context).popUntil((route) => route.isFirst);
-                            // Navigate to My Trips (index 1 in bottom nav)
-                            Navigator.pushNamed(context, '/my-trips');
+                            Navigator.pushNamed(context, '/main');
                           },
-                          child: const Text(
-                            'Xem Chuyến Đi',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: const Text('Xem Chuyến Đi', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
@@ -608,6 +503,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   }
 
   // --- BUILD ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -621,12 +517,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Payment Methods',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+          'Phương thức thanh toán',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
         ),
         centerTitle: true,
       ),
@@ -639,26 +531,15 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   child: ListView(
                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                     children: [
-                      // List of cards
                       ..._methods.map((method) => _buildMethodItem(method)),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Add More Button
-                      _buildAddMoreButton(),
-                      
                       const SizedBox(height: 40),
                     ],
                   ),
                 ),
-                
-                // Bottom payment bar
                 _buildBottomBar(),
               ],
             ),
           ),
-          
-          // Fullscreen processing loader
           if (_isProcessing)
             Container(
               color: Colors.black.withValues(alpha: 0.3),
@@ -679,17 +560,11 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 child: const Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(
-                      color: AppTheme.primaryBlue,
-                    ),
+                    CircularProgressIndicator(color: AppTheme.primaryBlue),
                     SizedBox(height: 16),
                     Text(
                       'Đang xử lý thanh toán...',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: AppTheme.textBlack,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textBlack),
                     ),
                   ],
                 ),
@@ -702,21 +577,23 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
   Widget _buildMethodItem(PaymentMethod method) {
     final isSelected = _selectedMethodId == method.id;
-    final selectedColor = AppTheme.primaryBlue;
+    final selectedColor = method.type == 'vnpay'
+        ? const Color(0xFFDA251D)
+        : method.type == 'momo'
+            ? const Color(0xFFA50064)
+            : AppTheme.primaryBlue;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            setState(() {
-              _selectedMethodId = method.id;
-            });
+            setState(() => _selectedMethodId = method.id);
           },
           borderRadius: BorderRadius.circular(20),
           child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
@@ -725,34 +602,31 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 width: isSelected ? 1.5 : 1.0,
               ),
               boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: selectedColor.withValues(alpha: 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
+                  ? [BoxShadow(color: selectedColor.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 4))]
                   : null,
             ),
             child: Row(
               children: [
-                // Logo on the left
                 method.logo,
                 const SizedBox(width: 16),
-                
-                // Name in the middle
                 Expanded(
-                  child: Text(
-                    method.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.textBlack,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        method.name,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.textBlack),
+                      ),
+                      if (method.description != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          method.description!,
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
-                
-                // Selection indicator on the right
                 if (isSelected)
                   Container(
                     width: 20,
@@ -762,44 +636,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.check,
-                      color: Colors.white,
-                      size: 14,
-                    ),
+                    child: const Icon(Icons.check, color: Colors.white, size: 14),
                   )
                 else
-                  const SizedBox(
-                    width: 20,
-                    height: 20,
-                  ),
+                  const SizedBox(width: 20),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAddMoreButton() {
-    return Center(
-      child: TextButton.icon(
-        onPressed: _addNewCard,
-        icon: const Icon(
-          Icons.add_circle_outline_rounded,
-          color: Color(0xFF94A3B8),
-          size: 20,
-        ),
-        label: const Text(
-          'Add More',
-          style: TextStyle(
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
@@ -824,21 +667,10 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Tổng thanh toán',
-                style: TextStyle(
-                  color: Color(0xFF64748B),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              const Text('Tổng thanh toán', style: TextStyle(color: Color(0xFF64748B), fontSize: 15, fontWeight: FontWeight.w500)),
               Text(
                 formatVND(widget.totalPrice),
-                style: const TextStyle(
-                  color: AppTheme.primaryBlue,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: const TextStyle(color: AppTheme.primaryBlue, fontSize: 24, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -850,76 +682,15 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryBlue,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
               onPressed: _handlePay,
-              child: const Text(
-                'Xác nhận & Thanh toán',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: const Text('Xác nhận & Thanh toán', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-// --- TEXT FORMATTERS FOR CARD FORM ---
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    var text = newValue.text;
-    if (newValue.selection.baseOffset == 0) {
-      return newValue;
-    }
-    var buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      buffer.write(text[i]);
-      var nonZeroIndex = i + 1;
-      if (nonZeroIndex % 4 == 0 && nonZeroIndex != text.length) {
-        buffer.write(' '); // Add double space or single space
-      }
-    }
-    var string = buffer.toString();
-    return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
-    );
-  }
-}
-
-class _ExpiryFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    var text = newValue.text;
-    if (newValue.selection.baseOffset == 0) {
-      return newValue;
-    }
-    var buffer = StringBuffer();
-    for (int i = 0; i < text.length; i++) {
-      buffer.write(text[i]);
-      var nonZeroIndex = i + 1;
-      if (nonZeroIndex == 2 && nonZeroIndex != text.length) {
-        buffer.write('/');
-      }
-    }
-    var string = buffer.toString();
-    return newValue.copyWith(
-      text: string,
-      selection: TextSelection.collapsed(offset: string.length),
     );
   }
 }

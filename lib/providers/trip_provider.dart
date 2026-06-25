@@ -15,8 +15,8 @@ class TripNotifier extends Notifier<List<Trip>> {
     state = [trip, ...state];
   }
 
-  Future<bool> bookTrip({String? destinationId, String? date, String? guests, double? totalPrice}) async {
-    if (destinationId == null) return false;
+  Future<String?> bookTrip({String? destinationId, String? date, String? guests, double? totalPrice}) async {
+    if (destinationId == null) return null;
     try {
       final trip = await ref.read(apiProvider).bookTrip(
         destinationId: destinationId,
@@ -25,49 +25,49 @@ class TripNotifier extends Notifier<List<Trip>> {
         totalPrice: totalPrice,
       );
       addTrip(trip);
-      return true;
+      return trip.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  Future<bool> bookFlight({required String flightId, required String date, required String guests}) async {
+  Future<String?> bookFlight({required String flightId, required String date, required String guests}) async {
     try {
       final trip = await ref.read(apiProvider).bookFlight(
         flightId: flightId, date: date, guests: guests
       );
       addTrip(trip);
-      return true;
+      return trip.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  Future<bool> bookHotel({required String roomId, required String checkIn, required String checkOut, required String guests}) async {
+  Future<String?> bookHotel({required String roomId, required String checkIn, required String checkOut, required String guests}) async {
     try {
       final trip = await ref.read(apiProvider).bookHotel(
         roomId: roomId, checkIn: checkIn, checkOut: checkOut, guests: guests
       );
       addTrip(trip);
-      return true;
+      return trip.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  Future<bool> bookTour({required String tourId, required String date, required String guests, double? totalPrice}) async {
+  Future<String?> bookTour({required String tourId, required String date, required String guests, double? totalPrice}) async {
     try {
       final trip = await ref.read(apiProvider).bookTour(
         tourId: tourId, date: date, guests: guests, totalPrice: totalPrice
       );
       addTrip(trip);
-      return true;
+      return trip.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 
-  Future<bool> createCustomTour({
+  Future<String?> createCustomTour({
     required String destination, required String location, required String date,
     required String guests, required String imagePath,
     List<String>? flightIds, List<String>? hotelIds, String? roomId, double? totalPrice,
@@ -79,9 +79,9 @@ class TripNotifier extends Notifier<List<Trip>> {
         hotelIds: hotelIds, roomId: roomId, totalPrice: totalPrice
       );
       addTrip(trip);
-      return true;
+      return trip.id;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 }

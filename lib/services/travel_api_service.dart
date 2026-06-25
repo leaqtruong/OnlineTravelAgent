@@ -236,6 +236,31 @@ class TravelApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
+  // ── VNPAY Payment ─────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> createVnpayPayment({required String tripId, required double amount, String? orderInfo, String? locale}) async {
+    return _postJson('/api/payment/vnpay/create', {
+      'tripId': tripId,
+      'amount': amount,
+      'orderInfo': orderInfo ?? 'Thanh toán đặt chỗ Online Travel Agent',
+      'locale': locale ?? 'vn',
+    });
+  }
+
+  Future<Map<String, dynamic>> checkPaymentStatus(String tripId) async {
+    return _getJson('/api/payment/vnpay/status/$tripId');
+  }
+
+  // ── MoMo Payment ───────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> createMomoPayment({required String tripId, required double amount, String? orderInfo}) async {
+    return _postJson('/api/payment/momo/create', {
+      'tripId': tripId,
+      'amount': amount,
+      'orderInfo': orderInfo ?? 'Thanh toán đặt chỗ Online Travel Agent',
+    });
+  }
+
   // ── Auth ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login({required String email, required String password}) async {
