@@ -69,12 +69,14 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
         id: 'mastercard',
         name: 'Master Card',
         type: 'mastercard',
+        description: 'Thanh toán qua thẻ quốc tế Mastercard',
         logo: _buildMasterCardLogo(),
       ),
       PaymentMethod(
         id: 'visa',
         name: 'Visa',
         type: 'visa',
+        description: 'Thanh toán qua thẻ quốc tế Visa',
         logo: _buildVisaLogo(),
       ),
       PaymentMethod(
@@ -88,18 +90,21 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
         id: 'paypal',
         name: 'PayPal',
         type: 'paypal',
+        description: 'Thanh toán quốc tế an toàn qua PayPal',
         logo: _buildPayPalLogo(),
       ),
       PaymentMethod(
         id: 'applepay',
         name: 'Apple Pay',
         type: 'applepay',
+        description: 'Thanh toán nhanh qua ví Apple Pay',
         logo: _buildApplePayLogo(),
       ),
       PaymentMethod(
         id: 'cash',
-        name: 'Tiền mặt (Thanh toán khi khởi hành)',
+        name: 'Tiền mặt',
         type: 'cash',
+        description: 'Thanh toán trực tiếp khi khởi hành',
         logo: _buildCashLogo(),
       ),
     ];
