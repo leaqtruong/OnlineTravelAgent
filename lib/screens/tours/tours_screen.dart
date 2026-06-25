@@ -207,22 +207,23 @@ class _ToursScreenState extends ConsumerState<ToursScreen> {
       ),
           ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CustomTourStepperScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppTheme.primaryBlue,
-        icon: const Icon(Icons.add_location_alt, color: Colors.white),
-        label: const Text(
-          'Tự Tạo Tour',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
+      // Tạm thời ẩn nút Tự tạo tour
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => const CustomTourStepperScreen(),
+      //       ),
+      //     );
+      //   },
+      //   backgroundColor: AppTheme.primaryBlue,
+      //   icon: const Icon(Icons.add_location_alt, color: Colors.white),
+      //   label: const Text(
+      //     'Tự Tạo Tour',
+      //     style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      //   ),
+      // ),
     );
   }
 
