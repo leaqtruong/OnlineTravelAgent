@@ -8,8 +8,8 @@ class BookingInfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bookingCode =
-        'BK-${trip.id.toUpperCase().hashCode.toString().substring(0, 6)}';
+    final hashStr = trip.id.toUpperCase().hashCode.abs().toString();
+    final bookingCode = 'BK-${hashStr.length >= 6 ? hashStr.substring(0, 6) : hashStr.padLeft(6, '0')}';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

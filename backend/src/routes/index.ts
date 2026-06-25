@@ -9,6 +9,7 @@ import { adminAuth, partnerAuth } from "../middlewares/auth.js";
 
 export const routes = Router();
 
+// Strict rate limit for auth endpoints (login/register)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -17,7 +18,16 @@ const authLimiter = rateLimit({
   message: { message: "Too many login attempts, please try again later" },
 });
 
-routes.use("/", clientRouter);
+// General API rate limit (generous for normal usage)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "Too many requests, please try again later" },
+});
+
+routes.use("/", generalLimiter, clientRouter);
 routes.use("/payment", paymentRouter);
 routes.use("/admin", adminAuth, adminRouter);
 routes.use("/partner", partnerAuth, partnerRouter);

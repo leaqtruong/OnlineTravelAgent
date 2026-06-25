@@ -89,6 +89,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             child: Image.asset(
               'assets/images/halong_image.png',
               fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.black,
+              ),
             ),
           ),
           // Dark Overlay
@@ -248,7 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
           // Back button
           Positioned(
-            top: 50,
+            top: MediaQuery.of(context).padding.top + 10,
             left: 20,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),

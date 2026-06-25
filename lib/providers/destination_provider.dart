@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/destination.dart';
+import '../utils/api_exception.dart';
 import 'api_provider.dart';
 import 'app_state_provider.dart';
 
@@ -26,15 +27,33 @@ class DestinationsNotifier extends Notifier<List<Destination>> {
     
     try {
       await ref.read(apiProvider).setFavorite(id, newValue);
-    } catch (e) {
-      // Revert on failure
+      ref.read(recommendedProvider.notifier).syncFavorite(id, newValue);
+    } on ApiException catch (e) {
       state = [
         for (int i = 0; i < state.length; i++)
           if (i == index) current else state[i]
       ];
+      ref.read(recommendedProvider.notifier).syncFavorite(id, current.isFavorite);
+      ref.read(destinationErrorProvider.notifier).setError(e.message);
+      rethrow;
+    } catch (e) {
+      state = [
+        for (int i = 0; i < state.length; i++)
+          if (i == index) current else state[i]
+      ];
+      ref.read(recommendedProvider.notifier).syncFavorite(id, current.isFavorite);
+      ref.read(destinationErrorProvider.notifier).setError(getErrorMessage(e));
+      rethrow;
     }
   }
 }
+
+class DestinationErrorNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void setError(String? val) => state = val;
+}
+final destinationErrorProvider = NotifierProvider<DestinationErrorNotifier, String?>(DestinationErrorNotifier.new);
 
 final destinationsProvider = NotifierProvider<DestinationsNotifier, List<Destination>>(DestinationsNotifier.new);
 
@@ -46,8 +65,6 @@ class RecommendedNotifier extends Notifier<List<Destination>> {
     return bootstrap?.recommended ?? [];
   }
 
-  // Need a way to sync favorite from main destination list to recommended list
-  // Actually, we can just compute recommended from destinations? No, recommended is a separate list from API.
   void syncFavorite(String id, bool isFavorite) {
     final index = state.indexWhere((d) => d.id == id);
     if (index == -1) return;
@@ -118,6 +135,3 @@ final foodDestinationsProvider = Provider<List<Destination>>((ref) {
   final destinations = ref.watch(destinationsProvider);
   return destinations.where((d) => d.category == 'Ẩm thực').toList();
 });
-
-// 5. Selected Destination for details (Optional: better to pass via argument, but if we need global state)
-

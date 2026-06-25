@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import '../core/exceptions.dart';
@@ -14,6 +17,7 @@ import '../models/review.dart';
 import '../models/room.dart';
 import '../models/tour_package.dart';
 import '../models/trip_schedule.dart';
+import '../utils/api_exception.dart';
 
 class BootstrapData {
   final List<String> categories;
@@ -36,10 +40,35 @@ class BootstrapData {
 }
 
 class TravelApiService {
-  TravelApiService({String? baseUrl}) : _baseUrl = baseUrl ?? _defaultBaseUrl();
+  TravelApiService({String? baseUrl, FlutterSecureStorage? secureStorage})
+      : _baseUrl = baseUrl ?? _defaultBaseUrl(),
+        _secureStorage = secureStorage ?? const FlutterSecureStorage() {
+    loadTokenFuture = _loadToken();
+  }
 
   final String _baseUrl;
+  final FlutterSecureStorage _secureStorage;
+  FlutterSecureStorage get secureStorage => _secureStorage;
   String? token;
+  String? userName;
+  String? userEmail;
+  late final Future<void> loadTokenFuture;
+
+  static const String _tokenKey = 'auth_token';
+
+  Future<void> _loadToken() async {
+    try {
+      token = await _secureStorage.read(key: _tokenKey);
+      userName = await _secureStorage.read(key: 'auth_user_name');
+      userEmail = await _secureStorage.read(key: 'auth_user_email');
+    } catch (e) {
+      debugPrint('Failed to read token from secure storage: $e');
+    }
+  }
+
+  Future<void> _ensureTokenLoaded() async {
+    await loadTokenFuture;
+  }
 
   static String _defaultBaseUrl() {
     const fromDefine = String.fromEnvironment('API_BASE_URL');
@@ -61,50 +90,68 @@ class TravelApiService {
   }
 
   Future<Map<String, dynamic>> _getJson(String path) async {
-    final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    });
   }
 
   Future<List<dynamic>> _getList(String path) async {
-    final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as List<dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.get(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as List<dynamic>;
+    });
   }
 
   Future<Map<String, dynamic>> _postJson(String path, Map<String, dynamic> body) async {
-    final response = await http.post(
-      _uri(path),
-      headers: _headers,
-      body: jsonEncode(body),
-    ).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.post(
+        _uri(path),
+        headers: _headers,
+        body: jsonEncode(body),
+      ).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    });
   }
 
   Future<Map<String, dynamic>> _patchJson(String path, Map<String, dynamic> body) async {
-    final response = await http.patch(
-      _uri(path),
-      headers: _headers,
-      body: jsonEncode(body),
-    ).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.patch(
+        _uri(path),
+        headers: _headers,
+        body: jsonEncode(body),
+      ).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    });
   }
 
   Future<Map<String, dynamic>> _putJson(String path, Map<String, dynamic> body) async {
-    final response = await http.put(
-      _uri(path),
-      headers: _headers,
-      body: jsonEncode(body),
-    ).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.put(
+        _uri(path),
+        headers: _headers,
+        body: jsonEncode(body),
+      ).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    });
   }
 
   Future<void> _delete(String path) async {
-    final response = await http.delete(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.delete(_uri(path), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+    });
   }
 
   Future<BootstrapData> fetchBootstrap() async {
@@ -137,18 +184,21 @@ class TravelApiService {
   }
 
   Future<List<Flight>> searchFlights(String? departure, String? arrival) async {
-    String query = '';
-    if (departure != null && arrival != null) {
-      query = '?departure=$departure&arrival=$arrival';
-    } else if (departure != null) {
-      query = '?departure=$departure';
-    } else if (arrival != null) {
-      query = '?arrival=$arrival';
-    }
-    final response = await http.get(_uri('/api/flights/search$query'), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    final List<dynamic> raw = jsonDecode(response.body);
-    return raw.map((e) => Flight.fromJson(e)).toList();
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      String query = '';
+      if (departure != null && arrival != null) {
+        query = '?departure=$departure&arrival=$arrival';
+      } else if (departure != null) {
+        query = '?departure=$departure';
+      } else if (arrival != null) {
+        query = '?arrival=$arrival';
+      }
+      final response = await http.get(_uri('/api/flights/search$query'), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      final List<dynamic> raw = jsonDecode(response.body);
+      return raw.map((e) => Flight.fromJson(e)).toList();
+    });
   }
 
   Future<Trip> bookFlight({required String flightId, required String date, required String guests}) async {
@@ -166,9 +216,12 @@ class TravelApiService {
   }
 
   Future<bool> deleteDocument(String documentId) async {
-    final response = await http.delete(_uri('/api/documents/$documentId'), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return true;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.delete(_uri('/api/documents/$documentId'), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return true;
+    });
   }
 
   Future<ReviewResponse> getReviews({required String targetType, required String targetId}) async {
@@ -184,12 +237,15 @@ class TravelApiService {
   }
 
   Future<bool> deleteReview(String reviewId) async {
-    final response = await http.delete(
-      _uri('/api/reviews/$reviewId'),
-      headers: _headers,
-    ).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return true;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.delete(
+        _uri('/api/reviews/$reviewId'),
+        headers: _headers,
+      ).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return true;
+    });
   }
 
   Future<Trip> bookHotel({required String roomId, required String checkIn, required String checkOut, required String guests}) async {
@@ -231,9 +287,12 @@ class TravelApiService {
   }
 
   Future<Map<String, dynamic>> checkPromoCode(String code) async {
-    final response = await http.get(_uri('/api/promo-codes/check?code=$code'), headers: _headers).timeout(AppTheme.apiTimeout);
-    _throwIfError(response);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    await _ensureTokenLoaded();
+    return _safeCall(() async {
+      final response = await http.get(_uri('/api/promo-codes/check?code=$code'), headers: _headers).timeout(AppTheme.apiTimeout);
+      _throwIfError(response);
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    });
   }
 
   // ── VNPAY Payment ─────────────────────────────────────────────────────────
@@ -264,11 +323,64 @@ class TravelApiService {
   // ── Auth ──────────────────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> login({required String email, required String password}) async {
-    return await _postJson('/api/auth/login', {'email': email, 'password': password});
+    final res = await _postJson('/api/auth/login', {'email': email, 'password': password});
+    final tokenValue = res['token']?.toString();
+    if (tokenValue != null) {
+      token = tokenValue;
+      try {
+        await _secureStorage.write(key: _tokenKey, value: tokenValue);
+        final name = (res['user'] as Map<String, dynamic>?)?['name']?.toString();
+        final userEmailValue = (res['user'] as Map<String, dynamic>?)?['email']?.toString();
+        if (name != null) {
+          userName = name;
+          await _secureStorage.write(key: 'auth_user_name', value: name);
+        }
+        if (userEmailValue != null) {
+          userEmail = userEmailValue;
+          await _secureStorage.write(key: 'auth_user_email', value: userEmailValue);
+        }
+      } catch (e) {
+        debugPrint('Failed to write auth data to secure storage: $e');
+      }
+    }
+    return res;
   }
 
   Future<Map<String, dynamic>> register({required String name, required String email, required String password}) async {
-    return await _postJson('/api/auth/register', {'name': name, 'email': email, 'password': password});
+    final res = await _postJson('/api/auth/register', {'name': name, 'email': email, 'password': password});
+    final tokenValue = res['token']?.toString();
+    if (tokenValue != null) {
+      token = tokenValue;
+      try {
+        await _secureStorage.write(key: _tokenKey, value: tokenValue);
+        final resName = (res['user'] as Map<String, dynamic>?)?['name']?.toString();
+        final resEmail = (res['user'] as Map<String, dynamic>?)?['email']?.toString();
+        if (resName != null) {
+          userName = resName;
+          await _secureStorage.write(key: 'auth_user_name', value: resName);
+        }
+        if (resEmail != null) {
+          userEmail = resEmail;
+          await _secureStorage.write(key: 'auth_user_email', value: resEmail);
+        }
+      } catch (e) {
+        debugPrint('Failed to write auth data to secure storage: $e');
+      }
+    }
+    return res;
+  }
+
+  Future<void> logout() async {
+    token = null;
+    userName = null;
+    userEmail = null;
+    try {
+      await _secureStorage.delete(key: _tokenKey);
+      await _secureStorage.delete(key: 'auth_user_name');
+      await _secureStorage.delete(key: 'auth_user_email');
+    } catch (e) {
+      debugPrint('Failed to delete auth data from secure storage: $e');
+    }
   }
 
   Future<Map<String, dynamic>> becomePartner() async {
@@ -344,13 +456,49 @@ class TravelApiService {
 
   static void _throwIfError(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) return;
+
+    final body = response.body;
     String message;
     try {
-      final body = jsonDecode(response.body);
-      message = body['message']?.toString() ?? 'Lỗi không xác định (${response.statusCode})';
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      message = json['error']?.toString() ?? json['message']?.toString() ?? body;
     } catch (_) {
-      message = 'Lỗi server (${response.statusCode})';
+      message = body;
     }
-    throw ApiException(response.statusCode, message);
+
+    switch (response.statusCode) {
+      case 400:
+        throw ValidationException(message: message);
+      case 401:
+        throw AuthException(message: message);
+      case 403:
+        throw ForbiddenException(message: message);
+      case 404:
+        throw NotFoundException(message: message);
+      case 500:
+      case 502:
+      case 503:
+        throw ServerException(message: message);
+      default:
+        throw ApiException(statusCode: response.statusCode, message: 'Lỗi API ($response.statusCode): $message');
+    }
+  }
+
+  Future<T> _safeCall<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } on ApiException {
+      rethrow;
+    } on SocketException {
+      throw const NetworkException();
+    } on HttpException {
+      throw const NetworkException(message: 'Không thể kết nối đến máy chủ.');
+    } on TimeoutException {
+      throw const TimeoutApiException();
+    } on FormatException {
+      throw const ParseException();
+    } catch (e) {
+      rethrow;
+    }
   }
 }

@@ -10,6 +10,8 @@ import '../../providers/auth_provider.dart';
 import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../../widgets/review_section.dart';
+import '../../providers/destination_provider.dart';
+import '../../providers/app_state_provider.dart';
 
 class DestinationDetailScreen extends ConsumerStatefulWidget {
   final Destination destination;
@@ -57,7 +59,9 @@ class _DestinationDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.destination;
+    final destinations = ref.watch(destinationsProvider);
+    final d = destinations.firstWhere((e) => e.id == widget.destination.id, orElse: () => widget.destination);
+
     final heroCacheWidth = (MediaQuery.sizeOf(context).width *
             MediaQuery.devicePixelRatioOf(context))
         .round();
@@ -121,6 +125,10 @@ class _DestinationDetailScreenState
                   fit: BoxFit.cover,
                   cacheWidth: heroCacheWidth,
                   filterQuality: FilterQuality.low,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, color: Colors.grey),
+                  ),
                 ),
               ),
             ),
@@ -216,34 +224,36 @@ class _DestinationDetailScreenState
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: FlutterMap(
-                          options: MapOptions(
-                            initialCenter: LatLng(d.latitude, d.longitude),
-                            initialZoom: 13,
-                            interactionOptions: const InteractionOptions(
-                              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                        child: RepaintBoundary(
+                          child: FlutterMap(
+                            options: MapOptions(
+                              initialCenter: LatLng(d.latitude, d.longitude),
+                              initialZoom: 13,
+                              interactionOptions: const InteractionOptions(
+                                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                              ),
                             ),
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate: kOpenStreetMapTileUrl,
-                              userAgentPackageName: 'com.example.onlinetravelagent',
-                            ),
-                            MarkerLayer(
-                              markers: [
-                                Marker(
-                                  point: LatLng(d.latitude, d.longitude),
-                                  width: 40,
-                                  height: 40,
-                                  child: const Icon(
-                                    Icons.location_on,
-                                    color: Colors.red,
-                                    size: 40,
+                            children: [
+                              TileLayer(
+                                urlTemplate: kOpenStreetMapTileUrl,
+                                userAgentPackageName: 'com.example.onlinetravelagent',
+                              ),
+                              MarkerLayer(
+                                markers: [
+                                  Marker(
+                                    point: LatLng(d.latitude, d.longitude),
+                                    width: 40,
+                                    height: 40,
+                                    child: const Icon(
+                                      Icons.location_on,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     )
@@ -285,9 +295,12 @@ class _DestinationDetailScreenState
                   const SizedBox(height: 32),
                   ReviewSection(
                     targetType: 'destination',
-                    targetId: widget.destination.id,
-                    fallbackRating: double.tryParse(widget.destination.rating) ?? 0.0,
-                    fallbackCount: int.tryParse(widget.destination.reviewsCount) ?? 0,
+                    targetId: d.id,
+                    fallbackRating: double.tryParse(d.rating) ?? 0.0,
+                    fallbackCount: int.tryParse(d.reviewsCount) ?? 0,
+                    onReviewSubmitted: () {
+                      ref.invalidate(bootstrapProvider);
+                    },
                   ),
                 ],
               ),

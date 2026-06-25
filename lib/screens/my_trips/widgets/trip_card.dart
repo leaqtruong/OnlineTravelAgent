@@ -8,44 +8,6 @@ class TripCard extends StatelessWidget {
 
   const TripCard({super.key, required this.trip});
 
-  String _getClassificationLabel() {
-    if (trip.isCustom) {
-      return 'Tự thiết kế';
-    } else if (trip.flightId != null) {
-      return 'Chuyến bay';
-    } else if (trip.hotelId != null) {
-      return 'Khách sạn';
-    }
-    return 'Gói Tour';
-  }
-
-  LinearGradient _getClassificationGradient() {
-    if (trip.isCustom) {
-      return const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-    } else if (trip.flightId != null) {
-      return const LinearGradient(
-        colors: [Color(0xFF00B0FF), Color(0xFF2979FF)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-    } else if (trip.hotelId != null) {
-      return const LinearGradient(
-        colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-    }
-    return const LinearGradient(
-      colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final cacheWidth = (140 * MediaQuery.devicePixelRatioOf(context)).round();
@@ -111,33 +73,7 @@ class TripCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  // Float Classification Tag
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        gradient: _getClassificationGradient(),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        _getClassificationLabel(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ),

@@ -17,6 +17,7 @@ class ReviewSection extends ConsumerStatefulWidget {
   final String targetId;
   final double fallbackRating;
   final int fallbackCount;
+  final VoidCallback? onReviewSubmitted;
 
   const ReviewSection({
     super.key,
@@ -24,6 +25,7 @@ class ReviewSection extends ConsumerStatefulWidget {
     required this.targetId,
     this.fallbackRating = 4.5,
     this.fallbackCount = 0,
+    this.onReviewSubmitted,
   });
 
   @override
@@ -317,7 +319,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(content: Text('Đã gửi đánh giá thành công!')),
                               );
-                              _loadReviews();
+                              await _loadReviews();
+                              widget.onReviewSubmitted?.call();
                             } catch (e) {
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(

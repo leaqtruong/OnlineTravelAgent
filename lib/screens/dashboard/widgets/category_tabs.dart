@@ -27,7 +27,7 @@ class CategoryTabs extends StatelessWidget {
           itemBuilder: (context, index) {
             final category = visibleCategories[index];
             final isSelected = ref.watch(selectedCategoryProvider) == category;
-            return GestureDetector(
+            return InkWell(
               onTap: () {
                 if (category == AppConstants.categoryHotels) {
                   Navigator.push(
@@ -56,7 +56,9 @@ class CategoryTabs extends StatelessWidget {
                   ref.read(selectedCategoryProvider.notifier).update(category);
                 }
               },
-              child: Container(
+              borderRadius: BorderRadius.circular(16),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 12,

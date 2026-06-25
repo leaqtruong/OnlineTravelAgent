@@ -28,13 +28,20 @@ class PopularDestinationCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            Image.asset(
-              destination.imagePath,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              cacheWidth: cacheWidth,
-              filterQuality: FilterQuality.low,
+            Hero(
+              tag: 'dest_image_${destination.name}',
+              child: Image.asset(
+                destination.imagePath,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                cacheWidth: cacheWidth,
+                filterQuality: FilterQuality.low,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[300],
+                  child: const Icon(Icons.image, color: Colors.grey),
+                ),
+              ),
             ),
             Container(
               decoration: BoxDecoration(

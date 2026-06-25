@@ -15,7 +15,7 @@ class FavoritesScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final favorites = ref.watch(favoritesProvider);
-    final authState = ref.watch(authProvider);
+    final isLoggedIn = ref.watch(authProvider.select((state) => state.isLoggedIn));
 
     Future<void> onRefresh() async {
       ref.invalidate(bootstrapProvider);
@@ -38,7 +38,7 @@ class FavoritesScreen extends ConsumerWidget {
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
-              if (!authState.isLoggedIn)
+              if (!isLoggedIn)
                 const Expanded(
                   child: RequireLoginPlaceholder(
                     subtitle: "Lưu lại các địa điểm yêu thích\nđể lên kế hoạch dễ dàng hơn",

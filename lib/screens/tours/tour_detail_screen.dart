@@ -9,9 +9,11 @@ import '../../models/tour_package.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/tour_provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
+import '../../utils/app_utils.dart';
 import '../../widgets/review_section.dart';
+import '../../providers/app_state_provider.dart';
+import '../checkout/payment_method_screen.dart';
 
 class TourDetailScreen extends ConsumerStatefulWidget {
   final TourPackage tour;
@@ -176,6 +178,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tours = ref.watch(bootstrapProvider).value?.tourPackages ?? [];
+    final t = tours.firstWhere((e) => e.id == widget.tour.id, orElse: () => widget.tour);
+
     final coordinates = _getCoordinates();
     final center = coordinates.first;
     final itinerary = _generateItinerary();
@@ -213,8 +218,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                   Center(
                     child: GestureDetector(
                       onTap: () {
-                        ref.read(tourFavoritesProvider.notifier).toggle(widget.tour.id);
-                        final isFav = ref.read(tourFavoritesProvider).contains(widget.tour.id);
+                        ref.read(tourFavoritesProvider.notifier).toggle(t.id);
+                        final isFav = ref.read(tourFavoritesProvider).contains(t.id);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
@@ -228,7 +233,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                       },
                       child: Builder(
                         builder: (context) {
-                          final isFav = ref.watch(tourFavoritesProvider).contains(widget.tour.id);
+                          final isFav = ref.watch(tourFavoritesProvider).contains(t.id);
                           return Container(
                             margin: const EdgeInsets.only(right: 20),
                             padding: const EdgeInsets.all(8),
@@ -255,9 +260,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                     fit: StackFit.expand,
                     children: [
                       Hero(
-                        tag: 'tour_image_${widget.tour.name}',
+                        tag: 'tour_image_${t.name}',
                         child: Image.asset(
-                          widget.tour.imagePath,
+                          t.imagePath,
                           fit: BoxFit.cover,
                           cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                           errorBuilder: (context, error, stackTrace) => Container(
@@ -288,7 +293,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (widget.tour.isPopular)
+                            if (t.isPopular)
                               Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -314,7 +319,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                 ),
                               ),
                             Text(
-                              widget.tour.name,
+                              t.name,
                               style: const TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
@@ -334,19 +339,19 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             _buildOverviewItem(
                               Icons.access_time_filled_rounded,
                               'Thời gian',
-                              widget.tour.duration,
+                              t.duration,
                             ),
                             _buildOverviewDivider(),
                             _buildOverviewItem(
                               Icons.flight_takeoff_rounded,
                               'Khởi hành',
-                              widget.tour.departure,
+                              t.departure,
                             ),
                             _buildOverviewDivider(),
                             _buildOverviewItem(
                               Icons.map_rounded,
                               'Điểm đến',
-                              '${widget.tour.destinations.length} Tỉnh thành',
+                              '${t.destinations.length} Tỉnh thành',
                             ),
                           ],
                         ),
@@ -510,7 +515,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            widget.tour.description,
+                            t.description,
                             style: TextStyle(
                               color: Colors.grey.shade700,
                               height: 1.6,
@@ -520,7 +525,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           const SizedBox(height: 24),
 
                           // D. Guide Switch (If tour package includes dynamic guides)
-                          if (widget.tour.includesGuide) ...[
+                          if (t.includesGuide) ...[
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -549,7 +554,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '+ ${formatVND(widget.tour.guideFee)} / Khách',
+                                          '+ ${formatVND(t.guideFee)} / Khách',
                                           style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.w600, fontSize: 12),
                                         ),
                                       ],
@@ -591,9 +596,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                               crossAxisSpacing: 10,
                               mainAxisSpacing: 10,
                             ),
-                            itemCount: widget.tour.includes.length,
+                            itemCount: t.includes.length,
                             itemBuilder: (context, index) {
-                              final item = widget.tour.includes[index];
+                              final item = t.includes[index];
                               return Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
@@ -817,14 +822,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(24),
-                              child: FlutterMap(
-                                options: MapOptions(
-                                  initialCenter: center,
-                                  initialZoom: coordinates.length > 1 ? 9 : 12,
-                                  interactionOptions: const InteractionOptions(
-                                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                              child: RepaintBoundary(
+                                child: FlutterMap(
+                                  options: MapOptions(
+                                    initialCenter: center,
+                                    initialZoom: coordinates.length > 1 ? 9 : 12,
+                                    interactionOptions: const InteractionOptions(
+                                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                                    ),
                                   ),
-                                ),
                                 children: [
                                   TileLayer(
                                     urlTemplate: kOpenStreetMapTileUrl,
@@ -881,12 +887,20 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                   ),
                                 ],
                               ),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 28),
+
+                          // I. Reviews Section
                           ReviewSection(
                             targetType: 'tour',
-                            targetId: widget.tour.id,
+                            targetId: t.id,
+                            fallbackRating: 0.0,
+                            fallbackCount: 0,
+                            onReviewSubmitted: () {
+                              ref.invalidate(bootstrapProvider);
+                            },
                           ),
                           const SizedBox(height: 120), // Bottom padding for sheet
                         ],
@@ -929,12 +943,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                         children: [
                           Row(
                             children: [
-                              Text(
-                                formatVND(widget.tour.price),
-                                style: const TextStyle(
-                                  decoration: TextDecoration.lineThrough,
-                                  color: Colors.grey,
-                                  fontSize: 14,
+                              Flexible(
+                                child: Text(
+                                  formatVND(widget.tour.price),
+                                  style: const TextStyle(
+                                    decoration: TextDecoration.lineThrough,
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -945,12 +962,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            formatVND(_totalPrice),
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlue,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              formatVND(_totalPrice),
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryBlue,
+                              ),
                             ),
                           ),
                         ],
@@ -1035,7 +1055,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
     );
   }
 
-  void _bookTour() async {
+  void _bookTour() {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
       Navigator.pushNamed(context, '/login');
@@ -1045,26 +1065,23 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
     final String formattedDate = DateFormat('dd/MM/yyyy').format(_selectedDate);
     final String guestsLabel = '$_guestsCount Người';
 
-    try {
-      final success = await ref.read(tripsProvider.notifier).bookTour(
-            tourId: widget.tour.id,
-            date: formattedDate,
-            guests: guestsLabel,
-            totalPrice: _totalPrice,
-          );
-
-      if (mounted) {
-        if (success) {
-          showSuccessSnackBar(context, 'Đặt tour thành công!');
-          Navigator.pop(context);
-        } else {
-          showErrorSnackBar(context, 'Đặt tour thất bại.');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        showErrorSnackBar(context, 'Lỗi đặt tour: $e');
-      }
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PaymentMethodScreen(
+          totalPrice: _totalPrice,
+          onPaymentSuccess: () async {
+            if (!mounted) return null;
+            final success = await ref.read(tripsProvider.notifier).bookTour(
+                  tourId: widget.tour.id,
+                  date: formattedDate,
+                  guests: guestsLabel,
+                  totalPrice: _totalPrice,
+                );
+            return success;
+          },
+        ),
+      ),
+    );
   }
 }

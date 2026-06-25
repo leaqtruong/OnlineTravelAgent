@@ -10,6 +10,7 @@ import '../../utils/app_utils.dart';
 import '../../utils/dialog_utils.dart';
 import '../checkout/payment_method_screen.dart';
 import '../../widgets/review_section.dart';
+import '../../providers/app_state_provider.dart';
 
 class HotelDetailScreen extends ConsumerStatefulWidget {
   final Hotel hotel;
@@ -98,6 +99,9 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bootstrap = ref.watch(bootstrapProvider).value;
+    final h = bootstrap?.hotels.firstWhere((e) => e.id == widget.hotel.id, orElse: () => widget.hotel) ?? widget.hotel;
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
@@ -108,9 +112,9 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
               flexibleSpace: FlexibleSpaceBar(
                 background: Hero(
                   // Use hotel id in hero tag to avoid collisions when names are identical
-                  tag: 'hotel_image_${widget.hotel.id}',
+                  tag: 'hotel_image_${h.id}',
                   child: Image.asset(
-                    widget.hotel.imagePath,
+                    h.imagePath,
                     fit: BoxFit.cover,
                     cacheWidth: (MediaQuery.sizeOf(context).width * MediaQuery.devicePixelRatioOf(context)).round(),
                     errorBuilder: (context, error, stackTrace) => Container(
@@ -146,7 +150,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          widget.hotel.name,
+                          h.name,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -158,7 +162,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                           const Icon(Icons.star, color: Colors.amber, size: 20),
                           const SizedBox(width: 4),
                           Text(
-                            widget.hotel.rating,
+                            h.rating,
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -175,7 +179,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          widget.hotel.address,
+                          h.address,
                           style: const TextStyle(color: Colors.grey),
                         ),
                       ),
@@ -190,7 +194,7 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: widget.hotel.amenities.map((amenity) {
+                    children: h.amenities.map((amenity) {
                       return Chip(
                         label: Text(amenity, style: const TextStyle(fontSize: 12)),
                         backgroundColor: AppTheme.backgroundGray,
@@ -205,13 +209,18 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    widget.hotel.description,
+                    h.description,
                     style: const TextStyle(color: Colors.grey, height: 1.5),
                   ),
                   const SizedBox(height: 24),
                   ReviewSection(
                     targetType: 'hotel',
-                    targetId: widget.hotel.id,
+                    targetId: h.id,
+                    fallbackRating: double.tryParse(h.rating) ?? 0.0,
+                    fallbackCount: 0,
+                    onReviewSubmitted: () {
+                      ref.invalidate(bootstrapProvider);
+                    },
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -244,10 +253,10 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
-                  if (widget.hotel.rooms.isEmpty)
+                  if (h.rooms.isEmpty)
                     const Text('Hiện không có phòng nào trống.')
                   else
-                    ...widget.hotel.rooms.map((room) => _buildRoomCard(room)),
+                    ...h.rooms.map((room) => _buildRoomCard(room)),
                   const SizedBox(height: 80),
                 ],
               ),
@@ -271,25 +280,27 @@ class _HotelDetailScreenState extends ConsumerState<HotelDetailScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Tổng cộng',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  Text(
-                    _selectedRoom == null
-                        ? 'Chưa chọn phòng'
-                        : formatVND(_selectedRoom!.price),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlue,
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Tổng cộng',
+                      style: TextStyle(color: Colors.grey),
                     ),
-                  ),
-                ],
+                    Text(
+                      _selectedRoom == null
+                          ? 'Chưa chọn phòng'
+                          : formatVND(_selectedRoom!.price),
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               ElevatedButton(
                 onPressed: _selectedRoom == null ? null : _bookHotel,

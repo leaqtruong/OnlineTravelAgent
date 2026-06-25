@@ -74,7 +74,6 @@ class _FoodScreenState extends ConsumerState<FoodScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
           onPressed: () {
-            ref.read(searchQueryProvider.notifier).update('');
             Navigator.pop(context);
           },
         ),

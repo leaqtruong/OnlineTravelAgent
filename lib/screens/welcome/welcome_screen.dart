@@ -182,6 +182,7 @@ class _VietnamTextAnimationState extends State<_VietnamTextAnimation> {
   late final List<Path> _vietnamPaths;
   late final List<Paint> _vietnamPaints;
   bool _showFill = false;
+  Timer? _vietnamTextTimer;
 
   @override
   void initState() {
@@ -199,7 +200,7 @@ class _VietnamTextAnimationState extends State<_VietnamTextAnimation> {
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round,
     ];
-    Future.delayed(const Duration(seconds: 3), () {
+    _vietnamTextTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
           _showFill = true;
@@ -209,35 +210,44 @@ class _VietnamTextAnimationState extends State<_VietnamTextAnimation> {
   }
 
   @override
+  void dispose() {
+    _vietnamTextTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 270, // width for the SVG path bounding box
-      height: 100, // height for the SVG path
-      child: Transform.translate(
-        offset: const Offset(-8, -10),
-        child: Stack(
-          children: [
-            AnimatedDrawing.paths(
-              _vietnamPaths,
-              paints: _vietnamPaints,
-              run: true,
-              duration: const Duration(seconds: 3),
-              scaleToViewport: false,
-            ),
-            AnimatedOpacity(
-              opacity: _showFill ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 500),
-              child: CustomPaint(
-                size: const Size(270, 100),
-                painter: _PathFillPainter(
-                  _vietnamPaths,
-                  Paint()
-                    ..style = PaintingStyle.fill
-                    ..color = Colors.white,
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: SizedBox(
+        width: 270, // width for the SVG path bounding box
+        height: 100, // height for the SVG path
+        child: Transform.translate(
+          offset: const Offset(-8, -10),
+          child: Stack(
+            children: [
+              AnimatedDrawing.paths(
+                _vietnamPaths,
+                paints: _vietnamPaints,
+                run: true,
+                duration: const Duration(seconds: 3),
+                scaleToViewport: false,
+              ),
+              AnimatedOpacity(
+                opacity: _showFill ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                child: CustomPaint(
+                  size: const Size(270, 100),
+                  painter: _PathFillPainter(
+                    _vietnamPaths,
+                    Paint()
+                      ..style = PaintingStyle.fill
+                      ..color = Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

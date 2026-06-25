@@ -316,15 +316,16 @@ class PlaceTripDetailScreen extends ConsumerWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter:
-                LatLng(destination.latitude, destination.longitude),
-            initialZoom: 13,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        child: RepaintBoundary(
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter:
+                  LatLng(destination.latitude, destination.longitude),
+              initialZoom: 13,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
             ),
-          ),
           children: [
             TileLayer(
               urlTemplate: kOpenStreetMapTileUrl,
@@ -343,6 +344,7 @@ class PlaceTripDetailScreen extends ConsumerWidget {
               ],
             ),
           ],
+          ),
         ),
       ),
     );

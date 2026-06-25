@@ -29,12 +29,12 @@ model Destination {
   location      String
   latitude      Float?
   longitude     Float?
-  rating        String
+  rating        String  @default("0.0")
   duration      String
   imagePath     String  @map("image_path")
   description   String
   price         String
-  reviewsCount  String  @map("reviews_count")
+  reviewsCount  String  @default("0") @map("reviews_count")
   category      String
   isFavorite    Boolean @default(false) @map("is_favorite")
   isRecommended Boolean @default(false) @map("is_recommended")
@@ -116,7 +116,7 @@ model Hotel {
   location    String
   latitude    Float?
   longitude   Float?
-  rating      String
+  rating      String  @default("0.0")
   imagePath   String  @map("image_path")
   description String
   priceFrom   Float   @map("price_from")

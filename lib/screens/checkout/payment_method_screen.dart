@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/api_provider.dart';
+import '../../utils/api_exception.dart';
 import '../../utils/app_utils.dart';
 import 'vnpay_payment_screen.dart';
 
@@ -277,19 +277,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
     );
   }
 
-  Widget _buildGenericCardLogo(String name) {
-    return Container(
-      width: 44,
-      height: 28,
-      decoration: BoxDecoration(
-        color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppTheme.primaryBlue.withValues(alpha: 0.2)),
-      ),
-      alignment: Alignment.center,
-      child: const Icon(Icons.credit_card, color: AppTheme.primaryBlue, size: 16),
-    );
-  }
+
 
   // --- ACTIONS ---
 
@@ -313,11 +301,39 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
           const SnackBar(content: Text('Thanh toán thất bại, vui lòng thử lại')),
         );
       }
+    } on AuthException catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } on ApiException catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } on NetworkException catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
+    } on TimeoutApiException catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message)),
+        );
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Lỗi thanh toán: $e')),
+          SnackBar(content: Text(getErrorMessage(e))),
         );
       }
     }
@@ -467,7 +483,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop();
                             Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                           child: const Text('Về Trang Chủ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
@@ -484,7 +499,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                             elevation: 0,
                           ),
                           onPressed: () {
-                            Navigator.of(context).pop();
                             Navigator.of(context).popUntil((route) => route.isFirst);
                             Navigator.pushNamed(context, '/main');
                           },

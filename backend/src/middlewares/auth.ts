@@ -1,7 +1,10 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret";
+const JWT_SECRET = process.env.JWT_SECRET as string;
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is not set. Authentication will fail.');
+}
 
 // Extract JWT Token
 const extractToken = (req: express.Request): string | null => {
@@ -74,7 +77,7 @@ export const adminAuth = (req: express.Request, res: express.Response, next: exp
     const user = auth[0];
     const pass = auth[1];
     
-    if (user === 'admin' && pass === (process.env.ADMIN_PASSWORD || 'admin123')) {
+    if (user === 'admin' && pass === process.env.ADMIN_PASSWORD) {
       next();
     } else {
       res.status(401).send('Unauthorized');

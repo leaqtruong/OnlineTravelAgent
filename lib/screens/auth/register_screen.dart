@@ -261,7 +261,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
           ),
           // Back button
           Positioned(
-            top: 50,
+            top: MediaQuery.of(context).padding.top + 10,
             left: 20,
             child: GestureDetector(
               onTap: () => Navigator.pop(context),

@@ -38,17 +38,20 @@ class RecommendedTourCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.asset(
-                      tour.imagePath,
-                      height: 96,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      cacheWidth: cacheWidth,
-                      filterQuality: FilterQuality.low,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                    child: Hero(
+                      tag: 'tour_image_${tour.name}',
+                      child: Image.asset(
+                        tour.imagePath,
                         height: 96,
-                        color: Colors.grey[200],
-                        child: const Icon(Icons.image, color: Colors.grey),
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        cacheWidth: cacheWidth,
+                        filterQuality: FilterQuality.low,
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          height: 96,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.image, color: Colors.grey),
+                        ),
                       ),
                     ),
                   ),

@@ -10,6 +10,7 @@ import 'payment_method_screen.dart';
 import 'widgets/summary_card.dart';
 import 'widgets/transport_selection.dart';
 import 'widgets/guide_option.dart';
+import '../../utils/api_exception.dart';
 import '../../utils/app_utils.dart';
 import '../../providers/api_provider.dart';
 
@@ -36,6 +37,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final TextEditingController _promoController = TextEditingController();
   double _promoDiscount = 0.0;
   String? _promoError;
+  String? _promoCode;
+  double? _promoPercentage;
+  double? _promoFixedAmount;
+
+  void _recalcPromo() {
+    if (_promoCode == null) return;
+    if (_promoPercentage != null) {
+      _promoDiscount = (_subtotal + _tax) * _promoPercentage! / 100;
+    } else if (_promoFixedAmount != null) {
+      _promoDiscount = _promoFixedAmount!;
+    }
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (_promoCode != null) _recalcPromo();
+  }
 
   final Map<String, int> _transportPrices = {
     'Tự túc': 0,
@@ -86,18 +105,24 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     try {
       final api = ref.read(apiProvider);
       final result = await api.checkPromoCode(code);
+      if (!mounted) return;
       setState(() {
-        if (result['discountPercentage'] != null) {
-          _promoDiscount = (_subtotal + _tax) * (result['discountPercentage'] / 100);
-        } else if (result['discountAmount'] != null) {
-          _promoDiscount = result['discountAmount'].toDouble();
-        }
+        _promoCode = code;
+        _promoPercentage = result['discountPercentage']?.toDouble();
+        _promoFixedAmount = result['discountAmount']?.toDouble();
+        _recalcPromo();
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Áp dụng mã thành công!')));
       }
+    } on ApiException catch (e) {
+      if (mounted) setState(() { _promoError = e.message; });
+    } on NetworkException catch (e) {
+      if (mounted) setState(() { _promoError = e.message; });
+    } on TimeoutApiException catch (e) {
+      if (mounted) setState(() { _promoError = e.message; });
     } catch (e) {
-      setState(() { _promoError = 'Mã không hợp lệ hoặc đã hết hạn'; });
+      if (mounted) setState(() { _promoError = getErrorMessage(e); });
     }
   }
 
@@ -237,6 +262,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               height: 80,
               fit: BoxFit.cover,
               cacheWidth: (80 * MediaQuery.devicePixelRatioOf(context)).round(),
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 80,
+                height: 80,
+                color: Colors.grey[200],
+                child: const Icon(Icons.image, color: Colors.grey),
+              ),
             ),
           ),
           const SizedBox(width: 16),

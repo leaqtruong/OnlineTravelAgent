@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../utils/app_utils.dart';
 
 class TransportSelection extends StatelessWidget {
   final String selectedTransport;
@@ -52,7 +53,7 @@ class TransportSelection extends StatelessWidget {
               ),
             ),
             if (price > 0)
-              Text('+\$$price/người', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
+              Text('+${formatVND(price * 1000.0)}/người', style: const TextStyle(color: AppTheme.primaryBlue, fontWeight: FontWeight.bold)),
           ],
         ),
       ),

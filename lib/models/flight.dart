@@ -30,7 +30,7 @@ class Flight {
       arrival: json['arrival']?.toString() ?? '',
       departureTime: json['departureTime']?.toString() ?? '',
       arrivalTime: json['arrivalTime']?.toString() ?? '',
-      price: json['price'] as int? ?? 0,
+      price: (json['price'] as num?)?.toInt() ?? 0,
       duration: json['duration']?.toString() ?? '',
     );
   }

@@ -76,7 +76,7 @@ export const partnerController = {
 
   updateHotel: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const hotel = await prisma.hotel.findFirst({ where: { id, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -89,7 +89,7 @@ export const partnerController = {
 
   deleteHotel: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const hotel = await prisma.hotel.findFirst({ where: { id, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -99,7 +99,7 @@ export const partnerController = {
 
   updateTour: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tour = await prisma.tourPackage.findFirst({ where: { id, partnerId } });
     if (!tour) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -112,7 +112,7 @@ export const partnerController = {
 
   deleteTour: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const tour = await prisma.tourPackage.findFirst({ where: { id, partnerId } });
     if (!tour) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -122,7 +122,7 @@ export const partnerController = {
 
   getRooms: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { hotelId } = req.params;
+    const hotelId = req.params.hotelId as string;
     const hotel = await prisma.hotel.findFirst({ where: { id: hotelId, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     const rooms = await prisma.room.findMany({ where: { hotelId } });
@@ -131,7 +131,7 @@ export const partnerController = {
 
   createRoom: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { hotelId } = req.params;
+    const hotelId = req.params.hotelId as string;
     const hotel = await prisma.hotel.findFirst({ where: { id: hotelId, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -153,7 +153,8 @@ export const partnerController = {
 
   updateRoom: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { hotelId, roomId } = req.params;
+    const hotelId = req.params.hotelId as string;
+    const roomId = req.params.roomId as string;
     const hotel = await prisma.hotel.findFirst({ where: { id: hotelId, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     
@@ -167,7 +168,8 @@ export const partnerController = {
 
   deleteRoom: asyncHandler(async (req: Request, res: Response) => {
     const partnerId = (req as any).userId;
-    const { hotelId, roomId } = req.params;
+    const hotelId = req.params.hotelId as string;
+    const roomId = req.params.roomId as string;
     const hotel = await prisma.hotel.findFirst({ where: { id: hotelId, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
     

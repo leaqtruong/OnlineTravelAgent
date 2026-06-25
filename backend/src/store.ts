@@ -39,6 +39,85 @@ function orderCategoryNames(categories: Array<{ name: string }>): string[] {
   ];
 }
 
+function parseDateStr(dateStr: string) {
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+  }
+  return new Date();
+}
+
+function processTripStatus<T extends { status: string; isUpcoming: boolean; date: string }>(trip: T): T {
+  if (trip.status === "Chờ thanh toán") return trip;
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  try {
+    let isOngoing = false;
+    let isHistory = false;
+
+    if (trip.date.includes(" - ")) {
+      const [startStr, endStr] = trip.date.split(" - ");
+      const start = parseDateStr(startStr.trim());
+      const end = parseDateStr(endStr.trim());
+      
+      if (today >= start && today <= end) isOngoing = true;
+      if (today > end) isHistory = true;
+    } else {
+      const date = parseDateStr(trip.date.trim());
+      if (today.getTime() === date.getTime()) isOngoing = true;
+      if (today > date) isHistory = true;
+    }
+
+    if (isOngoing) {
+      trip.status = "Đang diễn ra";
+      trip.isUpcoming = false;
+    } else if (isHistory) {
+      trip.status = "Đã hoàn thành";
+      trip.isUpcoming = false;
+    } else {
+      trip.isUpcoming = true;
+      if (trip.status === "Đang diễn ra" || trip.status === "Đã hoàn thành") {
+        trip.status = "Sắp tới";
+      }
+    }
+  } catch (e) {
+    // ignore
+  }
+  return trip;
+}
+
+async function attachRealReviews<T extends { id: string }>(items: T[], targetType: string) {
+  if (!items.length) return items;
+
+  const ids = items.map((i) => i.id);
+  const stats = await prisma.review.groupBy({
+    by: ['targetId'],
+    where: { targetType, targetId: { in: ids } },
+    _avg: { rating: true },
+    _count: { id: true },
+  });
+
+  return items.map((item) => {
+    const stat = stats.find((s) => s.targetId === item.id);
+    if (stat && stat._count.id > 0) {
+      const count = stat._count.id;
+      const avg = stat._avg.rating || 0;
+      return {
+        ...item,
+        rating: (Math.round(avg * 10) / 10).toString(),
+        reviewsCount: count > 999 ? (count / 1000).toFixed(1) + 'k' : count.toString(),
+      };
+    }
+    return {
+      ...item,
+      rating: "0.0",
+      reviewsCount: "0",
+    };
+  });
+}
+
 export const store = {
   async getBootstrap(userId?: string) {
     const [categories, destinations, trips, documents, hotels, tourPackages] = await Promise.all([
@@ -54,33 +133,43 @@ export const store = {
       ...destination,
       category: normalizeCategoryName(destination.category),
     }));
-    const recommended = normalizedDestinations.filter((d) => d.isRecommended);
+    const [realDestinations, realHotels, realTours] = await Promise.all([
+      attachRealReviews(normalizedDestinations, "destination"),
+      attachRealReviews(hotels, "hotel"),
+      attachRealReviews(tourPackages, "tour")
+    ]);
+
+    const realRecommended = realDestinations.filter((d) => d.isRecommended);
 
     return {
       categories: orderCategoryNames(categories),
-      destinations: normalizedDestinations,
-      recommended,
-      trips,
+      destinations: realDestinations,
+      recommended: realRecommended,
+      trips: trips.map(processTripStatus),
       documents,
-      hotels,
-      tourPackages,
+      hotels: realHotels,
+      tourPackages: realTours,
     };
   },
 
   async getHotels(location?: string) {
     const where: Prisma.HotelWhereInput = location ? { location: { contains: location, mode: "insensitive" } } : {};
-    return prisma.hotel.findMany({ where });
+    const hotels = await prisma.hotel.findMany({ where });
+    return attachRealReviews(hotels, "hotel");
   },
 
   async getHotelById(id: string) {
-    return prisma.hotel.findUnique({
+    const hotel = await prisma.hotel.findUnique({
       where: { id },
       include: { rooms: true },
     });
+    if (!hotel) return null;
+    const items = await attachRealReviews([hotel], "hotel");
+    return items[0];
   },
 
   async searchHotels(query: string) {
-    return prisma.hotel.findMany({
+    const hotels = await prisma.hotel.findMany({
       where: {
         OR: [
           { name: { contains: query, mode: "insensitive" } },
@@ -88,6 +177,7 @@ export const store = {
         ],
       },
     });
+    return attachRealReviews(hotels, "hotel");
   },
 
   async bookHotel(userId: string | undefined, roomId: string, checkIn: string, checkOut: string, guests: string) {
@@ -115,11 +205,15 @@ export const store = {
   },
 
   async getTours() {
-    return prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } });
+    const tours = await prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } });
+    return attachRealReviews(tours, "tour");
   },
 
   async getTourById(id: string) {
-    return prisma.tourPackage.findUnique({ where: { id } });
+    const tour = await prisma.tourPackage.findUnique({ where: { id } });
+    if (!tour) return null;
+    const items = await attachRealReviews([tour], "tour");
+    return items[0];
   },
 
   async bookTour(userId: string | undefined, tourId: string, date: string, guests: string, totalPrice?: number) {
@@ -178,7 +272,8 @@ export const store = {
   },
 
   async getFavorites() {
-    return prisma.destination.findMany({ where: { isFavorite: true } });
+    const favs = await prisma.destination.findMany({ where: { isFavorite: true } });
+    return attachRealReviews(favs, "destination");
   },
 
   async updateFavorite(destinationId: string, isFavorite?: boolean) {
@@ -268,7 +363,8 @@ export const store = {
     const where: Prisma.TripWhereInput = userId ? { userId } : {};
     if (type === "upcoming") where.isUpcoming = true;
     if (type === "past") where.isUpcoming = false;
-    return prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
+    const trips = await prisma.trip.findMany({ where, orderBy: { createdAt: "desc" } });
+    return trips.map(processTripStatus);
   },
 
   async getDocuments() {
@@ -306,8 +402,11 @@ export const store = {
   },
 
   async createReview(userId: string | undefined, targetType: string, targetId: string, rating: number, comment: string) {
+    if (!userId) {
+      throw new Error("Authentication required to create a review");
+    }
     const review = await prisma.review.create({
-      data: { userId: userId || "", targetType, targetId, rating, comment },
+      data: { userId, targetType, targetId, rating, comment },
       include: { user: { select: { id: true, name: true } } },
     });
     return review;

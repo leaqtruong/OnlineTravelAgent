@@ -55,21 +55,6 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
     return Colors.grey.withValues(alpha: 0.1);
   }
 
-  LinearGradient _getClassificationGradient() {
-    if (widget.trip.isCustom) {
-      return const LinearGradient(
-        colors: [Color(0xFFFF9800), Color(0xFFFF5722)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      );
-    }
-    return const LinearGradient(
-      colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final tourPackage = _findTourPackage(ref);
@@ -199,29 +184,7 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
                       ),
                       Row(
                         children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            margin: const EdgeInsets.only(right: 8),
-                            decoration: BoxDecoration(
-                              gradient: _getClassificationGradient(),
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              widget.trip.isCustom ? 'Tự thiết kế' : 'Gói Tour',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+
                           _floatingButton(
                             icon: Icons.share_outlined,
                             onTap: () {
@@ -468,14 +431,15 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: centerPoint,
-            initialZoom: points.length >= 2 ? 8 : 12,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+        child: RepaintBoundary(
+          child: FlutterMap(
+            options: MapOptions(
+              initialCenter: centerPoint,
+              initialZoom: points.length >= 2 ? 8 : 12,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
             ),
-          ),
           children: [
             TileLayer(
               urlTemplate: kOpenStreetMapTileUrl,
@@ -493,6 +457,7 @@ class _TourTripDetailScreenState extends ConsumerState<TourTripDetailScreen> {
               ),
             MarkerLayer(markers: markers),
           ],
+          ),
         ),
       ),
     );

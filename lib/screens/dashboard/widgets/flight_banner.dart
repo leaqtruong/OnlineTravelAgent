@@ -89,7 +89,7 @@ class FlightPageRoute extends PageRouteBuilder {
   FlightPageRoute({required this.page})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 2500), 
+          transitionDuration: const Duration(milliseconds: 3500), 
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             
             if (animation.status == AnimationStatus.reverse) {
@@ -163,9 +163,9 @@ class _AirplaneWithTrails extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.white.withValues(alpha: 0.85),
-              Colors.white.withValues(alpha: 0.4),
-              Colors.white.withValues(alpha: 0.0),
+              Colors.grey.withValues(alpha: 0.85),
+              Colors.grey.withValues(alpha: 0.4),
+              Colors.grey.withValues(alpha: 0.0),
             ],
             stops: const [0.0, 0.3, 1.0],
           ),
@@ -183,9 +183,9 @@ class _AirplaneWithTrails extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          _buildSubtleTrail(370, 650, 60, 1200), // Đuôi máy bay to hơn
-          _buildSubtleTrail(95, 480, 10, 600),   // Cánh trái to hơn
-          _buildSubtleTrail(695, 480, 10, 600),  // Cánh phải to hơn
+          _buildSubtleTrail(315, 650, 150, 300), // Đuôi máy bay to hơn
+          _buildSubtleTrail(88, 480, 24, 150),   // Cánh trái to hơn
+          _buildSubtleTrail(688, 480, 24, 150),  // Cánh phải to hơn
           Icon(
             Icons.flight,
             size: planeSize,

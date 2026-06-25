@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_constants.dart';
 import '../models/trip.dart';
+import '../utils/api_exception.dart';
 import 'app_state_provider.dart';
 import 'api_provider.dart';
 
@@ -16,7 +17,9 @@ class TripNotifier extends Notifier<List<Trip>> {
   }
 
   Future<String?> bookTrip({String? destinationId, String? date, String? guests, double? totalPrice}) async {
-    if (destinationId == null) return null;
+    if (destinationId == null) {
+      throw const ValidationException(message: 'Destination ID không được để trống');
+    }
     try {
       final trip = await ref.read(apiProvider).bookTrip(
         destinationId: destinationId,
@@ -26,8 +29,10 @@ class TripNotifier extends Notifier<List<Trip>> {
       );
       addTrip(trip);
       return trip.id;
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(statusCode: 500, message: getErrorMessage(e));
     }
   }
 
@@ -38,8 +43,10 @@ class TripNotifier extends Notifier<List<Trip>> {
       );
       addTrip(trip);
       return trip.id;
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(statusCode: 500, message: getErrorMessage(e));
     }
   }
 
@@ -50,8 +57,10 @@ class TripNotifier extends Notifier<List<Trip>> {
       );
       addTrip(trip);
       return trip.id;
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(statusCode: 500, message: getErrorMessage(e));
     }
   }
 
@@ -62,8 +71,10 @@ class TripNotifier extends Notifier<List<Trip>> {
       );
       addTrip(trip);
       return trip.id;
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(statusCode: 500, message: getErrorMessage(e));
     }
   }
 
@@ -80,8 +91,10 @@ class TripNotifier extends Notifier<List<Trip>> {
       );
       addTrip(trip);
       return trip.id;
-    } catch (_) {
-      return null;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(statusCode: 500, message: getErrorMessage(e));
     }
   }
 }

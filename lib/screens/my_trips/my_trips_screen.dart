@@ -49,8 +49,8 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
           onRefresh: _onRefresh,
           child: Consumer(
           builder: (context, ref, child) {
-            final authState = ref.watch(authProvider);
-            if (!authState.isLoggedIn) {
+            final isLoggedIn = ref.watch(authProvider.select((state) => state.isLoggedIn));
+            if (!isLoggedIn) {
               return ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: const [

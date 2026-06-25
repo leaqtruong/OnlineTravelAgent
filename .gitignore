@@ -34,3 +34,8 @@
 
 # Temp SVG
 /temp_svg/node_modules/
+
+# AI Agents workspace
+.agents/
+.agent/
+docs/

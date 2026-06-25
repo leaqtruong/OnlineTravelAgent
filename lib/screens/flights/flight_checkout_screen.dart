@@ -433,7 +433,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
               ),
             ),
             if (price > 0)
-              Text('+\$$price', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.primaryBlue)),
+              Text('+${formatVND(price * 1000.0)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppTheme.primaryBlue)),
           ],
         ),
       ),
@@ -458,23 +458,25 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Tổng thanh toán',
-                style: TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-              Text(
-                formatVND(_totalPrice),
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tổng thanh toán',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
-              ),
-            ],
+                Text(
+                  formatVND(_totalPrice),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
           ElevatedButton(
             onPressed: _isProcessing ? null : _navigateToPayment,

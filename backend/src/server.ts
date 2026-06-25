@@ -1,12 +1,10 @@
 import cors from "cors";
 import express from "express";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import prisma from "./config/prisma.js";
 import { routes } from "./routes/index.js";
-import { adminAuth } from "./middlewares/auth.js";
 import { Request, Response, NextFunction } from "express";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -44,16 +42,6 @@ app.use(cors({
 // Request body size limit
 app.use(express.json({ limit: "1mb" }));
 
-// Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many requests, please try again later" },
-});
-app.use("/api", apiLimiter);
-
 // Redirect root to /admin
 app.get("/", (req, res) => {
   res.redirect("/admin");
@@ -79,14 +67,32 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-const server = app.listen(port, () => {
+const server = app.listen(port, async () => {
   console.log(`\n==============================================`);
   console.log(`🚀 Backend running at http://localhost:${port}`);
   console.log(`==============================================`);
   console.log(`👉 Admin Portal:   http://localhost:${port}/admin`);
   console.log(`👉 Partner Portal: http://localhost:${port}/partner`);
   console.log(`👉 Prisma Studio:  http://localhost:5555`);
-  console.log(`==============================================\n`);
+  console.log(`==============================================`);
+
+  try {
+    const admin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    const partner = await prisma.user.findFirst({ where: { role: 'PARTNER' } });
+    
+    if (admin || partner) {
+      console.log(`[👤 System Users Info]`);
+      if (admin) {
+        console.log(`👑 ADMIN:   ${admin.email} / password123`);
+      }
+      if (partner) {
+        console.log(`🤝 PARTNER: ${partner.email} / password123`);
+      }
+      console.log(`==============================================\n`);
+    }
+  } catch (e) {
+    // Ignore db connection issues at startup if they occur
+  }
 });
 
 // Graceful shutdown

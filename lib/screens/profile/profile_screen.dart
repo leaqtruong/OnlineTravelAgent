@@ -307,7 +307,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final documents = ref.watch(documentsProvider);
-    final authState = ref.watch(authProvider);
+    final isLoggedIn = ref.watch(authProvider.select((state) => state.isLoggedIn));
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundGray,
@@ -346,14 +346,14 @@ class ProfileScreen extends ConsumerWidget {
                           ),
                           child: IconButton(
                             onPressed: () {
-                              if (authState.isLoggedIn) {
+                              if (isLoggedIn) {
                                 ref.read(authProvider.notifier).logout();
                               } else {
                                 Navigator.pushNamed(context, '/login');
                               }
                             },
                             icon: Icon(
-                              authState.isLoggedIn ? Icons.logout_rounded : Icons.login_rounded,
+                              isLoggedIn ? Icons.logout_rounded : Icons.login_rounded,
                               color: Colors.white,
                               size: 22,
                             ),
@@ -376,7 +376,7 @@ class ProfileScreen extends ConsumerWidget {
                               width: 2,
                             ),
                           ),
-                          child: authState.isLoggedIn
+                          child: isLoggedIn
                               ? Center(
                                   child: Text(
                                     _getInitials(profile.name),
@@ -399,7 +399,7 @@ class ProfileScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                !authState.isLoggedIn
+                                !isLoggedIn
                                     ? "Chưa đăng nhập"
                                     : (profile.name.isNotEmpty ? profile.name : "Người dùng"),
                                 style: const TextStyle(
@@ -410,7 +410,7 @@ class ProfileScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                !authState.isLoggedIn
+                                !isLoggedIn
                                     ? "Đăng nhập để trải nghiệm đầy đủ"
                                     : (profile.email.isNotEmpty ? profile.email : "Chưa cập nhật email"),
                                 style: TextStyle(
@@ -423,7 +423,7 @@ class ProfileScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        if (authState.isLoggedIn)
+                        if (isLoggedIn)
                           IconButton(
                             onPressed: () => _showEditProfileSheet(context, ref),
                             icon: Container(
@@ -452,7 +452,7 @@ class ProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
 
                     // Quick Actions
-                    if (authState.isLoggedIn) ...[
+                    if (isLoggedIn) ...[
                       Row(
                         children: [
                           _buildQuickAction(
@@ -478,7 +478,7 @@ class ProfileScreen extends ConsumerWidget {
                     ],
 
                     // Special Request Banner
-                    if (authState.isLoggedIn) ...[
+                    if (isLoggedIn) ...[
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
@@ -570,7 +570,7 @@ class ProfileScreen extends ConsumerWidget {
                           "Giấy tờ của tôi",
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        if (authState.isLoggedIn)
+                        if (isLoggedIn)
                           TextButton.icon(
                             onPressed: () => _showAddDocumentSheet(context, ref),
                             icon: const Icon(Icons.add_circle_outline, size: 18, color: AppTheme.primaryBlue),
@@ -593,7 +593,7 @@ class ProfileScreen extends ConsumerWidget {
 
             // Documents List
             SliverToBoxAdapter(
-              child: !authState.isLoggedIn
+              child: !isLoggedIn
                   ? _buildLoginPrompt(context)
                   : documents.isEmpty
                       ? _buildEmptyDocuments(context, ref)

@@ -42,6 +42,21 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     final bootstrapAsync = ref.watch(bootstrapProvider);
     final selectedDestination = ref.watch(selectedDestinationProvider);
 
+    // Lắng nghe lỗi favorite và hiển thị SnackBar
+    ref.listen<String?>(destinationErrorProvider, (previous, next) {
+      if (next != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next),
+            backgroundColor: Colors.redAccent,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        // Reset state lỗi
+        ref.read(destinationErrorProvider.notifier).setError(null);
+      }
+    });
+
     return bootstrapAsync.when(
       loading: () => const Scaffold(
         body: SafeArea(
@@ -148,39 +163,32 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
-        child: MediaQuery.removePadding(
-          context: context,
-          removeBottom: true,
-          child: Transform.translate(
-            offset: const Offset(0, 0),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: BottomNavigationBar(
-                currentIndex: _selectedIndex,
-                onTap: (index) {
-                  setState(() {
-                    _selectedIndex = index;
-                    _visitedTabs.add(index);
-                  });
-                },
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Colors.white,
-                selectedItemColor: AppTheme.primaryBlue,
-                unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
-                showSelectedLabels: true,
-                showUnselectedLabels: true,
-                iconSize: 30,
-                selectedLabelStyle: const TextStyle(fontSize: 14),
-                unselectedLabelStyle: const TextStyle(fontSize: 14),
-                elevation: 0,
-              items: List.generate(
-                _titles.length,
-                (index) => BottomNavigationBarItem(
-                  icon: Icon(_icons[index]),
-                  label: _titles[index],
-                ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: BottomNavigationBar(
+            currentIndex: _selectedIndex,
+            onTap: (index) {
+              setState(() {
+                _selectedIndex = index;
+                _visitedTabs.add(index);
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: AppTheme.primaryBlue,
+            unselectedItemColor: Colors.grey.withValues(alpha: 0.5),
+            showSelectedLabels: true,
+            showUnselectedLabels: true,
+            iconSize: 30,
+            selectedLabelStyle: const TextStyle(fontSize: 14),
+            unselectedLabelStyle: const TextStyle(fontSize: 14),
+            elevation: 0,
+            items: List.generate(
+              _titles.length,
+              (index) => BottomNavigationBarItem(
+                icon: Icon(_icons[index]),
+                label: _titles[index],
               ),
-            ),
             ),
           ),
         ),
@@ -224,12 +232,15 @@ class _SkeletonLoading extends StatelessWidget {
           ),
           const SizedBox(height: 32),
           // Categories
-          Row(
-            children: List.generate(
-              4,
-              (index) => Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Container(width: 80, height: 40, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                4,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Container(width: 80, height: 40, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16))),
+                ),
               ),
             ),
           ),
@@ -245,12 +256,15 @@ class _SkeletonLoading extends StatelessWidget {
           Container(width: 150, height: 24, color: Colors.white),
           const SizedBox(height: 16),
           // Destination Cards
-          Row(
-            children: List.generate(
-              2,
-              (index) => Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: Container(width: 200, height: 240, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(
+                2,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Container(width: 200, height: 240, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24))),
+                ),
               ),
             ),
           ),

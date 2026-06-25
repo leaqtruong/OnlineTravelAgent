@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/hotel.dart';
 import '../../models/tour_package.dart';
 import '../../models/room.dart';
+import '../../utils/api_exception.dart';
 
 class PartnerDashboardScreen extends ConsumerStatefulWidget {
   const PartnerDashboardScreen({super.key});
@@ -50,30 +51,29 @@ class _PartnerDashboardScreenState extends ConsumerState<PartnerDashboardScreen>
         api.getPartnerTours(),
         api.getPartnerStats(),
       ]);
+      if (!mounted) return;
       setState(() {
         _hotels = results[0] as List<Hotel>;
         _tours = results[1] as List<TourPackage>;
         _stats = results[2] as Map<String, dynamic>;
         _isPartner = true;
       });
+    } on ForbiddenException catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isPartner = false;
+        _errorMessage = null;
+      });
     } catch (e) {
-      if (e is ApiException) {
-        if (e.statusCode == 403) {
-          setState(() => _isPartner = false);
-        } else {
-          setState(() {
-            _isPartner = false;
-            _errorMessage = e.message;
-          });
-        }
-      } else {
-        setState(() {
-          _isPartner = false;
-          _errorMessage = 'Không thể kết nối server. Kiểm tra lại mạng.';
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _isPartner = false;
+        _errorMessage = getErrorMessage(e);
+      });
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -95,11 +95,14 @@ class _PartnerDashboardScreenState extends ConsumerState<PartnerDashboardScreen>
       }
     } catch (e) {
       if (mounted) {
-        final msg = e is ApiException ? e.message : 'Không thể kết nối server';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi khi đăng ký đối tác: ${getErrorMessage(e)}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
+      if (!mounted) return;
       setState(() => _isLoading = false);
     }
   }
@@ -123,9 +126,11 @@ class _PartnerDashboardScreenState extends ConsumerState<PartnerDashboardScreen>
       await _loadData();
     } catch (e) {
       if (mounted) {
-        final msg = e is ApiException ? e.message : 'Không thể kết nối server';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi thêm/sửa khách sạn: ${getErrorMessage(e)}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       setState(() => _isLoading = false);
@@ -154,9 +159,11 @@ class _PartnerDashboardScreenState extends ConsumerState<PartnerDashboardScreen>
       await _loadData();
     } catch (e) {
       if (mounted) {
-        final msg = e is ApiException ? e.message : 'Không thể kết nối server';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Lỗi xóa khách sạn: ${getErrorMessage(e)}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
       setState(() => _isLoading = false);

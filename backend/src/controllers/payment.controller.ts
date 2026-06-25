@@ -139,7 +139,7 @@ export const paymentController = {
       return;
     }
 
-    const status = await vnpayService.getTripPaymentStatus(tripId);
+    const status = await vnpayService.getTripPaymentStatus(tripId as string);
     if (!status) {
       res.status(404).json({ message: "Trip not found" });
       return;
