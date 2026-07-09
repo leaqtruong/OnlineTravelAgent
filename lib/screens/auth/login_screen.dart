@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/dialog_utils.dart';
@@ -231,10 +233,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                   ),
                                   GestureDetector(
                                     onTap: () {
-                                      Navigator.pushReplacementNamed(
-                                        context,
-                                        '/register',
-                                      );
+                                      context.go(AppRoutes.register);
                                     },
                                     child: Text(
                                       tr('auth.register'),

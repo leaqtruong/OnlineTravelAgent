@@ -23,7 +23,9 @@ vi.mock("../src/config/prisma.js", () => ({
 
 import { app } from "../src/app.js";
 
-const adminAuth = `Basic ${Buffer.from("admin:test-admin_password").toString("base64")}`;
+import { env } from "../src/config/env.js";
+
+const adminAuth = `Basic ${Buffer.from(`admin:${env.adminPassword}`).toString("base64")}`;
 
 describe("admin schedule security", () => {
   beforeEach(() => {

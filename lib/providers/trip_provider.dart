@@ -6,62 +6,7 @@ import '../utils/api_exception.dart';
 import 'api_provider.dart';
 import 'app_state_provider.dart';
 
-String _requiredText(String? value, String field) {
-  final normalized = value?.trim() ?? '';
-  if (normalized.isEmpty) {
-    throw ValidationException(message: '$field không được để trống');
-  }
-  return normalized;
-}
-
-String _requiredGuests(String? guests) {
-  final normalized = _requiredText(guests, 'Số khách');
-  if (!RegExp(r'[1-9]\d*').hasMatch(normalized)) {
-    throw const ValidationException(message: 'Số khách phải lớn hơn 0');
-  }
-  return normalized;
-}
-
-DateTime _requiredDate(String value, String field) {
-  final parsed = _parseDate(value);
-  if (parsed == null) {
-    throw ValidationException(message: '$field không hợp lệ');
-  }
-  return parsed;
-}
-
-DateTime? _parseDate(String value) {
-  final normalized = value.trim();
-  final vietnameseDate = RegExp(
-    r'^(\d{1,2})/(\d{1,2})/(\d{4})$',
-  ).firstMatch(normalized);
-
-  if (vietnameseDate != null) {
-    final day = int.parse(vietnameseDate.group(1)!);
-    final month = int.parse(vietnameseDate.group(2)!);
-    final year = int.parse(vietnameseDate.group(3)!);
-    final date = DateTime(year, month, day);
-    if (date.year == year && date.month == month && date.day == day) {
-      return date;
-    }
-    return null;
-  }
-
-  final isoDate = DateTime.tryParse(normalized);
-  if (isoDate == null) return null;
-  return DateTime(isoDate.year, isoDate.month, isoDate.day);
-}
-
-void _validateHotelStay({required String checkIn, required String checkOut}) {
-  final checkInDate = _requiredDate(checkIn, 'Ngày nhận phòng');
-  final checkOutDate = _requiredDate(checkOut, 'Ngày trả phòng');
-
-  if (!checkOutDate.isAfter(checkInDate)) {
-    throw const ValidationException(
-      message: 'Ngày trả phòng phải sau ngày nhận phòng',
-    );
-  }
-}
+import '../utils/trip_validator.dart';
 
 class TripNotifier extends Notifier<List<Trip>> {
   @override
@@ -80,12 +25,12 @@ class TripNotifier extends Notifier<List<Trip>> {
     String? guests,
     double? totalPrice,
   }) async {
-    final normalizedDestinationId = _requiredText(
+    final normalizedDestinationId = TripValidator.requiredText(
       destinationId,
       'Destination ID',
     );
-    final normalizedDate = _requiredText(date, 'Ngày đi');
-    final normalizedGuests = _requiredGuests(guests);
+    final normalizedDate = TripValidator.requiredText(date, 'Ngày đi');
+    final normalizedGuests = TripValidator.requiredGuests(guests);
 
     try {
       final trip = await ref
@@ -110,9 +55,9 @@ class TripNotifier extends Notifier<List<Trip>> {
     required String date,
     required String guests,
   }) async {
-    final normalizedFlightId = _requiredText(flightId, 'Flight ID');
-    final normalizedDate = _requiredText(date, 'Ngày bay');
-    final normalizedGuests = _requiredGuests(guests);
+    final normalizedFlightId = TripValidator.requiredText(flightId, 'Flight ID');
+    final normalizedDate = TripValidator.requiredText(date, 'Ngày bay');
+    final normalizedGuests = TripValidator.requiredGuests(guests);
 
     try {
       final trip = await ref
@@ -137,12 +82,12 @@ class TripNotifier extends Notifier<List<Trip>> {
     required String checkOut,
     required String guests,
   }) async {
-    final normalizedRoomId = _requiredText(roomId, 'Room ID');
-    final normalizedCheckIn = _requiredText(checkIn, 'Ngày nhận phòng');
-    final normalizedCheckOut = _requiredText(checkOut, 'Ngày trả phòng');
-    final normalizedGuests = _requiredGuests(guests);
+    final normalizedRoomId = TripValidator.requiredText(roomId, 'Room ID');
+    final normalizedCheckIn = TripValidator.requiredText(checkIn, 'Ngày nhận phòng');
+    final normalizedCheckOut = TripValidator.requiredText(checkOut, 'Ngày trả phòng');
+    final normalizedGuests = TripValidator.requiredGuests(guests);
 
-    _validateHotelStay(
+    TripValidator.validateHotelStay(
       checkIn: normalizedCheckIn,
       checkOut: normalizedCheckOut,
     );
@@ -171,9 +116,9 @@ class TripNotifier extends Notifier<List<Trip>> {
     required String guests,
     double? totalPrice,
   }) async {
-    final normalizedTourId = _requiredText(tourId, 'Tour ID');
-    final normalizedDate = _requiredText(date, 'Ngày đi');
-    final normalizedGuests = _requiredGuests(guests);
+    final normalizedTourId = TripValidator.requiredText(tourId, 'Tour ID');
+    final normalizedDate = TripValidator.requiredText(date, 'Ngày đi');
+    final normalizedGuests = TripValidator.requiredGuests(guests);
 
     try {
       final trip = await ref
@@ -204,11 +149,11 @@ class TripNotifier extends Notifier<List<Trip>> {
     String? roomId,
     double? totalPrice,
   }) async {
-    final normalizedDestination = _requiredText(destination, 'Điểm đến');
-    final normalizedLocation = _requiredText(location, 'Khu vực');
-    final normalizedDate = _requiredText(date, 'Ngày đi');
-    final normalizedGuests = _requiredGuests(guests);
-    final normalizedImagePath = _requiredText(imagePath, 'Ảnh đại diện');
+    final normalizedDestination = TripValidator.requiredText(destination, 'Điểm đến');
+    final normalizedLocation = TripValidator.requiredText(location, 'Khu vực');
+    final normalizedDate = TripValidator.requiredText(date, 'Ngày đi');
+    final normalizedGuests = TripValidator.requiredGuests(guests);
+    final normalizedImagePath = TripValidator.requiredText(imagePath, 'Ảnh đại diện');
 
     try {
       final trip = await ref

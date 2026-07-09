@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/router/app_routes.dart';
 import '../core/theme/app_theme.dart';
 
 class AppPlaceholderCard extends StatelessWidget {
@@ -153,7 +155,7 @@ class RequireLoginPlaceholder extends StatelessWidget {
       subtitle: subtitle,
       actionText: 'Đăng nhập ngay',
       actionIcon: Icons.login_rounded,
-      onActionTap: () => Navigator.pushNamed(context, '/login'),
+      onActionTap: () => context.push(AppRoutes.login),
     );
   }
 }

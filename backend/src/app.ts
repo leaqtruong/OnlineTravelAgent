@@ -9,6 +9,8 @@ import { routes } from "./routes/index.js";
 import { Request, Response, NextFunction } from "express";
 import { env } from "./config/env.js";
 import { UPLOAD_DIR, UploadValidationError } from "./middlewares/upload.js";
+import { adminAuth } from "./middlewares/auth.js";
+import { panelRateLimiter, panelStaticHeaders } from "./middlewares/panel.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -55,9 +57,18 @@ app.get("/", (req, res) => {
   res.redirect("/admin");
 });
 
-// Serve admin panel at /admin (no auth for static files, UI handles login)
-app.use("/admin", express.static(adminDir));
-app.use("/partner", express.static(partnerDir));
+// Serve admin/partner panels with rate limit and no-cache headers.
+// Optional REQUIRE_ADMIN_BASIC_AUTH=true adds HTTP Basic Auth before static assets.
+const adminStatic = [panelRateLimiter, panelStaticHeaders, express.static(adminDir)];
+const partnerStatic = [panelRateLimiter, panelStaticHeaders, express.static(partnerDir)];
+
+if (process.env.REQUIRE_ADMIN_BASIC_AUTH === "true") {
+  app.use("/admin", adminAuth, ...adminStatic);
+} else {
+  app.use("/admin", ...adminStatic);
+}
+
+app.use("/partner", ...partnerStatic);
 
 // Serve uploads
 app.use("/uploads", express.static(UPLOAD_DIR));
@@ -66,13 +77,29 @@ app.get("/health", (_, res) => {
   res.json({ ok: true });
 });
 
+import rateLimit from "express-rate-limit";
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 200, // Limit each IP to 200 requests per windowMs
+  standardHeaders: "draft-7", // draft-6: `RateLimit-*` headers; draft-7: combined `RateLimit` header
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
 // Mount all API routes
-app.use("/api", routes);
+app.use("/api", apiLimiter, routes);
+
+import { ZodError } from "zod";
 
 // Global error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError || err instanceof UploadValidationError) {
     res.status(400).json({ message: err.message });
+    return;
+  }
+
+  if (err instanceof ZodError) {
+    res.status(400).json({ message: "Validation error", errors: err.issues });
     return;
   }
 

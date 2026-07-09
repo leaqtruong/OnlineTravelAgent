@@ -29,6 +29,8 @@ import 'daos/reviews_dao.dart';
 import 'daos/documents_dao.dart';
 import 'tables/offline_queue_table.dart';
 import 'daos/offline_queue_dao.dart';
+import 'tables/flights_table.dart';
+import 'daos/flights_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -46,6 +48,7 @@ part 'app_database.g.dart';
     ReviewsTable,
     DocumentsTable,
     OfflineQueueTable,
+    FlightsTable,
   ],
   daos: [
     DestinationsDao,
@@ -60,6 +63,7 @@ part 'app_database.g.dart';
     ReviewsDao,
     DocumentsDao,
     OfflineQueueDao,
+    FlightsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -71,7 +75,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.instance() => _instance ??= AppDatabase();
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -81,6 +85,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (m, from, to) async {
       if (from < 3) {
         await m.createTable(offlineQueueTable);
+      }
+      if (from < 4) {
+        await m.createTable(flightsTable);
       }
     },
   );

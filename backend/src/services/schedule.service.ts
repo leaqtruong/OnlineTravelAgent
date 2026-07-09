@@ -322,6 +322,38 @@ export const scheduleService = {
     return { tripId, days, updates };
   },
 
+  async getTripSchedulesBatch(tripIds: string[], requesterUserId: string) {
+    const uniqueIds = [...new Set(tripIds)];
+    const trips = await prisma.trip.findMany({
+      where: { id: { in: uniqueIds }, userId: requesterUserId },
+      select: { id: true },
+    });
+    const ownedIds = trips.map((trip) => trip.id);
+    if (!ownedIds.length) return {};
+
+    const [allDays, allUpdates] = await Promise.all([
+      prisma.tripScheduleDay.findMany({
+        where: { tripId: { in: ownedIds } },
+        orderBy: { dayNumber: "asc" },
+        include: { items: { orderBy: [{ sortOrder: "asc" }, { startTime: "asc" }] } },
+      }),
+      prisma.tripScheduleUpdate.findMany({
+        where: { tripId: { in: ownedIds } },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    const result: Record<string, { tripId: string; days: typeof allDays; updates: typeof allUpdates }> = {};
+    for (const tripId of ownedIds) {
+      result[tripId] = {
+        tripId,
+        days: allDays.filter((day) => day.tripId === tripId),
+        updates: allUpdates.filter((update) => update.tripId === tripId),
+      };
+    }
+    return result;
+  },
+
   async updateTripSchedule(tripId: string, days: ScheduleDayInput[] = []) {
     const trip = await prisma.trip.findUnique({ where: { id: tripId }, select: { id: true } });
     if (!trip) return null;

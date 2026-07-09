@@ -28,6 +28,7 @@ clientRouter.get("/promo-codes/check", clientAuth, clientController.checkPromoCo
 
 // Trips
 clientRouter.get("/trips", clientAuth, clientController.getTrips);
+clientRouter.get("/trips/schedules", clientAuth, clientController.getTripSchedulesBatch);
 clientRouter.get("/trips/:id/schedule", clientAuth, clientController.getTripSchedule);
 clientRouter.post("/trips/book", clientAuth, validate(bookTripSchema), clientController.bookTrip);
 clientRouter.post("/trips/book-flight", clientAuth, validate(bookFlightSchema), clientController.bookFlightTrip);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
 import '../checkout/checkout_screen.dart';
@@ -45,7 +47,7 @@ class _DestinationDetailScreenState
   void _navigateToCheckout(BuildContext context, WidgetRef ref) {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
-      Navigator.pushNamed(context, '/login');
+      context.push(AppRoutes.login);
       return;
     }
     Navigator.push(

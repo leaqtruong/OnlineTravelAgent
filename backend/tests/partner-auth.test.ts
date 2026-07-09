@@ -16,7 +16,9 @@ vi.mock("../src/config/prisma.js", () => ({
 
 import { app } from "../src/app.js";
 
-const userToken = jwt.sign({ userId: "user-1", role: "USER" }, "test-jwt_secret");
+import { env } from "../src/config/env.js";
+
+const userToken = jwt.sign({ userId: "user-1", role: "USER" }, env.jwtSecret);
 
 describe("partner role elevation", () => {
   beforeEach(() => {

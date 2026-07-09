@@ -17,6 +17,18 @@ enum Role {
   ADMIN
 }
 
+enum TripStatus {
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 model Category {
   id   String @id @default(cuid())
   name String @unique
@@ -55,7 +67,7 @@ model Trip {
   location    String
   date        String
   guests      String
-  status      String
+  status      TripStatus @default(ONGOING)
   imagePath   String   @map("image_path")
   isUpcoming  Boolean  @default(true) @map("is_upcoming")
   
@@ -74,7 +86,7 @@ model Trip {
   discount    Float?   @default(0)
 
   paymentMethod   String?  @map("payment_method")
-  paymentStatus   String?  @default("pending") @map("payment_status")
+  paymentStatus   PaymentStatus?  @default(PENDING) @map("payment_status")
   paymentTxnRef   String?  @map("payment_txn_ref")
   paymentTxnNumber String? @map("payment_txn_number")
 
@@ -207,8 +219,24 @@ model User {
   tours     TourPackage[] @relation("PartnerTours")
   documents DocumentItem[]
   favoriteDestinations UserFavoriteDestination[]
+  refreshTokens RefreshToken[]
 
   @@map("users")
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 model UserFavoriteDestination {
@@ -236,6 +264,7 @@ model Review {
 
   user User @relation(fields: [userId], references: [id])
 
+  @@unique([userId, targetType, targetId])
   @@index([targetType, targetId])
   @@index([userId])
   @@map("reviews")

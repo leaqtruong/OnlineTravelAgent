@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/router/app_routes.dart';
 import 'package:path_drawing/path_drawing.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../core/theme/app_theme.dart';
@@ -70,7 +73,7 @@ class WelcomeScreen extends StatelessWidget {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, '/main');
+                        context.go(AppRoutes.main);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryBlue,

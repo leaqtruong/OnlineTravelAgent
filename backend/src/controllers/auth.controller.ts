@@ -1,33 +1,38 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
+import { Role } from "@prisma/client";
 import prisma from "../config/prisma.js";
-import { env } from "../config/env.js";
 import { passwordService } from "../services/password.service.js";
+import { tokenService } from "../services/token.service.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+
+async function buildAuthResponse(user: { id: string; name: string; email: string; role: Role; password: string; createdAt: Date; updatedAt: Date }) {
+  const { password: _, ...userWithoutPassword } = user;
+  const tokens = await tokenService.issueTokenPair({ id: user.id, role: user.role });
+
+  return {
+    user: userWithoutPassword,
+    token: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresIn: tokens.expiresIn,
+  };
+}
 
 export const authController = {
-  login: async (req: Request, res: Response) => {
+  login: asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      res.status(400).json({ message: "Email and password are required" });
-      return;
-    }
-
     const user = await prisma.user.findUnique({ where: { email } });
-
     if (!user) {
       res.status(401).json({ message: "Invalid email or password" });
       return;
     }
 
     const passwordValid = await passwordService.verify(password, user.password);
-
     if (!passwordValid) {
       res.status(401).json({ message: "Invalid email or password" });
       return;
     }
 
-    // Migrate legacy SHA-256 hash to bcrypt
     if (passwordService.shouldMigrate(user.password)) {
       const bcryptHash = await passwordService.hash(password);
       await prisma.user.update({
@@ -36,18 +41,11 @@ export const authController = {
       });
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = jwt.sign({ userId: user.id, role: user.role }, env.jwtSecret, { expiresIn: '7d' });
-    res.json({ user: userWithoutPassword, token });
-  },
+    res.json(await buildAuthResponse(user));
+  }),
 
-  register: async (req: Request, res: Response) => {
+  register: asyncHandler(async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      res.status(400).json({ message: "Name, email and password are required" });
-      return;
-    }
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -56,22 +54,48 @@ export const authController = {
     }
 
     const hashedPassword = await passwordService.hash(password);
-
     const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
+      data: { name, email, password: hashedPassword },
     });
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = jwt.sign({ userId: user.id, role: user.role }, env.jwtSecret, { expiresIn: '7d' });
-    res.status(201).json({ user: userWithoutPassword, token });
-  },
+    res.status(201).json(await buildAuthResponse(user));
+  }),
 
-  becomePartner: async (req: Request, res: Response) => {
-    const userId = (req as any).userId;
+  refresh: asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = typeof req.body?.refreshToken === "string" ? req.body.refreshToken.trim() : "";
+    if (!refreshToken) {
+      res.status(400).json({ message: "refreshToken is required" });
+      return;
+    }
+
+    const tokens = await tokenService.rotateRefreshToken(refreshToken);
+    if (!tokens) {
+      res.status(401).json({ message: "Invalid or expired refresh token" });
+      return;
+    }
+
+    res.json({
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: tokens.expiresIn,
+    });
+  }),
+
+  logout: asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = typeof req.body?.refreshToken === "string" ? req.body.refreshToken.trim() : "";
+    if (refreshToken) {
+      await tokenService.revokeRefreshToken(refreshToken);
+    }
+
+    if (req.userId) {
+      await tokenService.revokeAllForUser(req.userId);
+    }
+
+    res.json({ ok: true });
+  }),
+
+  becomePartner: asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.userId;
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
       return;
@@ -80,13 +104,12 @@ export const authController = {
       res.status(403).json({ message: "Partner signup requires admin approval" });
       return;
     }
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { role: 'PARTNER' }
+      data: { role: "PARTNER" },
     });
-    const { password: _, ...userWithoutPassword } = user;
-    const token = jwt.sign({ userId: user.id, role: user.role }, env.jwtSecret, { expiresIn: '7d' });
-    res.json({ user: userWithoutPassword, token });
-  }
-};
 
+    res.json(await buildAuthResponse(user));
+  }),
+};

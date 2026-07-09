@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/flight.dart';
 import '../../providers/trip_provider.dart';
@@ -47,7 +49,7 @@ class _FlightCheckoutScreenState extends ConsumerState<FlightCheckoutScreen> {
   void _navigateToPayment() async {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
-      Navigator.pushNamed(context, '/login');
+      context.push(AppRoutes.login);
       return;
     }
     if (_adults < 1) {

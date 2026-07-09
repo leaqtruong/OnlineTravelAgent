@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/api_provider.dart';
 import '../../utils/api_exception.dart';
@@ -561,7 +563,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                             Navigator.of(
                               context,
                             ).popUntil((route) => route.isFirst);
-                            Navigator.pushNamed(context, '/main');
+                            context.go(AppRoutes.main);
                           },
                           child: const Text(
                             'Xem Chuyến Đi',

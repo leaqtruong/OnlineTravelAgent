@@ -10,6 +10,7 @@ import '../models/destination.dart';
 import '../models/hotel.dart';
 import '../models/tour_package.dart';
 import '../models/document_item.dart';
+import '../models/flight.dart';
 import '../models/trip.dart';
 import '../models/trip_schedule.dart';
 import '../services/travel_api_service.dart';
@@ -64,16 +65,19 @@ class SyncService {
       await _syncCategories(data.categories);
       await _syncHotels(data.hotels);
       await _syncTours(data.tourPackages);
+      await _syncFlights(data.flights);
       await _syncDocuments(data.documents);
       await _syncTrips(data.trips);
 
-      // Sync schedules for each trip
-      for (final trip in data.trips) {
+      if (data.trips.isNotEmpty) {
         try {
-          final schedule = await api.fetchTripSchedule(trip.id);
-          await _syncSchedule(trip.id, schedule);
+          final tripIds = data.trips.map((trip) => trip.id).toList(growable: false);
+          final schedules = await api.fetchTripSchedulesBatch(tripIds);
+          for (final entry in schedules.entries) {
+            await _syncSchedule(entry.key, entry.value);
+          }
         } catch (e, st) {
-          debugPrint('Sync schedule error: $e\n$st');
+          debugPrint('Sync schedules batch error: $e\n$st');
         }
       }
     } catch (e, st) {
@@ -196,6 +200,26 @@ class SyncService {
               isPopular: Value(t.isPopular),
               includesGuide: Value(t.includesGuide),
               guideFee: Value(t.guideFee),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<void> _syncFlights(List<Flight> flights) async {
+    await db.flightsDao.insertAll(
+      flights
+          .map(
+            (f) => FlightsTableCompanion.insert(
+              id: f.id,
+              airline: f.airline,
+              airlineLogo: Value(f.airlineLogo),
+              departure: f.departure,
+              arrival: f.arrival,
+              departureTime: Value(f.departureTime),
+              arrivalTime: Value(f.arrivalTime),
+              price: Value(f.price),
+              duration: Value(f.duration),
             ),
           )
           .toList(),
@@ -340,6 +364,7 @@ class SyncService {
     final tourRows = await db.tourPackagesDao.getAll();
     final tripRows = await db.tripsDao.getAll();
     final docRows = await db.documentsDao.getAll();
+    final flightRows = await db.flightsDao.getAll();
 
     final destinations = destRows
         .map(
@@ -451,6 +476,22 @@ class SyncService {
         )
         .toList();
 
+    final flights = flightRows
+        .map(
+          (f) => Flight.fromDb(
+            id: f.id,
+            airline: f.airline,
+            airlineLogo: f.airlineLogo,
+            departure: f.departure,
+            arrival: f.arrival,
+            departureTime: f.departureTime,
+            arrivalTime: f.arrivalTime,
+            price: f.price,
+            duration: f.duration,
+          ),
+        )
+        .toList();
+
     return BootstrapData(
       categories: categoryRows.map((c) => c.name).toList(),
       destinations: destinations,
@@ -459,6 +500,7 @@ class SyncService {
       documents: documents,
       hotels: hotels,
       tourPackages: tours,
+      flights: flights,
     );
   }
 

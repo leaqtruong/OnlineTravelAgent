@@ -34,4 +34,28 @@ class Flight {
       duration: json['duration']?.toString() ?? '',
     );
   }
+
+  factory Flight.fromDb({
+    required String id,
+    required String airline,
+    required String airlineLogo,
+    required String departure,
+    required String arrival,
+    required String departureTime,
+    required String arrivalTime,
+    required int price,
+    required String duration,
+  }) {
+    return Flight(
+      id: id,
+      airline: airline,
+      airlineLogo: airlineLogo,
+      departure: departure,
+      arrival: arrival,
+      departureTime: departureTime,
+      arrivalTime: arrivalTime,
+      price: price,
+      duration: duration,
+    );
+  }
 }

@@ -98,8 +98,10 @@ export interface CreateUserBody {
   password: string;
 }
 
+import { TripStatus } from "@prisma/client";
+
 export interface UpdateTripBody {
-  status?: string;
+  status?: TripStatus;
   isUpcoming?: boolean;
 }
 

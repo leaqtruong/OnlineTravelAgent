@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/router/app_routes.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -78,7 +80,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
   void _showReviewSheet() {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'review.login_to_review'.tr());
-      Navigator.pushNamed(context, '/login');
+      context.push(AppRoutes.login);
       return;
     }
     _selectedRating = 5;

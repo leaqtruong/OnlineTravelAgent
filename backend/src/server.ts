@@ -44,8 +44,21 @@ const server = app.listen(env.port, () => {
         socket.leave(`trip_${tripId}`);
       }
     });
-    socket.on("join_tour_room", (tourId) => {
-      socket.join(`tour_${tourId}`);
+    socket.on("join_tour_room", async (payload) => {
+      const tourId = typeof payload === "string" ? payload : payload?.tourId;
+      if (!tourId || typeof tourId !== "string") return;
+
+      try {
+        const tour = await prisma.tourPackage.findUnique({
+          where: { id: tourId },
+          select: { id: true },
+        });
+        if (tour) {
+          socket.join(`tour_${tourId}`);
+        }
+      } catch {
+        // Ignore invalid tour room join attempts.
+      }
     });
     socket.on("leave_tour_room", (tourId) => {
       if (typeof tourId === "string" && tourId) {

@@ -31,8 +31,10 @@ vi.mock("../src/services/vnpay.service.js", () => ({
 
 import { app } from "../src/app.js";
 
+import { env } from "../src/config/env.js";
+
 const tokenFor = (userId: string) =>
-  jwt.sign({ userId, role: "USER" }, "test-jwt_secret");
+  jwt.sign({ userId, role: "USER" }, env.jwtSecret);
 
 describe("payment security", () => {
   beforeEach(() => {

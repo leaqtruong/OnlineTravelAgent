@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/destination.dart';
 import '../../models/flight.dart';
@@ -1790,7 +1792,7 @@ class _CustomTourStepperScreenState
   void _submitCustomTour() {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
-      Navigator.pushNamed(context, '/login');
+      context.push(AppRoutes.login);
       return;
     }
 

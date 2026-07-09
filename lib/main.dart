@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-import 'screens/welcome/welcome_screen.dart';
-import 'screens/main/main_screen.dart';
-import 'screens/auth/login_screen.dart';
-import 'screens/auth/register_screen.dart';
-import 'screens/partner/partner_dashboard_screen.dart';
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/app_state_provider.dart';
 import 'services/sync_service.dart';
@@ -86,24 +82,17 @@ class _OnlineTravelAgentAppState extends ConsumerState<OnlineTravelAgentApp>
 
   @override
   Widget build(BuildContext context) {
-    // Activate bootstrap sync (profile + documents from bootstrap data)
     ref.watch(bootstrapSyncProvider);
+    final router = ref.watch(appRouterProvider);
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Online Travel Agent',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       localizationsDelegates: context.localizationDelegates,
       supportedLocales: context.supportedLocales,
       locale: context.locale,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const WelcomeScreen(),
-        '/main': (context) => const MainScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/partner-dashboard': (context) => const PartnerDashboardScreen(),
-      },
+      routerConfig: router,
     );
   }
 }

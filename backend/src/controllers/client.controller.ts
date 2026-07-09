@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { appCache } from "../config/cache.js";
-import { store } from "../store.js";
+import { store } from "../store/index.js";
 import { scheduleService } from "../services/schedule.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import {
@@ -11,6 +11,14 @@ import {
   CreateDocumentBody,
   CreateReviewBody,
 } from "../types/index.js";
+import {
+  bookTripSchema,
+  bookFlightSchema,
+  bookHotelSchema,
+  bookTourSchema,
+  createDocumentSchema,
+  createReviewSchema,
+} from "../validators/index.js";
 
 export const clientController = {
   getBootstrap: asyncHandler(async (req: Request, res: Response) => {
@@ -58,9 +66,27 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookTrip: asyncHandler(async (req: Request<unknown, unknown, BookTripBody & { requestId?: string }>, res: Response) => {
+  getTripSchedulesBatch: asyncHandler(async (req: Request, res: Response) => {
+    const rawIds = typeof req.query.ids === "string" ? req.query.ids : "";
+    const tripIds = rawIds
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (!tripIds.length) {
+      res.status(400).json({ message: "ids query parameter is required" });
+      return;
+    }
+    if (tripIds.length > 50) {
+      res.status(400).json({ message: "Maximum 50 trip ids per request" });
+      return;
+    }
+    const data = await scheduleService.getTripSchedulesBatch(tripIds, req.userId!);
+    res.json(data);
+  }),
+
+  bookTrip: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
-    const body = req.body;
+    const body = bookTripSchema.parse(req.body);
     const trip = await store.createTrip(userId, body.destinationId, String(body.date || ""), String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined, body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Destination not found" });
@@ -76,9 +102,9 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookFlightTrip: asyncHandler(async (req: Request<unknown, unknown, BookFlightBody & { requestId?: string }>, res: Response) => {
+  bookFlightTrip: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
-    const body = req.body;
+    const body = bookFlightSchema.parse(req.body);
     const trip = await store.bookFlightTrip(userId, body.flightId, String(body.date || ""), String(body.guests || ""), body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Flight not found" });
@@ -93,7 +119,7 @@ export const clientController = {
   }),
 
   createDocument: asyncHandler(async (req: Request, res: Response) => {
-    const body = req.body as CreateDocumentBody;
+    const body = createDocumentSchema.parse(req.body);
     const doc = await store.createDocument(
       req.userId,
       body.title,
@@ -127,8 +153,8 @@ export const clientController = {
 
   createReview: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
-    const { targetType, targetId, rating, comment } = req.body as CreateReviewBody;
-    const review = await store.createReview(userId, targetType, targetId, rating, comment);
+    const body = createReviewSchema.parse(req.body);
+    const review = await store.createReview(userId, body.targetType, body.targetId, body.rating, body.comment || "");
     res.status(201).json(review);
   }),
 
@@ -169,9 +195,9 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookHotel: asyncHandler(async (req: Request<unknown, unknown, BookHotelBody & { requestId?: string }>, res: Response) => {
+  bookHotel: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
-    const body = req.body;
+    const body = bookHotelSchema.parse(req.body);
     const trip = await store.bookHotel(userId, body.roomId, body.checkIn, body.checkOut, String(body.guests || ""), body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Room not found" });
@@ -203,10 +229,10 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookTour: asyncHandler(async (req: Request<unknown, unknown, BookTourBody & { requestId?: string }>, res: Response) => {
+  bookTour: asyncHandler(async (req: Request, res: Response) => {
     const userId = req.userId;
-    const body = req.body;
-    const trip = await store.bookTour(userId, body.tourId, body.date, String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined, body.requestId);
+    const body = bookTourSchema.parse(req.body);
+    const trip = await store.bookTour(userId, body.tourId, body.date || "", String(body.guests || ""), body.totalPrice, body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Tour not found" });
       return;

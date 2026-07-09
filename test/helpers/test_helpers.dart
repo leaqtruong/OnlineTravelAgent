@@ -139,6 +139,17 @@ class FakeTravelApiService extends TravelApiService {
   }
 
   @override
+  Future<Map<String, TripSchedule>> fetchTripSchedulesBatch(List<String> tripIds) async {
+    final result = <String, TripSchedule>{};
+    for (final tripId in tripIds) {
+      if (tripSchedules.containsKey(tripId)) {
+        result[tripId] = tripSchedules[tripId]!;
+      }
+    }
+    return result;
+  }
+
+  @override
   Future<Destination> setFavorite(String destinationId, bool isFavorite) async {
     return Destination(
       id: destinationId, name: 'Test', location: 'Test',

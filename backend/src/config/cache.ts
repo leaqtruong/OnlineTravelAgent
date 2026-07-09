@@ -4,6 +4,8 @@ import NodeCache from "node-cache";
 // 5 minutes default TTL
 export const appCache = new NodeCache({ stdTTL: 300 });
 
+export const BOOTSTRAP_BASE_KEY = "bootstrapBase";
+
 export function invalidateBootstrapCache() {
   appCache.flushAll();
 }

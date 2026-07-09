@@ -3,6 +3,7 @@ import crypto from "crypto";
 import prisma from "../config/prisma.js";
 import { vnpayService } from "../services/vnpay.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { PaymentStatus, TripStatus } from "@prisma/client";
 
 const MOMO_PARTNER_CODE = process.env.MOMO_PARTNER_CODE ?? "MOMO";
 const MOMO_ACCESS_KEY = process.env.MOMO_ACCESS_KEY ?? "";
@@ -80,11 +81,11 @@ async function markVnpayResult(result: {
     await prisma.trip.update({
       where: { id: tripId },
       data: {
-        paymentStatus: "paid",
+        paymentStatus: PaymentStatus.SUCCESS,
         paymentMethod: "vnpay",
         paymentTxnRef: result.txnRef,
         paymentTxnNumber: result.transactionNo,
-        status: "Đã xác nhận",
+        status: TripStatus.ONGOING,
         isUpcoming: true,
       },
     });
@@ -92,7 +93,7 @@ async function markVnpayResult(result: {
     await prisma.trip.update({
       where: { id: tripId },
       data: {
-        paymentStatus: "failed",
+        paymentStatus: PaymentStatus.FAILED,
         paymentMethod: "vnpay",
         paymentTxnRef: result.txnRef,
       },
@@ -151,11 +152,11 @@ async function markMomoResult(query: Record<string, string>): Promise<boolean> {
     await prisma.trip.update({
       where: { id: tripId },
       data: {
-        paymentStatus: "paid",
+        paymentStatus: PaymentStatus.SUCCESS,
         paymentMethod: "momo",
         paymentTxnRef: orderId,
         paymentTxnNumber: query["transId"] ?? null,
-        status: "Đã xác nhận",
+        status: TripStatus.ONGOING,
         isUpcoming: true,
       },
     });
@@ -163,7 +164,7 @@ async function markMomoResult(query: Record<string, string>): Promise<boolean> {
     await prisma.trip.update({
       where: { id: tripId },
       data: {
-        paymentStatus: "failed",
+        paymentStatus: PaymentStatus.FAILED,
         paymentMethod: "momo",
         paymentTxnRef: orderId,
       },
@@ -236,7 +237,7 @@ export const paymentController = {
       return;
     }
 
-    await vnpayService.updateTripPaymentStatus(tripId, "pending", txnRef);
+    await vnpayService.updateTripPaymentStatus(tripId, PaymentStatus.PENDING, txnRef);
 
     res.json({
       paymentUrl,
@@ -351,7 +352,7 @@ export const paymentController = {
       if (result.resultCode === "0" || result.payUrl) {
         await prisma.trip.update({
           where: { id: tripId },
-          data: { paymentStatus: "pending", paymentMethod: "momo", paymentTxnRef: orderId },
+          data: { paymentStatus: PaymentStatus.PENDING, paymentMethod: "momo", paymentTxnRef: orderId },
         });
         res.json({
           payUrl: result.payUrl,

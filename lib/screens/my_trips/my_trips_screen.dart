@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/router/app_routes.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/trip.dart';
@@ -326,7 +329,7 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
       actionText: 'Khám phá ngay',
       actionIcon: Icons.arrow_forward_rounded,
       onActionTap: () {
-        Navigator.pushReplacementNamed(context, '/main');
+        context.go(AppRoutes.main);
       },
     );
   }

@@ -30,15 +30,34 @@ class Trip {
   });
 
   factory Trip.fromJson(Map<String, dynamic> json) {
+    final String rawStatus = json['status']?.toString() ?? '';
+    final bool isUpcoming = json['isUpcoming'] == true;
+    final String rawPaymentStatus = json['paymentStatus']?.toString() ?? '';
+    String mappedStatus = rawStatus;
+
+    if (rawPaymentStatus == 'PENDING') {
+      mappedStatus = 'Chờ thanh toán';
+    } else if (rawStatus == 'ONGOING') {
+      if (isUpcoming) {
+        mappedStatus = 'Sắp tới';
+      } else {
+        mappedStatus = 'Đang diễn ra';
+      }
+    } else if (rawStatus == 'COMPLETED') {
+      mappedStatus = 'Đã hoàn thành';
+    } else if (rawStatus == 'CANCELLED') {
+      mappedStatus = 'Đã hủy';
+    }
+
     return Trip(
       id: json['id']?.toString() ?? '',
       destination: json['destination']?.toString() ?? '',
       location: json['location']?.toString() ?? '',
       date: json['date']?.toString() ?? '',
       guests: json['guests']?.toString() ?? '',
-      status: json['status']?.toString() ?? '',
+      status: mappedStatus,
       imagePath: json['imagePath']?.toString() ?? '',
-      isUpcoming: json['isUpcoming'] == true,
+      isUpcoming: isUpcoming,
       flightId: json['flightId']?.toString(),
       hotelId: json['hotelId']?.toString(),
       roomId: json['roomId']?.toString(),

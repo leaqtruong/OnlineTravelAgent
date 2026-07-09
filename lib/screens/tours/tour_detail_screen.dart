@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
+import '../../core/router/app_routes.dart';
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_package.dart';
 import '../../providers/trip_provider.dart';
@@ -15,6 +15,11 @@ import '../../widgets/review_section.dart';
 import '../../widgets/shimmer_loading.dart';
 import '../../providers/app_state_provider.dart';
 import '../checkout/payment_method_screen.dart';
+import 'widgets/tour_detail_helpers.dart';
+import 'widgets/tour_overview_section.dart';
+import 'widgets/tour_itinerary_list.dart';
+import 'widgets/tour_map_section.dart';
+import 'widgets/tour_booking_bottom_bar.dart';
 
 class TourDetailScreen extends ConsumerStatefulWidget {
   final TourPackage tour;
@@ -50,198 +55,6 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
     return singlePrice * _guestsCount;
   }
 
-  // Resolve coordinate markers for popular destinations
-  List<LatLng> _getCoordinates() {
-    final Map<String, LatLng> coordsMap = {
-      'đà nẵng': const LatLng(16.0544, 108.2022),
-      'hội an': const LatLng(15.8801, 108.3380),
-      'huế': const LatLng(16.4637, 107.5908),
-      'phú quốc': const LatLng(10.2899, 103.9840),
-      'đà lạt': const LatLng(11.9404, 108.4583),
-      'sapa': const LatLng(22.3364, 103.8438),
-      'sa pa': const LatLng(22.3364, 103.8438),
-      'hạ long': const LatLng(20.9501, 107.0733),
-      'vịnh hạ long': const LatLng(20.9501, 107.0733),
-      'hà nội': const LatLng(21.0285, 105.8542),
-      'hồ chí minh': const LatLng(10.8231, 106.6297),
-      'sài gòn': const LatLng(10.8231, 106.6297),
-      'nha trang': const LatLng(12.2388, 109.1967),
-    };
-
-    final List<LatLng> points = [];
-    for (final dest in widget.tour.destinations) {
-      final key = dest.toLowerCase().trim();
-      LatLng? match;
-      coordsMap.forEach((name, coord) {
-        if (key.contains(name) || name.contains(key)) {
-          match = coord;
-        }
-      });
-      if (match != null) {
-        points.add(match!);
-      }
-    }
-
-    // Default if no coordinates found
-    if (points.isEmpty) {
-      points.add(const LatLng(16.0544, 108.2022)); // Center at Da Nang
-    }
-    return points;
-  }
-
-  IconData _getInclusionIcon(String title) {
-    final key = title.toLowerCase().trim();
-    if (key.contains('khách sạn') ||
-        key.contains('hotel') ||
-        key.contains('phòng') ||
-        key.contains('nghỉ')) {
-      return Icons.hotel_rounded;
-    } else if (key.contains('ăn') ||
-        key.contains('food') ||
-        key.contains('sáng') ||
-        key.contains('trưa') ||
-        key.contains('tối') ||
-        key.contains('bữa')) {
-      return Icons.flatware_rounded;
-    } else if (key.contains('xe') ||
-        key.contains('đưa đón') ||
-        key.contains('bus') ||
-        key.contains('di chuyển') ||
-        key.contains('vận chuyển')) {
-      return Icons.directions_bus_rounded;
-    } else if (key.contains('vé') ||
-        key.contains('ticket') ||
-        key.contains('cổng') ||
-        key.contains('tham quan')) {
-      return Icons.local_activity_rounded;
-    } else if (key.contains('hướng dẫn') || key.contains('guide')) {
-      return Icons.people_rounded;
-    } else if (key.contains('bảo hiểm')) {
-      return Icons.security_rounded;
-    } else if (key.contains('nước') || key.contains('uống')) {
-      return Icons.local_drink_rounded;
-    }
-    return Icons.check_circle_rounded;
-  }
-
-  // Smart itinerary description generator based on destinations including hour milestones
-  List<Map<String, dynamic>> _generateItinerary() {
-    final destinations = widget.tour.destinations;
-    if (destinations.isEmpty) {
-      return [
-        {
-          'day': 'Ngày 1',
-          'title': 'Khởi hành & Khám phá hành trình',
-          'desc':
-              'Bắt đầu chuyến du lịch đầy hứa hẹn. Xe và hướng dẫn viên đón Quý khách tại điểm hẹn, khởi hành tham quan các địa danh danh tiếng và làm thủ tục nhận phòng khách sạn nghỉ ngơi.',
-          'milestones': [
-            {
-              'time': '08:00',
-              'event': 'Xe và HDV đón khách tại điểm hẹn, khởi hành.',
-            },
-            {'time': '12:00', 'event': 'Ăn trưa tại nhà hàng ẩm thực bản địa.'},
-            {
-              'time': '14:00',
-              'event': 'Làm thủ tục nhận phòng khách sạn & nghỉ ngơi.',
-            },
-            {'time': '18:00', 'event': 'Ăn tối ấm cúng và tự do khám phá.'},
-          ],
-        },
-      ];
-    }
-
-    final List<Map<String, dynamic>> itinerary = [];
-    for (int i = 0; i < destinations.length; i++) {
-      final dest = destinations[i];
-      if (i == 0) {
-        itinerary.add({
-          'day': 'Ngày 1',
-          'title': 'Chào đón & Trải nghiệm $dest',
-          'desc':
-              'Chào đón Quý khách tại điểm tập trung. Xe đưa Quý khách tham quan các thắng cảnh biểu tượng của $dest, tìm hiểu nét đẹp lịch sử văn hóa địa phương.',
-          'milestones': [
-            {
-              'time': '08:30',
-              'event':
-                  'Đón khách tại điểm hẹn, di chuyển đến điểm tham quan đầu tiên.',
-            },
-            {
-              'time': '10:00',
-              'event': 'Khám phá danh lam thắng cảnh nổi bật tại $dest.',
-            },
-            {
-              'time': '12:00',
-              'event': 'Thưởng thức bữa trưa đặc sản vùng miền.',
-            },
-            {
-              'time': '14:30',
-              'event': 'Nhận phòng khách sạn, nghỉ ngơi tự do.',
-            },
-            {
-              'time': '18:00',
-              'event': 'Bữa tối ngon miệng và dạo chơi phố phường về đêm.',
-            },
-          ],
-        });
-      } else {
-        itinerary.add({
-          'day': 'Ngày ${i + 1}',
-          'title': 'Hành trình di sản tại $dest',
-          'desc':
-              'Di chuyển khám phá mảnh đất $dest đầy quyến rũ và giàu bản sắc văn hóa.',
-          'milestones': [
-            {
-              'time': '07:30',
-              'event': 'Dùng điểm tâm sáng buffet tại khách sạn.',
-            },
-            {
-              'time': '09:00',
-              'event': 'Khởi hành hành trình khám phá chiều sâu $dest.',
-            },
-            {
-              'time': '12:30',
-              'event': 'Nghỉ ngơi và dùng cơm trưa tại nhà hàng đặc sản.',
-            },
-            {
-              'time': '15:00',
-              'event': 'Tham gia các hoạt động vui chơi giải trí địa phương.',
-            },
-            {
-              'time': '18:30',
-              'event':
-                  'Dùng bữa tối hải sản thịnh soạn, tự do tham quan phố đêm.',
-            },
-          ],
-        });
-      }
-    }
-
-    // Add a wrap-up day
-    itinerary.add({
-      'day': 'tour_detail.day'.tr(args: [(destinations.length + 1).toString()]),
-      'title': 'Mua sắm đặc sản & Kết thúc hành trình',
-      'desc': 'Thư giãn nghỉ ngơi, chuẩn bị hành lý trở về.',
-      'milestones': [
-        {
-          'time': '07:30',
-          'event': 'Ăn sáng, dạo phố nhâm nhi cà phê sáng bình yên.',
-        },
-        {
-          'time': '10:00',
-          'event': 'Tự do mua sắm các món quà lưu niệm ý nghĩa.',
-        },
-        {'time': '11:30', 'event': 'Làm thủ tục trả phòng khách sạn.'},
-        {'time': '12:30', 'event': 'Bữa trưa nhẹ nhàng ấm cúng.'},
-        {
-          'time': '14:30',
-          'event': 'Xe tiễn đoàn ra sân bay/nhà ga, kết thúc tour tốt đẹp.',
-        },
-      ],
-    });
-
-    return itinerary;
-  }
-
   @override
   Widget build(BuildContext context) {
     final tours = ref.watch(bootstrapProvider).value?.tourPackages ?? [];
@@ -250,9 +63,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
       orElse: () => widget.tour,
     );
 
-    final coordinates = _getCoordinates();
+    final coordinates = TourDetailHelpers.getCoordinates(widget.tour);
     final center = coordinates.first;
-    final fallbackItinerary = _generateItinerary();
+    final fallbackItinerary = TourDetailHelpers.generateItinerary(widget.tour);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundGray,
@@ -434,22 +247,22 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildOverviewItem(
-                              Icons.access_time_filled_rounded,
-                              'tour_detail.duration'.tr(),
-                              t.duration,
+                            TourOverviewItem(
+                              icon: Icons.access_time_filled_rounded,
+                              title: 'tour_detail.duration'.tr(),
+                              value: t.duration,
                             ),
-                            _buildOverviewDivider(),
-                            _buildOverviewItem(
-                              Icons.flight_takeoff_rounded,
-                              'tour_detail.departure'.tr(),
-                              t.departure,
+                            const TourOverviewDivider(),
+                            TourOverviewItem(
+                              icon: Icons.flight_takeoff_rounded,
+                              title: 'tour_detail.departure'.tr(),
+                              value: t.departure,
                             ),
-                            _buildOverviewDivider(),
-                            _buildOverviewItem(
-                              Icons.map_rounded,
-                              'tour_detail.destination'.tr(),
-                              'tour_detail.destinations_count'.tr(args: [t.destinations.length.toString()]),
+                            const TourOverviewDivider(),
+                            TourOverviewItem(
+                              icon: Icons.map_rounded,
+                              title: 'tour_detail.destination'.tr(),
+                              value: 'tour_detail.destinations_count'.tr(args: [t.destinations.length.toString()]),
                             ),
                           ],
                         ),
@@ -791,7 +604,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                           ),
                                         ),
                                         child: Icon(
-                                          _getInclusionIcon(item),
+                                          TourDetailHelpers.getInclusionIcon(item),
                                           color: AppTheme.primaryBlue,
                                           size: 20,
                                         ),
@@ -821,9 +634,11 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                 .watch(tourScheduleProvider(widget.tour.id))
                                 .when(
                                   data: (schedule) {
-                                    List<Map<String, dynamic>> finalItinerary =
-                                        [];
-                                    if (schedule.days.isNotEmpty) {
+                                    List<Map<String, dynamic>> finalItinerary = [];
+                                    bool hasValidSchedule = schedule.days.isNotEmpty && 
+                                        schedule.days.any((day) => day.items.isNotEmpty);
+                                        
+                                    if (hasValidSchedule) {
                                       for (var day in schedule.days) {
                                         finalItinerary.add({
                                           'day': 'tour_detail.day'.tr(args: [day.dayNumber.toString()]),
@@ -866,7 +681,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        _buildItineraryList(finalItinerary),
+                                        TourItineraryList(itinerary: finalItinerary),
                                       ],
                                     );
                                   },
@@ -887,118 +702,16 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 16),
-                                      _buildItineraryList(fallbackItinerary),
+                                      TourItineraryList(itinerary: fallbackItinerary),
                                     ],
                                   ),
                                 ),
                             const SizedBox(height: 12),
 
                             // G. Route Map
-                            Text(
-                              'tour_detail.location_route'.tr(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.textBlack,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Container(
-                              height: 220,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: Colors.grey.withValues(alpha: 0.15),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: RepaintBoundary(
-                                  child: FlutterMap(
-                                    options: MapOptions(
-                                      initialCenter: center,
-                                      initialZoom: coordinates.length > 1
-                                          ? 9
-                                          : 12,
-                                      interactionOptions:
-                                          const InteractionOptions(
-                                            flags:
-                                                InteractiveFlag.all &
-                                                ~InteractiveFlag.rotate,
-                                          ),
-                                    ),
-                                    children: [
-                                      TileLayer(
-                                        urlTemplate: kOpenStreetMapTileUrl,
-                                        userAgentPackageName:
-                                            'com.example.onlinetravelagent',
-                                      ),
-                                      // Connect route paths if multiple destinations
-                                      if (coordinates.length > 1)
-                                        PolylineLayer(
-                                          polylines: <Polyline<Object>>[
-                                            Polyline(
-                                              points: coordinates,
-                                              strokeWidth: 4,
-                                              color: AppTheme.primaryBlue,
-                                            ),
-                                          ],
-                                        ),
-                                      MarkerLayer(
-                                        markers: coordinates.map((pt) {
-                                          final int idx = coordinates.indexOf(
-                                            pt,
-                                          );
-                                          return Marker(
-                                            point: pt,
-                                            width: 32,
-                                            height: 32,
-                                            child: Stack(
-                                              alignment: Alignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.location_on_sharp,
-                                                  color: Colors.red,
-                                                  size: 32,
-                                                ),
-                                                Positioned(
-                                                  top: 2,
-                                                  child: Container(
-                                                    padding:
-                                                        const EdgeInsets.all(2),
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                          color: Colors.white,
-                                                          shape:
-                                                              BoxShape.circle,
-                                                        ),
-                                                    child: Text(
-                                                      '${idx + 1}',
-                                                      style: const TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 8,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                            TourMapSection(
+                              coordinates: coordinates,
+                              center: center,
                             ),
                             const SizedBox(height: 28),
 
@@ -1025,174 +738,21 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
           ),
 
           // 3. Floating Bottom Purchase Sheet
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 15,
-                    offset: const Offset(0, -6),
-                  ),
-                ],
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(28),
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  formatVND(widget.tour.price),
-                                  style: const TextStyle(
-                                    decoration: TextDecoration.lineThrough,
-                                    color: Colors.grey,
-                                    fontSize: 14,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'tour_detail.guests'.tr(args: [_guestsCount.toString()]),
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              formatVND(_totalPrice),
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      height: 56,
-                      width: 190,
-                      child: ElevatedButton(
-                        onPressed: _bookTour,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryBlue,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          elevation: 3,
-                          shadowColor: AppTheme.primaryBlue.withValues(
-                            alpha: 0.3,
-                          ),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                'tour_detail.book_now'.tr(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          TourBookingBottomBar(
+            originalPrice: widget.tour.price,
+            guestsCount: _guestsCount,
+            totalPrice: _totalPrice,
+            onBookPressed: _bookTour,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOverviewItem(IconData icon, String title, String value) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryBlue.withValues(alpha: 0.08),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: AppTheme.primaryBlue, size: 22),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 13,
-            color: AppTheme.textBlack,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOverviewDivider() {
-    return const SizedBox(
-      width: 1,
-      height: 40,
-      child: ColoredBox(color: Color(0x339E9E9E)),
-    );
-  }
-
   void _bookTour() {
     if (!ref.read(authProvider).isLoggedIn) {
       showErrorSnackBar(context, 'tour_detail.login_to_book'.tr());
-      Navigator.pushNamed(context, '/login');
+      context.push(AppRoutes.login);
       return;
     }
 
@@ -1221,167 +781,4 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
     );
   }
 
-  Widget _buildItineraryList(List<Map<String, dynamic>> itinerary) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: EdgeInsets.zero,
-      itemCount: itinerary.length,
-      itemBuilder: (context, index) {
-        final step = itinerary[index];
-        final isLast = index == itinerary.length - 1;
-        final milestones = (step['milestones'] as List)
-            .cast<Map<String, dynamic>>();
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Left Column: Dot & Connecting Line
-              Column(
-                children: [
-                  Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppTheme.primaryBlue, width: 3),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-                          blurRadius: 6,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isLast)
-                    Expanded(
-                      child: Container(
-                        width: 2,
-                        color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // Right Column: Day details card
-              Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.02),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.05),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            step['day'] as String,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.primaryBlue,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const Icon(
-                            Icons.circle_notifications_rounded,
-                            color: AppTheme.primaryBlue,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        step['title'] as String,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: AppTheme.textBlack,
-                        ),
-                      ),
-                      if ((step['desc'] as String).isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          step['desc'] as String,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      const Divider(height: 1, color: AppTheme.backgroundGray),
-                      const SizedBox(height: 12),
-                      // Render detailed hourly milestones
-                      ...milestones.map(
-                        (m) => Padding(
-                          padding: const EdgeInsets.only(bottom: 10),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primaryBlue.withValues(
-                                    alpha: 0.08,
-                                  ),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  m['time'] as String,
-                                  style: const TextStyle(
-                                    color: AppTheme.primaryBlue,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 10,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 2),
-                                  child: Text(
-                                    m['event'] as String,
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade800,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
