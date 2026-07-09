@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 import '../../flights/flight_search_screen.dart';
 
@@ -47,21 +48,21 @@ class FlightBanner extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Đặt vé máy bay',
+                      'dashboard.flight_banner_title',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
-                    ),
+                    ).tr(),
                     SizedBox(height: 4),
                     Text(
-                      'Tìm chuyến bay giá rẻ nhất',
+                      'dashboard.flight_banner_subtitle'.tr(),
                       style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../core/theme/app_theme.dart';
 
@@ -21,18 +22,18 @@ class DailyTip extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: const Color(0xFFD8E6FF)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.lightbulb_outline,
                   color: AppTheme.primaryBlue,
                   size: 20,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Mẹo hôm nay: Đặt chuyến trước 2-3 tuần để có giá tốt hơn và nhiều khung giờ đẹp.',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF3B4A66)),
+                    'dashboard.daily_tip'.tr(),
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF3B4A66)),
                   ),
                 ),
               ],

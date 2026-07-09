@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -218,7 +219,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
 
     // Add a wrap-up day
     itinerary.add({
-      'day': 'Ngày ${destinations.length + 1}',
+      'day': 'tour_detail.day'.tr(args: [(destinations.length + 1).toString()]),
       'title': 'Mua sắm đặc sản & Kết thúc hành trình',
       'desc': 'Thư giãn nghỉ ngơi, chuẩn bị hành lý trở về.',
       'milestones': [
@@ -298,8 +299,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           SnackBar(
                             content: Text(
                               isFav
-                                  ? 'Đã lưu tour vào danh sách yêu thích'
-                                  : 'Đã xóa tour khỏi danh sách yêu thích',
+                                  ? 'tour_detail.saved_to_favorites'.tr()
+                                  : 'tour_detail.removed_from_favorites'.tr(),
                             ),
                             duration: const Duration(seconds: 1),
                           ),
@@ -392,7 +393,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                   ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
@@ -402,7 +403,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                     ),
                                     SizedBox(width: 6),
                                     Text(
-                                      'BÁN CHẠY',
+                                      'tour_detail.best_seller'.tr(),
                                       style: TextStyle(
                                         color: Color(0xFFFF9800),
                                         fontSize: 12,
@@ -436,20 +437,20 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           children: [
                             _buildOverviewItem(
                               Icons.access_time_filled_rounded,
-                              'Thời gian',
+                              'tour_detail.duration'.tr(),
                               t.duration,
                             ),
                             _buildOverviewDivider(),
                             _buildOverviewItem(
                               Icons.flight_takeoff_rounded,
-                              'Khởi hành',
+                              'tour_detail.departure'.tr(),
                               t.departure,
                             ),
                             _buildOverviewDivider(),
                             _buildOverviewItem(
                               Icons.map_rounded,
-                              'Điểm đến',
-                              '${t.destinations.length} Tỉnh thành',
+                              'tour_detail.destination'.tr(),
+                              'tour_detail.destinations_count'.tr(args: [t.destinations.length.toString()]),
                             ),
                           ],
                         ),
@@ -470,8 +471,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // B. Selection Section: Dates & Guests
-                            const Text(
-                              'Lịch trình & Đặt khách',
+                            Text(
+                              'tour_detail.itinerary_and_booking'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -541,8 +542,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               children: [
-                                                const Text(
-                                                  'Ngày đi',
+                                                Text(
+                                                  'tour_detail.departure_date'.tr(),
                                                   style: TextStyle(
                                                     color: Colors.grey,
                                                     fontSize: 11,
@@ -613,8 +614,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         // Value
                                         Column(
                                           children: [
-                                            const Text(
-                                              'Số khách',
+                                            Text(
+                                              'tour_detail.guests_count'.tr(),
                                               style: TextStyle(
                                                 color: Colors.grey,
                                                 fontSize: 10,
@@ -658,8 +659,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             const SizedBox(height: 24),
 
                             // C. Description Section
-                            const Text(
-                              'Giới thiệu hành trình',
+                            Text(
+                              'tour_detail.introduction'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -710,8 +711,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
-                                            'Hướng dẫn viên đi kèm',
+                                          Text(
+                                            'tour_detail.tour_guide'.tr(),
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14,
@@ -719,7 +720,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
-                                            '+ ${formatVND(t.guideFee)} / Khách',
+                                            'tour_detail.guide_fee'.tr(args: [formatVND(t.guideFee)]),
                                             style: const TextStyle(
                                               color: AppTheme.primaryBlue,
                                               fontWeight: FontWeight.w600,
@@ -747,8 +748,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             ],
 
                             // E. Inclusions Grid (Dịch vụ bao gồm)
-                            const Text(
-                              'Dịch vụ đã bao gồm',
+                            Text(
+                              'tour_detail.inclusions'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -826,9 +827,9 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                     if (schedule.days.isNotEmpty) {
                                       for (var day in schedule.days) {
                                         finalItinerary.add({
-                                          'day': 'Ngày ${day.dayNumber}',
+                                          'day': 'tour_detail.day'.tr(args: [day.dayNumber.toString()]),
                                           'title':
-                                              'Hoạt động ngày ${day.dayNumber}',
+                                              'tour_detail.activity_day'.tr(args: [day.dayNumber.toString()]),
                                           'desc': '',
                                           'milestones': day.items
                                               .map(
@@ -857,8 +858,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        const Text(
-                                          'Lịch trình chi tiết từng ngày',
+                                        Text(
+                                          'tour_detail.detailed_itinerary'.tr(),
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
@@ -878,8 +879,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const Text(
-                                        'Lịch trình chi tiết từng ngày',
+                                      Text(
+                                        'tour_detail.detailed_itinerary'.tr(),
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
@@ -894,8 +895,8 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             const SizedBox(height: 12),
 
                             // G. Route Map
-                            const Text(
-                              'Vị trí & Lộ trình di chuyển',
+                            Text(
+                              'tour_detail.location_route'.tr(),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -1069,7 +1070,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'x $_guestsCount khách',
+                                'tour_detail.guests'.tr(args: [_guestsCount.toString()]),
                                 style: const TextStyle(
                                   color: Colors.grey,
                                   fontSize: 12,
@@ -1113,14 +1114,14 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             alpha: 0.3,
                           ),
                         ),
-                        child: const FittedBox(
+                        child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Đặt Tour Ngay',
+                                'tour_detail.book_now'.tr(),
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -1191,7 +1192,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
 
   void _bookTour() {
     if (!ref.read(authProvider).isLoggedIn) {
-      showErrorSnackBar(context, 'Vui lòng đăng nhập để đặt!');
+      showErrorSnackBar(context, 'tour_detail.login_to_book'.tr());
       Navigator.pushNamed(context, '/login');
       return;
     }

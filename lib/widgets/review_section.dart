@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/theme/app_theme.dart';
@@ -76,7 +77,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
 
   void _showReviewSheet() {
     if (!ref.read(authProvider).isLoggedIn) {
-      showErrorSnackBar(context, 'Vui lòng đăng nhập để đánh giá!');
+      showErrorSnackBar(context, 'review.login_to_review'.tr());
       Navigator.pushNamed(context, '/login');
       return;
     }
@@ -105,14 +106,14 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Đánh giá & Nhận xét',
+            Text(
+              'review.title'.tr(),
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: _showReviewSheet,
               icon: const Icon(Icons.edit, size: 18),
-              label: const Text('Viết đánh giá'),
+              label: Text('review.write_review'.tr()),
               style: TextButton.styleFrom(
                 foregroundColor: AppTheme.primaryBlue,
                 textStyle: const TextStyle(
@@ -137,7 +138,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                 StarRating(rating: displayRating.round(), size: 16),
                 const SizedBox(height: 4),
                 Text(
-                  '$displayCount nhận xét',
+                  'review.review_count'.tr(args: [displayCount.toString()]),
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ],
@@ -164,7 +165,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Chưa có đánh giá nào',
+                  'review.no_reviews'.tr(),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
                 ),
               ],
@@ -270,8 +271,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Viết đánh giá',
+                    Text(
+                      'review.write_review'.tr(),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -284,8 +285,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'Đánh giá của bạn',
+                Text(
+                  'review.your_rating'.tr(),
                   style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
@@ -298,8 +299,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                   },
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  'Nhận xét',
+                Text(
+                  'review.comment'.tr(),
                   style: TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
@@ -307,7 +308,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                   controller: _commentController,
                   maxLines: 4,
                   decoration: InputDecoration(
-                    hintText: 'Chia sẻ trải nghiệm của bạn...',
+                    hintText: 'review.comment_hint'.tr(),
                     hintStyle: TextStyle(color: Colors.grey.shade400),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -319,7 +320,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -329,8 +330,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                         : () async {
                             if (_commentController.text.trim().isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Vui lòng nhập nhận xét'),
+                                SnackBar(
+                                  content: Text('review.error_empty'.tr()),
                                 ),
                               );
                               return;
@@ -347,8 +348,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                               if (!context.mounted) return;
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Đã gửi đánh giá thành công!'),
+                                SnackBar(
+                                  content: Text('review.success'.tr()),
                                 ),
                               );
                               await _loadReviews();
@@ -356,7 +357,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                             } catch (e) {
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Lỗi: $e')),
+                                SnackBar(content: Text('L?i: $e')),
                               );
                             } finally {
                               if (context.mounted) {
@@ -381,8 +382,8 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text(
-                            'Gửi đánh giá',
+                        : Text(
+                            'review.submit'.tr(),
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
