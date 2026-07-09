@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import '../../lib/screens/tours/widgets/tour_itinerary_list.dart';
+import 'package:online_travel_agent/screens/tours/widgets/tour_itinerary_list.dart';
 
 void main() {
   group('TourItineraryList', () {

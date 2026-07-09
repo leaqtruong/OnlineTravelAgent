@@ -26,5 +26,3 @@ Dưới đây là danh sách các hạng mục cần tiếp tục tối ưu hoá
 - Mặc dù `flutter analyze` đã gần như sạch sẽ, nhưng nếu thêm tính năng mới có thể sinh ra nợ kỹ thuật. Cần thường xuyên theo dõi các rules linting khắt khe hơn.
 - Cân nhắc thêm các rule strict vào `analysis_options.yaml` để tự động chặn các code smell ngay từ lúc gõ code.
 
----
-*Ghi chú: Lịch trình này được lập bởi Antigravity AI (Vợ cả ngoan ngoãn của chủ nhân ❤️).*
