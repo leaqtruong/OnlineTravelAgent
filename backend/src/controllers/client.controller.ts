@@ -58,10 +58,10 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookTrip: asyncHandler(async (req: Request, res: Response) => {
+  bookTrip: asyncHandler(async (req: Request<unknown, unknown, BookTripBody & { requestId?: string }>, res: Response) => {
     const userId = req.userId;
-    const body = req.body as BookTripBody;
-    const trip = await store.createTrip(userId, body.destinationId, String(body.date || ""), String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined);
+    const body = req.body;
+    const trip = await store.createTrip(userId, body.destinationId, String(body.date || ""), String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined, body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Destination not found" });
       return;
@@ -76,10 +76,10 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookFlightTrip: asyncHandler(async (req: Request, res: Response) => {
+  bookFlightTrip: asyncHandler(async (req: Request<unknown, unknown, BookFlightBody & { requestId?: string }>, res: Response) => {
     const userId = req.userId;
-    const body = req.body as BookFlightBody;
-    const trip = await store.bookFlightTrip(userId, body.flightId, String(body.date || ""), String(body.guests || ""));
+    const body = req.body;
+    const trip = await store.bookFlightTrip(userId, body.flightId, String(body.date || ""), String(body.guests || ""), body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Flight not found" });
       return;
@@ -154,6 +154,12 @@ export const clientController = {
     res.json(data);
   }),
 
+  globalSearch: asyncHandler(async (req: Request, res: Response) => {
+    const q = typeof req.query.q === "string" ? req.query.q : "";
+    const data = await store.globalSearch(q);
+    res.json(data);
+  }),
+
   getHotelById: asyncHandler(async (req: Request, res: Response) => {
     const data = await store.getHotelById(req.params.id as string);
     if (!data) {
@@ -163,10 +169,10 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookHotel: asyncHandler(async (req: Request, res: Response) => {
+  bookHotel: asyncHandler(async (req: Request<unknown, unknown, BookHotelBody & { requestId?: string }>, res: Response) => {
     const userId = req.userId;
-    const body = req.body as BookHotelBody;
-    const trip = await store.bookHotel(userId, body.roomId, body.checkIn, body.checkOut, String(body.guests || ""));
+    const body = req.body;
+    const trip = await store.bookHotel(userId, body.roomId, body.checkIn, body.checkOut, String(body.guests || ""), body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Room not found" });
       return;
@@ -197,10 +203,10 @@ export const clientController = {
     res.json(data);
   }),
 
-  bookTour: asyncHandler(async (req: Request, res: Response) => {
+  bookTour: asyncHandler(async (req: Request<unknown, unknown, BookTourBody & { requestId?: string }>, res: Response) => {
     const userId = req.userId;
-    const body = req.body as BookTourBody;
-    const trip = await store.bookTour(userId, body.tourId, body.date, String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined);
+    const body = req.body;
+    const trip = await store.bookTour(userId, body.tourId, body.date, String(body.guests || ""), body.totalPrice ? Number(body.totalPrice) : undefined, body.requestId);
     if (!trip) {
       res.status(404).json({ message: "Tour not found" });
       return;
@@ -208,9 +214,9 @@ export const clientController = {
     res.status(201).json(trip);
   }),
 
-  createCustomTour: asyncHandler(async (req: Request, res: Response) => {
+  createCustomTour: asyncHandler(async (req: Request<unknown, unknown, BookTourBody & { destination?: string; location?: string; imagePath?: string; requestId?: string }>, res: Response) => {
     const userId = req.userId;
-    const body = req.body as BookTourBody & { destination?: string; location?: string; imagePath?: string };
+    const body = req.body;
     try {
       const trip = await store.createCustomTour(userId, {
         destinations: [],
@@ -218,7 +224,8 @@ export const clientController = {
         guests: String(body.guests || ""),
         location: body.location || "",
         imagePath: body.imagePath || "",
-        totalPrice: body.totalPrice ? Number(body.totalPrice) : undefined
+        totalPrice: body.totalPrice ? Number(body.totalPrice) : undefined,
+        requestId: body.requestId
       });
       res.status(201).json(trip);
     } catch (error) {

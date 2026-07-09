@@ -39,8 +39,18 @@ const server = app.listen(env.port, () => {
         // Ignore unauthorized room join attempts.
       }
     });
+    socket.on("leave_trip_room", (tripId) => {
+      if (typeof tripId === "string" && tripId) {
+        socket.leave(`trip_${tripId}`);
+      }
+    });
     socket.on("join_tour_room", (tourId) => {
       socket.join(`tour_${tourId}`);
+    });
+    socket.on("leave_tour_room", (tourId) => {
+      if (typeof tourId === "string" && tourId) {
+        socket.leave(`tour_${tourId}`);
+      }
     });
   });
 

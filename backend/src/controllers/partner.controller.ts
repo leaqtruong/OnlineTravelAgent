@@ -79,10 +79,11 @@ export const partnerController = {
     const id = req.params.id as string;
     const hotel = await prisma.hotel.findFirst({ where: { id, partnerId } });
     if (!hotel) return res.status(404).json({ message: "Not found or unauthorized" });
+    const { id: _id, partnerId: _partnerId, ...data } = req.body;
     
     const updated = await prisma.hotel.update({
       where: { id },
-      data: req.body
+      data
     });
     res.json(updated);
   }),
@@ -102,10 +103,11 @@ export const partnerController = {
     const id = req.params.id as string;
     const tour = await prisma.tourPackage.findFirst({ where: { id, partnerId } });
     if (!tour) return res.status(404).json({ message: "Not found or unauthorized" });
+    const { id: _id, partnerId: _partnerId, ...data } = req.body;
     
     const updated = await prisma.tourPackage.update({
       where: { id },
-      data: req.body
+      data
     });
     res.json(updated);
   }),

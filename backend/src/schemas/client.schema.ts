@@ -51,12 +51,14 @@ export const bookTripSchema = z.object({
   date: requiredText("date"),
   guests: requiredText("guests"),
   totalPrice: optionalMoney,
+  requestId: optionalText,
 });
 
 export const bookFlightSchema = z.object({
   flightId: requiredText("flightId"),
   date: requiredText("date"),
   guests: requiredText("guests"),
+  requestId: optionalText,
 });
 
 export const documentSchema = z.object({
@@ -72,6 +74,7 @@ export const bookHotelSchema = z
     checkIn: requiredText("checkIn"),
     checkOut: requiredText("checkOut"),
     guests: requiredText("guests"),
+    requestId: optionalText,
   })
   .superRefine((value, ctx) => {
     const checkIn = parseDateInput(value.checkIn);
@@ -109,6 +112,7 @@ export const bookTourSchema = z.object({
   date: requiredText("date"),
   guests: requiredText("guests"),
   totalPrice: optionalMoney,
+  requestId: optionalText,
 });
 
 export const customTourSchema = z.object({
@@ -123,6 +127,7 @@ export const customTourSchema = z.object({
   hotelIds: z.array(z.string().min(1)).optional(),
   roomId: optionalText,
   totalPrice: optionalMoney,
+  requestId: optionalText,
 });
 
 export const reviewSchema = z.object({

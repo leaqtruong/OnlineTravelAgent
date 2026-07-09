@@ -76,6 +76,10 @@ export const authController = {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
+    if (process.env.ALLOW_SELF_PARTNER_SIGNUP !== "true") {
+      res.status(403).json({ message: "Partner signup requires admin approval" });
+      return;
+    }
     const user = await prisma.user.update({
       where: { id: userId },
       data: { role: 'PARTNER' }

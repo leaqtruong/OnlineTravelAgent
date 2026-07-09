@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import request from "supertest";
+
+vi.hoisted(() => {
+  process.env.ADMIN_PASSWORD = "test-admin_password";
+});
+
 import { app } from "../src/app.js";
 
 const adminAuth = `Basic ${Buffer.from("admin:test-admin_password").toString("base64")}`;

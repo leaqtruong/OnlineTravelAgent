@@ -108,12 +108,14 @@ export interface BookTripBody {
   date?: string;
   guests?: string;
   totalPrice?: number;
+  requestId?: string;
 }
 
 export interface BookFlightBody {
   flightId: string;
   date: string;
   guests: string;
+  requestId?: string;
 }
 
 export interface BookHotelBody {
@@ -121,6 +123,7 @@ export interface BookHotelBody {
   checkIn: string;
   checkOut: string;
   guests: string;
+  requestId?: string;
 }
 
 export interface BookTourBody {
@@ -128,6 +131,7 @@ export interface BookTourBody {
   date: string;
   guests: string;
   totalPrice?: number;
+  requestId?: string;
 }
 
 export interface CreateReviewBody {

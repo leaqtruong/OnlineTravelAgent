@@ -17,6 +17,9 @@ final tripScheduleProvider = FutureProvider.autoDispose
       });
 
       void onScheduleUpdated(dynamic data) {
+        if (data is Map && data['tripId'] != null && data['tripId'] != tripId) {
+          return;
+        }
         ref.invalidateSelf();
       }
 
@@ -24,6 +27,7 @@ final tripScheduleProvider = FutureProvider.autoDispose
 
       ref.onDispose(() {
         socket.off('schedule_updated', onScheduleUpdated);
+        socket.emit('leave_trip_room', tripId);
       });
 
       return apiService.fetchTripSchedule(tripId);

@@ -1,11 +1,16 @@
 import crypto from "crypto";
 import prisma from "../config/prisma.js";
 
-const VNP_TMN_CODE = process.env.VNP_TMN_CODE ?? "JYKVVFIV";
-const VNP_HASH_SECRET = process.env.VNP_HASH_SECRET ?? "HGDF3AQT9WD7IF36CX0PXVQ943F7PL35";
 const VNP_URL = process.env.VNP_URL ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 const VNP_RETURN_URL = process.env.VNP_RETURN_URL ?? "http://localhost:3000/api/payment/vnpay/return";
 const VNP_API_URL = process.env.VNP_API_URL ?? "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
+
+function readVnpayCredentials(): { tmnCode: string; hashSecret: string } | null {
+  const tmnCode = process.env.VNP_TMN_CODE?.trim();
+  const hashSecret = process.env.VNP_HASH_SECRET?.trim();
+  if (!tmnCode || !hashSecret) return null;
+  return { tmnCode, hashSecret };
+}
 
 function sortObject(obj: Record<string, string>): Record<string, string> {
   const sorted: Record<string, string> = {};
@@ -27,6 +32,11 @@ export const vnpayService = {
     ipAddr: string;
     locale?: string;
   }): { paymentUrl: string; txnRef: string } {
+    const credentials = readVnpayCredentials();
+    if (!credentials) {
+      throw new Error("VNPAY is not configured");
+    }
+
     const txnRef = `${params.tripId}-${Date.now()}`;
     const createDate = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
     const expireDate = new Date(Date.now() + 15 * 60 * 1000)
@@ -35,7 +45,7 @@ export const vnpayService = {
     const vnpParams: Record<string, string> = {
       vnp_Version: "2.1.0",
       vnp_Command: "pay",
-      vnp_TmnCode: VNP_TMN_CODE,
+      vnp_TmnCode: credentials.tmnCode,
       vnp_Amount: String(Math.round(params.amount * 100)),
       vnp_CreateDate: createDate,
       vnp_CurrCode: "VND",
@@ -50,7 +60,7 @@ export const vnpayService = {
 
     const sortedParams = sortObject(vnpParams);
     const signData = new URLSearchParams(sortedParams).toString();
-    const secureHash = hmacSHA512(VNP_HASH_SECRET, signData);
+    const secureHash = hmacSHA512(credentials.hashSecret, signData);
     sortedParams["vnp_SecureHash"] = secureHash;
 
     const paymentUrl = `${VNP_URL}?${new URLSearchParams(sortedParams).toString()}`;
@@ -64,6 +74,17 @@ export const vnpayService = {
     transactionNo: string;
     amount: number;
   } {
+    const credentials = readVnpayCredentials();
+    if (!credentials) {
+      return {
+        isValid: false,
+        txnRef: query["vnp_TxnRef"] ?? "",
+        responseCode: query["vnp_ResponseCode"] ?? "99",
+        transactionNo: query["vnp_TransactionNo"] ?? "",
+        amount: Number.parseInt(query["vnp_Amount"] ?? "0", 10) / 100,
+      };
+    }
+
     const secureHash = query["vnp_SecureHash"];
     const params = { ...query };
     delete params["vnp_SecureHash"];
@@ -71,7 +92,7 @@ export const vnpayService = {
 
     const sortedParams = sortObject(params);
     const signData = new URLSearchParams(sortedParams).toString();
-    const computedHash = hmacSHA512(VNP_HASH_SECRET, signData);
+    const computedHash = hmacSHA512(credentials.hashSecret, signData);
 
     return {
       isValid: computedHash === secureHash,
@@ -91,10 +112,13 @@ export const vnpayService = {
     transactionType: string;
     bankCode: string;
   } | null> {
+    const credentials = readVnpayCredentials();
+    if (!credentials) return null;
+
     const vnpRequestId = `${Date.now()}`;
     const vnpVersion = "2.1.0";
     const vnpCommand = "querydr";
-    const vnpTmnCode = VNP_TMN_CODE;
+    const vnpTmnCode = credentials.tmnCode;
     const vnpTxnRef = txnRef;
     const vnpOrderInfo = "Kiem tra giao dich";
     const vnpTransDate = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
@@ -103,7 +127,7 @@ export const vnpayService = {
     const vnpIpAddr = "127.0.0.1";
 
     const data = `${vnpRequestId}|${vnpVersion}|${vnpCommand}|${vnpTmnCode}|${vnpTxnRef}|${vnpTransDate}|${vnpCreateDate}|${vnpCreateBy}|${vnpOrderInfo}|${vnpIpAddr}`;
-    const secureHash = hmacSHA512(VNP_HASH_SECRET, data);
+    const secureHash = hmacSHA512(credentials.hashSecret, data);
 
     const body = {
       vnp_RequestId: vnpRequestId,

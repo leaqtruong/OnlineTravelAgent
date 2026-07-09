@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import helmet from "helmet";
 import multer from "multer";
+import compression from "compression";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { routes } from "./routes/index.js";
@@ -17,6 +18,9 @@ const partnerDir = join(__dirname, "../partner");
 export const app = express();
 
 app.set("trust proxy", env.trustProxy);
+
+// Nén phản hồi HTTP để tối ưu payload
+app.use(compression());
 
 // Security headers
 app.use(helmet({

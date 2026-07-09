@@ -40,6 +40,9 @@ final tourScheduleProvider = FutureProvider.autoDispose
       socket.emit('join_tour_room', tourId);
 
       void onScheduleUpdated(dynamic data) {
+        if (data is Map && data['tourId'] != null && data['tourId'] != tourId) {
+          return;
+        }
         ref.invalidateSelf();
       }
 
@@ -47,6 +50,7 @@ final tourScheduleProvider = FutureProvider.autoDispose
 
       ref.onDispose(() {
         socket.off('schedule_updated', onScheduleUpdated);
+        socket.emit('leave_tour_room', tourId);
       });
 
       return apiService.fetchTourSchedule(tourId);

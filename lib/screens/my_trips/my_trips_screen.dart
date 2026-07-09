@@ -184,7 +184,9 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
             (t) =>
                 t.isCustom ||
                 t.id.startsWith('trip_tour_') ||
-                t.id.startsWith('trip_custom_'),
+                t.id.startsWith('trip-tour-') ||
+                t.id.startsWith('trip_custom_') ||
+                t.id.startsWith('trip-custom-'),
           )
           .toList();
     } else if (_activeProductFilter == 'place') {
@@ -193,7 +195,9 @@ class _MyTripsScreenState extends ConsumerState<MyTripsScreen>
             (t) =>
                 !t.isCustom &&
                 !t.id.startsWith('trip_tour_') &&
+                !t.id.startsWith('trip-tour-') &&
                 !t.id.startsWith('trip_custom_') &&
+                !t.id.startsWith('trip-custom-') &&
                 t.hotelId == null &&
                 !t.id.startsWith('trip-hotel-') &&
                 t.flightId == null &&

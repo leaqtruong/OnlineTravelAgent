@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' as drift;
 import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:uuid/uuid.dart';
 
 import '../database/app_database.dart';
 
@@ -106,6 +107,23 @@ class TravelApiService {
 
   Uri _uri(String path) => Uri.parse('$_baseUrl$path');
 
+  Uri _uriWithQuery(String path, Map<String, String?> query) {
+    return Uri.parse('$_baseUrl${_pathWithQuery(path, query)}');
+  }
+
+  String _pathWithQuery(String path, Map<String, String?> query) {
+    final filtered = <String, String>{};
+    query.forEach((key, value) {
+      if (value != null && value.isNotEmpty) {
+        filtered[key] = value;
+      }
+    });
+    return Uri(
+      path: path,
+      queryParameters: filtered.isEmpty ? null : filtered,
+    ).toString();
+  }
+
   Map<String, String> get _headers {
     final headers = {'Content-Type': 'application/json'};
     if (token != null && token!.isNotEmpty) {
@@ -176,9 +194,10 @@ class TravelApiService {
 
   Future<Map<String, dynamic>> _postJson(
     String path,
-    Map<String, dynamic> body,
-  ) async {
-    final response = await _sendRequest('POST', path, body);
+    Map<String, dynamic> body, {
+    bool queueOnFailure = true,
+  }) async {
+    final response = await _sendRequest('POST', path, body, queueOnFailure);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
@@ -234,9 +253,10 @@ class TravelApiService {
       'destinationId': destinationId,
       'date': date,
       'guests': guests,
+      'requestId': const Uuid().v4(),
     };
     if (totalPrice != null) body['totalPrice'] = totalPrice;
-    final data = await _postJson('/api/trips/book', body);
+    final data = await _postJson('/api/trips/book', body, queueOnFailure: false);
     return Trip.fromJson(data);
   }
 
@@ -248,21 +268,28 @@ class TravelApiService {
   Future<List<Flight>> searchFlights(String? departure, String? arrival) async {
     await _ensureTokenLoaded();
     return _safeCall(() async {
-      String query = '';
-      if (departure != null && arrival != null) {
-        query = '?departure=$departure&arrival=$arrival';
-      } else if (departure != null) {
-        query = '?departure=$departure';
-      } else if (arrival != null) {
-        query = '?arrival=$arrival';
-      }
       final response = await http
-          .get(_uri('/api/flights/search$query'), headers: _headers)
+          .get(
+            _uriWithQuery('/api/flights/search', {
+              'departure': departure,
+              'arrival': arrival,
+            }),
+            headers: _headers,
+          )
           .timeout(AppTheme.apiTimeout);
       _throwIfError(response);
       final List<dynamic> raw = jsonDecode(response.body);
       return raw.map((e) => Flight.fromJson(e)).toList();
     });
+  }
+
+  Future<Map<String, List<dynamic>>> globalSearch(String query) async {
+    final data = await _getJson(_pathWithQuery('/api/search', {'q': query}));
+    return {
+      'hotels': _parseList(data['hotels'], Hotel.fromJson),
+      'tours': _parseList(data['tours'], TourPackage.fromJson),
+      'destinations': _parseList(data['destinations'], Destination.fromJson),
+    };
   }
 
   Future<Trip> bookFlight({
@@ -274,7 +301,8 @@ class TravelApiService {
       'flightId': flightId,
       'date': date,
       'guests': guests,
-    });
+      'requestId': const Uuid().v4(),
+    }, queueOnFailure: false);
     return Trip.fromJson(data);
   }
 
@@ -309,7 +337,10 @@ class TravelApiService {
     required String targetId,
   }) async {
     final data = await _getJson(
-      '/api/reviews?targetType=$targetType&targetId=$targetId',
+      _pathWithQuery('/api/reviews', {
+        'targetType': targetType,
+        'targetId': targetId,
+      }),
     );
     return ReviewResponse.fromJson(data);
   }
@@ -351,7 +382,8 @@ class TravelApiService {
       'checkIn': checkIn,
       'checkOut': checkOut,
       'guests': guests,
-    });
+      'requestId': const Uuid().v4(),
+    }, queueOnFailure: false);
     return Trip.fromJson(data);
   }
 
@@ -365,9 +397,10 @@ class TravelApiService {
       'tourId': tourId,
       'date': date,
       'guests': guests,
+      'requestId': const Uuid().v4(),
     };
     if (totalPrice != null) body['totalPrice'] = totalPrice;
-    final data = await _postJson('/api/tours/book', body);
+    final data = await _postJson('/api/tours/book', body, queueOnFailure: false);
     return Trip.fromJson(data);
   }
 
@@ -388,12 +421,13 @@ class TravelApiService {
       'date': date,
       'guests': guests,
       'imagePath': imagePath,
+      'requestId': const Uuid().v4(),
     };
     if (flightIds != null) body['flightIds'] = flightIds;
     if (hotelIds != null) body['hotelIds'] = hotelIds;
     if (roomId != null) body['roomId'] = roomId;
     if (totalPrice != null) body['totalPrice'] = totalPrice;
-    final data = await _postJson('/api/trips/custom-tour', body);
+    final data = await _postJson('/api/trips/custom-tour', body, queueOnFailure: false);
     return Trip.fromJson(data);
   }
 
@@ -418,7 +452,10 @@ class TravelApiService {
     await _ensureTokenLoaded();
     return _safeCall(() async {
       final response = await http
-          .get(_uri('/api/promo-codes/check?code=$code'), headers: _headers)
+          .get(
+            _uriWithQuery('/api/promo-codes/check', {'code': code}),
+            headers: _headers,
+          )
           .timeout(AppTheme.apiTimeout);
       _throwIfError(response);
       return jsonDecode(response.body) as Map<String, dynamic>;
@@ -438,7 +475,7 @@ class TravelApiService {
       'amount': amount,
       'orderInfo': orderInfo ?? 'Thanh toán đặt chỗ Online Travel Agent',
       'locale': locale ?? 'vn',
-    });
+    }, queueOnFailure: false);
   }
 
   Future<Map<String, dynamic>> checkPaymentStatus(String tripId) async {
@@ -456,7 +493,7 @@ class TravelApiService {
       'tripId': tripId,
       'amount': amount,
       'orderInfo': orderInfo ?? 'Thanh toán đặt chỗ Online Travel Agent',
-    });
+    }, queueOnFailure: false);
   }
 
   // ── Auth ──────────────────────────────────────────────────────────────

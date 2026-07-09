@@ -31,6 +31,40 @@ function generateId(prefix: string = ""): string {
   return prefix ? `${prefix}-${crypto.randomUUID()}` : crypto.randomUUID();
 }
 
+const allowedScheduleStatuses = new Set(["completed", "ongoing", "upcoming", "cancelled", "delayed"]);
+
+function isClockTime(value: string): boolean {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+
+function emitScheduleUpdated(req: Request, tripId: string) {
+  const io = req.app.get("io");
+  if (io) {
+    io.to(`trip_${tripId}`).emit("schedule_updated", { tripId });
+  }
+}
+
+function validateScheduleItemUpdate(body: UpdateScheduleItemBody): string | null {
+  if (body.startTime !== undefined && !isClockTime(body.startTime)) {
+    return "startTime must use HH:mm format";
+  }
+  if (body.endTime !== undefined && body.endTime !== null && body.endTime !== "" && !isClockTime(body.endTime)) {
+    return "endTime must use HH:mm format";
+  }
+  if (body.title !== undefined && !body.title.trim()) {
+    return "title is required";
+  }
+  if (
+    body.statusOverride !== undefined &&
+    body.statusOverride !== null &&
+    body.statusOverride !== "" &&
+    !allowedScheduleStatuses.has(body.statusOverride)
+  ) {
+    return "invalid schedule item statusOverride";
+  }
+  return null;
+}
+
 export const adminController = {
   getStats: asyncHandler(async (_: Request, res: Response) => {
     const [destinations, hotels, flights, tours, tripsUpcoming, tripsHistory] = await Promise.all([
@@ -267,27 +301,37 @@ export const adminController = {
   }),
 
   updateTripScheduleItem: asyncHandler(async (req: Request, res: Response) => {
+    const tripId = req.params.id as string;
     const itemId = req.params.itemId as string;
     const body = req.body as UpdateScheduleItemBody;
+    const validationError = validateScheduleItemUpdate(body);
+    if (validationError) {
+      res.status(400).json({ message: validationError });
+      return;
+    }
+
+    const existing = await prisma.tripScheduleItem.findFirst({
+      where: { id: itemId, day: { tripId } },
+      select: { id: true },
+    });
+    if (!existing) {
+      res.status(404).json({ message: "Item not found" });
+      return;
+    }
+
     const data: Record<string, any> = {};
     if (body.startTime !== undefined) data.startTime = body.startTime;
-    if (body.endTime !== undefined) data.endTime = body.endTime;
+    if (body.endTime !== undefined) data.endTime = body.endTime || null;
     if (body.title !== undefined) data.title = body.title;
-    if (body.description !== undefined) data.description = body.description;
-    if (body.locationName !== undefined) data.locationName = body.locationName;
+    if (body.description !== undefined) data.description = body.description || null;
+    if (body.locationName !== undefined) data.locationName = body.locationName || null;
     if (body.latitude !== undefined) data.latitude = body.latitude;
     if (body.longitude !== undefined) data.longitude = body.longitude;
     if (body.sortOrder !== undefined) data.sortOrder = body.sortOrder;
-    if (body.statusOverride !== undefined) data.statusOverride = body.statusOverride;
-    if (body.note !== undefined) data.note = body.note;
+    if (body.statusOverride !== undefined) data.statusOverride = body.statusOverride || null;
+    if (body.note !== undefined) data.note = body.note || null;
     const item = await prisma.tripScheduleItem.update({ where: { id: itemId }, data });
-    
-    // Emit real-time update
-    const tripDay = await prisma.tripScheduleDay.findUnique({ where: { id: item.dayId } });
-    const io = req.app.get("io");
-    if (io && tripDay) {
-      io.to(`trip_${tripDay.tripId}`).emit("schedule_updated");
-    }
+    emitScheduleUpdated(req, tripId);
     res.json(item);
   }),
 
@@ -301,11 +345,7 @@ export const adminController = {
       }
     });
 
-    // Emit real-time update
-    const io = req.app.get("io");
-    if (io) {
-      io.to(`trip_${tripId}`).emit("schedule_updated");
-    }
+    emitScheduleUpdated(req, tripId);
 
     res.status(201).json(update);
   }),
@@ -328,6 +368,7 @@ export const adminController = {
       res.status(404).json({ message: "Day not found" });
       return;
     }
+    emitScheduleUpdated(req, tripId);
     res.status(201).json(result);
   }),
 
@@ -339,6 +380,7 @@ export const adminController = {
       res.status(404).json({ message: "Item not found" });
       return;
     }
+    emitScheduleUpdated(req, tripId);
     res.json({ ok: true });
   }),
 
@@ -353,6 +395,7 @@ export const adminController = {
       res.status(404).json({ message: "Trip not found" });
       return;
     }
+    emitScheduleUpdated(req, tripId);
     res.status(201).json(result);
   }),
 
@@ -364,6 +407,7 @@ export const adminController = {
       res.status(404).json({ message: "Day not found" });
       return;
     }
+    emitScheduleUpdated(req, tripId);
     res.json({ ok: true });
   }),
 
@@ -380,6 +424,7 @@ export const adminController = {
       where: { id: dayId },
       data: { title: body.title ?? null },
     });
+    emitScheduleUpdated(req, tripId);
     res.json(updated);
   }),
 

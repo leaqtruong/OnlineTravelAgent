@@ -2,7 +2,8 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearchPostgres"]
 }
 
 datasource db {
@@ -66,6 +67,8 @@ model Trip {
 
   userId      String?  @map("user_id")
   user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  requestId   String?  @unique @map("request_id")
 
   promoCode   String?  @map("promo_code")
   discount    Float?   @default(0)

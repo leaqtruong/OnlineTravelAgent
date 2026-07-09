@@ -12,6 +12,7 @@ import '../destinations/destinations_screen.dart';
 import '../notifications/notifications_screen.dart';
 import '../tours/tour_detail_screen.dart';
 import '../tours/tours_screen.dart';
+import '../search/global_search_screen.dart';
 
 import 'widgets/popular_destination_card.dart';
 import 'widgets/recommended_tour_card.dart';
@@ -140,33 +141,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           color: AppTheme.backgroundGray,
           borderRadius: BorderRadius.circular(24),
         ),
-        child: ValueListenableBuilder<TextEditingValue>(
-          valueListenable: _searchController,
-          builder: (context, value, child) {
-            return TextField(
-              controller: _searchController,
-              onChanged: (text) =>
-                  ref.read(searchQueryProvider.notifier).update(text),
-              decoration: InputDecoration(
-                icon: const Icon(Icons.search, color: Colors.grey, size: 20),
-                hintText: tr('home.search_placeholder'),
-                hintStyle: TextStyle(
-                  color: Colors.grey.withValues(alpha: 0.6),
-                  fontSize: 14,
-                ),
-                border: InputBorder.none,
-                suffixIcon: value.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, size: 18),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(searchQueryProvider.notifier).update('');
-                        },
-                      )
-                    : null,
-              ),
+        child: TextField(
+          readOnly: true,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GlobalSearchScreen()),
             );
           },
+          decoration: InputDecoration(
+            icon: const Icon(Icons.search, color: Colors.grey, size: 20),
+            hintText: tr('home.search_placeholder'),
+            hintStyle: TextStyle(
+              color: Colors.grey.withValues(alpha: 0.6),
+              fontSize: 14,
+            ),
+            border: InputBorder.none,
+          ),
         ),
       ),
     );

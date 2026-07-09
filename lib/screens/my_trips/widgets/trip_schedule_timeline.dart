@@ -63,7 +63,18 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
     return hr * 60 + mn;
   }
 
-  String _getMilestoneStatus(List<TripScheduleItem> items, int index) {
+  DateTime? _parseScheduleDate(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  String _getMilestoneStatus(
+    TripScheduleDay day,
+    List<TripScheduleItem> items,
+    int index,
+  ) {
     final item = items[index];
     if (item.statusOverride != null && item.statusOverride!.isNotEmpty) {
       return item.statusOverride!;
@@ -78,6 +89,19 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
     if (statusLower == 'sắp tới' &&
         (_simulatedHour == null || _simulatedMinute == null)) {
       return 'upcoming';
+    }
+
+    final scheduleDate = _parseScheduleDate(day.date);
+    if (scheduleDate != null &&
+        (_simulatedHour == null || _simulatedMinute == null)) {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      if (scheduleDate.isBefore(today)) {
+        return 'completed';
+      }
+      if (scheduleDate.isAfter(today)) {
+        return 'upcoming';
+      }
     }
 
     // Process real-time or simulated tracking
@@ -343,7 +367,7 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
             ),
 
             // Timeline
-            _buildMilestonesTimeline(currentDay.items),
+            _buildMilestonesTimeline(currentDay),
           ],
         );
       },
@@ -445,7 +469,8 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
     );
   }
 
-  Widget _buildMilestonesTimeline(List<TripScheduleItem> items) {
+  Widget _buildMilestonesTimeline(TripScheduleDay day) {
+    final items = day.items;
     if (items.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(30),
@@ -471,7 +496,7 @@ class _TripScheduleTimelineState extends ConsumerState<TripScheduleTimeline> {
       children: List.generate(items.length, (index) {
         final item = items[index];
         final isLast = index == items.length - 1;
-        final status = _getMilestoneStatus(items, index);
+        final status = _getMilestoneStatus(day, items, index);
 
         Color dotColor;
         Color lineColor;

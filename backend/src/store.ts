@@ -2,6 +2,9 @@ import crypto from "crypto";
 import { Prisma } from "@prisma/client";
 import prisma from "./config/prisma.js";
 import { scheduleService } from "./services/schedule.service.js";
+import NodeCache from "node-cache";
+
+const cache = new NodeCache({ stdTTL: 300 }); // Cache 5 phút
 
 function generateId(prefix: string = ""): string {
   return prefix ? `${prefix}-${crypto.randomUUID()}` : crypto.randomUUID();
@@ -136,37 +139,53 @@ async function attachRealReviews<T extends { id: string }>(items: T[], targetTyp
 
 export const store = {
   async getBootstrap(userId?: string) {
-    const [categories, destinations, trips, documents, hotels, tourPackages] = await Promise.all([
-      prisma.category.findMany({ orderBy: { name: "asc" } }),
-      prisma.destination.findMany(),
+    let cachedBase = cache.get<{categories: string[], destinations: any[], hotels: any[], tourPackages: any[]}>("bootstrapBase");
+
+    if (!cachedBase) {
+      const [categories, destinations, hotels, tourPackages] = await Promise.all([
+        prisma.category.findMany({ orderBy: { name: "asc" } }),
+        prisma.destination.findMany(),
+        prisma.hotel.findMany(),
+        prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } }),
+      ]);
+
+      const normalizedDestinations = destinations.map((destination) => ({
+        ...destination,
+        category: normalizeCategoryName(destination.category),
+      }));
+
+      const [reviewedDestinations, realHotels, realTours] = await Promise.all([
+        attachRealReviews(normalizedDestinations, "destination"),
+        attachRealReviews(hotels, "hotel"),
+        attachRealReviews(tourPackages, "tour"),
+      ]);
+
+      cachedBase = {
+        categories: orderCategoryNames(categories),
+        destinations: reviewedDestinations,
+        hotels: realHotels,
+        tourPackages: realTours,
+      };
+      cache.set("bootstrapBase", cachedBase);
+    }
+
+    const [favoriteDestinationIds, trips, documents] = await Promise.all([
+      getFavoriteDestinationIds(userId),
       userId ? prisma.trip.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }) : Promise.resolve([]),
       userId ? prisma.documentItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }) : Promise.resolve([]),
-      prisma.hotel.findMany(),
-      prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } }),
     ]);
 
-    const normalizedDestinations = destinations.map((destination) => ({
-      ...destination,
-      category: normalizeCategoryName(destination.category),
-    }));
-    const [favoriteDestinationIds, reviewedDestinations, realHotels, realTours] = await Promise.all([
-      getFavoriteDestinationIds(userId),
-      attachRealReviews(normalizedDestinations, "destination"),
-      attachRealReviews(hotels, "hotel"),
-      attachRealReviews(tourPackages, "tour"),
-    ]);
-
-    const realDestinations = applyFavoriteState(reviewedDestinations, favoriteDestinationIds);
+    const realDestinations = applyFavoriteState(cachedBase.destinations, favoriteDestinationIds);
     const realRecommended = realDestinations.filter((d) => d.isRecommended);
 
     return {
-      categories: orderCategoryNames(categories),
+      categories: cachedBase.categories,
       destinations: realDestinations,
       recommended: realRecommended,
       trips: trips.map(processTripStatus),
       documents,
-      hotels: realHotels,
-      tourPackages: realTours,
+      hotels: cachedBase.hotels,
+      tourPackages: cachedBase.tourPackages,
     };
   },
 
@@ -187,18 +206,71 @@ export const store = {
   },
 
   async searchHotels(query: string) {
+    if (!query.trim()) return [];
+    const formattedQuery = query.trim().split(/\s+/).join(' | ');
     const hotels = await prisma.hotel.findMany({
       where: {
         OR: [
+          { name: { search: formattedQuery } },
+          { location: { search: formattedQuery } },
           { name: { contains: query, mode: "insensitive" } },
-          { location: { contains: query, mode: "insensitive" } },
         ],
       },
+      take: 10,
     });
     return attachRealReviews(hotels, "hotel");
   },
 
-  async bookHotel(userId: string | undefined, roomId: string, checkIn: string, checkOut: string, guests: string) {
+  async globalSearch(query: string) {
+    if (!query.trim()) return { hotels: [], tours: [], destinations: [] };
+    const formattedQuery = query.trim().split(/\s+/).join(' | ');
+    const [hotels, tours, destinations] = await Promise.all([
+      prisma.hotel.findMany({
+        where: {
+          OR: [
+            { name: { search: formattedQuery } },
+            { location: { search: formattedQuery } },
+            { name: { contains: query, mode: "insensitive" } },
+          ],
+        },
+        take: 5,
+      }),
+      prisma.tourPackage.findMany({
+        where: {
+          OR: [
+            { name: { search: formattedQuery } },
+            { description: { search: formattedQuery } },
+            { departure: { search: formattedQuery } },
+            { name: { contains: query, mode: "insensitive" } },
+          ],
+        },
+        take: 5,
+      }),
+      prisma.destination.findMany({
+        where: {
+          OR: [
+            { name: { search: formattedQuery } },
+            { location: { search: formattedQuery } },
+            { name: { contains: query, mode: "insensitive" } },
+          ],
+        },
+        take: 5,
+      }),
+    ]);
+    
+    return {
+      hotels: await attachRealReviews(hotels, "hotel"),
+      tours: await attachRealReviews(tours, "tour"),
+      destinations: await attachRealReviews(destinations, "destination"),
+    };
+  },
+
+  async bookHotel(userId: string | undefined, roomId: string, checkIn: string, checkOut: string, guests: string, requestId?: string) {
+    if (requestId) {
+      const existing = await prisma.trip.findUnique({ where: { requestId } });
+      if (existing) return existing;
+    }
+
     const room = await prisma.room.findUnique({
       where: { id: roomId },
       include: { hotel: true },
@@ -218,6 +290,7 @@ export const store = {
         status: "Sắp tới",
         imagePath: room.hotel.imagePath,
         isUpcoming: true,
+        requestId,
       },
     });
   },
@@ -246,7 +319,12 @@ export const store = {
     });
   },
 
-  async bookTour(userId: string | undefined, tourId: string, date: string, guests: string, totalPrice?: number) {
+  async bookTour(userId: string | undefined, tourId: string, date: string, guests: string, totalPrice?: number, requestId?: string) {
+    if (requestId) {
+      const existing = await prisma.trip.findUnique({ where: { requestId } });
+      if (existing) return existing;
+    }
+
     const tour = await prisma.tourPackage.findUnique({ where: { id: tourId } });
     if (!tour) return null;
 
@@ -263,6 +341,7 @@ export const store = {
         imagePath: tour.imagePath,
         isUpcoming: true,
         totalPrice: totalPrice,
+        requestId,
       },
     });
 
@@ -296,7 +375,12 @@ export const store = {
   },
 
 
-  async createCustomTour(userId: string | undefined, data: { destinations: string[]; date: string; guests: string; location: string; imagePath: string; totalPrice?: number }) {
+  async createCustomTour(userId: string | undefined, data: { destinations: string[]; date: string; guests: string; location: string; imagePath: string; totalPrice?: number; requestId?: string }) {
+    if (data.requestId) {
+      const existing = await prisma.trip.findUnique({ where: { requestId: data.requestId } });
+      if (existing) return existing;
+    }
+
     const tripId = generateId("trip-custom");
     const trip = await prisma.trip.create({
       data: {
@@ -311,6 +395,7 @@ export const store = {
         isUpcoming: true,
         totalPrice: data.totalPrice,
         isCustom: true,
+        requestId: data.requestId,
       },
     });
 
@@ -361,7 +446,12 @@ export const store = {
     return withReviews;
   },
 
-  async createTrip(userId: string | undefined, destinationId: string, date: string, guests: string, totalPrice?: number) {
+  async createTrip(userId: string | undefined, destinationId: string, date: string, guests: string, totalPrice?: number, requestId?: string) {
+    if (requestId) {
+      const existing = await prisma.trip.findUnique({ where: { requestId } });
+      if (existing) return existing;
+    }
+
     const destination = await prisma.destination.findUnique({ where: { id: destinationId } });
     if (!destination) return null;
 
@@ -378,6 +468,7 @@ export const store = {
         imagePath: destination.imagePath,
         isUpcoming: true,
         totalPrice: totalPrice,
+        requestId,
       },
     });
 
@@ -408,7 +499,12 @@ export const store = {
     return prisma.flight.findMany({ where });
   },
 
-  async bookFlightTrip(userId: string | undefined, flightId: string, date: string, guests: string) {
+  async bookFlightTrip(userId: string | undefined, flightId: string, date: string, guests: string, requestId?: string) {
+    if (requestId) {
+      const existing = await prisma.trip.findUnique({ where: { requestId } });
+      if (existing) return existing;
+    }
+
     const flight = await prisma.flight.findUnique({ where: { id: flightId } });
     if (!flight) {
       return null;
@@ -426,6 +522,7 @@ export const store = {
         status: "Sắp tới",
         imagePath: flight.airlineLogo,
         isUpcoming: true,
+        requestId,
       },
     });
   },

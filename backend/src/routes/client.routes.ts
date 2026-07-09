@@ -16,6 +16,9 @@ export const clientRouter = Router();
 
 clientRouter.get("/bootstrap", optionalAuth, clientController.getBootstrap);
 
+// Global Search
+clientRouter.get("/search", clientController.globalSearch);
+
 // Favorites
 clientRouter.get("/favorites", clientAuth, clientController.getFavorites);
 clientRouter.patch("/destinations/:id/favorite", clientAuth, clientController.updateFavorite);

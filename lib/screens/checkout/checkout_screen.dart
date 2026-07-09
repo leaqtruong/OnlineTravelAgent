@@ -198,7 +198,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     destinationId: widget.destination.id,
                     date: dateString,
                     guests: guestString,
-                    totalPrice: _includeGuide ? _total : null,
+                    totalPrice: _total,
                   );
             },
           ),

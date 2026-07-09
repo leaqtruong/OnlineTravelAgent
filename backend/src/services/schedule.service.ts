@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../config/prisma.js";
 
 export type ScheduleSourceType = "tour" | "destination";
@@ -111,7 +112,7 @@ function assertItems(days: ScheduleDayInput[] = []) {
   }
 }
 
-async function createTemplateDays(tx: any, templateId: string, days: ScheduleDayInput[] = []) {
+async function createTemplateDays(tx: Prisma.TransactionClient, templateId: string, days: ScheduleDayInput[] = []) {
   for (const day of days) {
     const createdDay = await tx.scheduleTemplateDay.create({
       data: {
@@ -139,7 +140,7 @@ async function createTemplateDays(tx: any, templateId: string, days: ScheduleDay
   }
 }
 
-async function createTripDays(tx: any, tripId: string, days: ScheduleDayInput[] = []) {
+async function createTripDays(tx: Prisma.TransactionClient, tripId: string, days: ScheduleDayInput[] = []) {
   for (const day of days) {
     const createdDay = await tx.tripScheduleDay.create({
       data: {
