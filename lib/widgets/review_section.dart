@@ -108,7 +108,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
           children: [
             Text(
               'review.title'.tr(),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             TextButton.icon(
               onPressed: _showReviewSheet,
@@ -273,7 +273,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                   children: [
                     Text(
                       'review.write_review'.tr(),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -287,7 +287,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                 const SizedBox(height: 16),
                 Text(
                   'review.your_rating'.tr(),
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 StarRating(
@@ -301,7 +301,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                 const SizedBox(height: 20),
                 Text(
                   'review.comment'.tr(),
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
+                  style: const TextStyle(fontSize: 13, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 TextField(
@@ -320,7 +320,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -384,7 +384,7 @@ class _ReviewSectionState extends ConsumerState<ReviewSection> {
                           )
                         : Text(
                             'review.submit'.tr(),
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),

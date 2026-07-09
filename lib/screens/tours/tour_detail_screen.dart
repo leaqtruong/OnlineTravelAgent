@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../models/tour_package.dart';
@@ -396,15 +395,15 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.stars,
                                       color: Color(0xFFFF9800),
                                       size: 16,
                                     ),
-                                    SizedBox(width: 6),
+                                    const SizedBox(width: 6),
                                     Text(
                                       'tour_detail.best_seller'.tr(),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: Color(0xFFFF9800),
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -473,7 +472,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             // B. Selection Section: Dates & Guests
                             Text(
                               'tour_detail.itinerary_and_booking'.tr(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textBlack,
@@ -544,7 +543,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                               children: [
                                                 Text(
                                                   'tour_detail.departure_date'.tr(),
-                                                  style: TextStyle(
+                                                  style: const TextStyle(
                                                     color: Colors.grey,
                                                     fontSize: 11,
                                                   ),
@@ -616,7 +615,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                           children: [
                                             Text(
                                               'tour_detail.guests_count'.tr(),
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                 color: Colors.grey,
                                                 fontSize: 10,
                                               ),
@@ -661,7 +660,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             // C. Description Section
                             Text(
                               'tour_detail.introduction'.tr(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textBlack,
@@ -713,7 +712,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                         children: [
                                           Text(
                                             'tour_detail.tour_guide'.tr(),
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14,
                                             ),
@@ -750,7 +749,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             // E. Inclusions Grid (Dịch vụ bao gồm)
                             Text(
                               'tour_detail.inclusions'.tr(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textBlack,
@@ -860,7 +859,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                       children: [
                                         Text(
                                           'tour_detail.detailed_itinerary'.tr(),
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
                                             color: AppTheme.textBlack,
@@ -881,7 +880,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                                     children: [
                                       Text(
                                         'tour_detail.detailed_itinerary'.tr(),
-                                        style: TextStyle(
+                                        style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
                                           color: AppTheme.textBlack,
@@ -897,7 +896,7 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             // G. Route Map
                             Text(
                               'tour_detail.location_route'.tr(),
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.textBlack,
@@ -1122,14 +1121,14 @@ class _TourDetailScreenState extends ConsumerState<TourDetailScreen> {
                             children: [
                               Text(
                                 'tour_detail.book_now'.tr(),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
                               ),
-                              SizedBox(width: 6),
-                              Icon(
+                              const SizedBox(width: 6),
+                              const Icon(
                                 Icons.arrow_forward_rounded,
                                 color: Colors.white,
                                 size: 18,

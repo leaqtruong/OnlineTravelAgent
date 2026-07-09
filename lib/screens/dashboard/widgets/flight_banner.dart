@@ -52,7 +52,7 @@ class FlightBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'dashboard.flight_banner_title',
                       style: TextStyle(
                         color: Colors.white,
@@ -60,10 +60,10 @@ class FlightBanner extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ).tr(),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       'dashboard.flight_banner_subtitle'.tr(),
-                      style: TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
