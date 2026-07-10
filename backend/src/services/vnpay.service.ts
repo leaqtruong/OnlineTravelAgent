@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import prisma from "../config/prisma.js";
 import { PaymentStatus } from "@prisma/client";
+import { memoryDb } from "../store/memory-db.js";
 
 const VNP_URL = process.env.VNP_URL ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
 const VNP_RETURN_URL = process.env.VNP_RETURN_URL ?? "http://localhost:3000/api/payment/vnpay/return";
@@ -167,22 +168,43 @@ export const vnpayService = {
   },
 
   async updateTripPaymentStatus(tripId: string, status: PaymentStatus, txnRef?: string, txnNumber?: string) {
-    return prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        paymentStatus: status,
+    try {
+      return await prisma.trip.update({
+        where: { id: tripId },
+        data: {
+          paymentStatus: status,
+          paymentMethod: "vnpay",
+          ...(txnRef ? { paymentTxnRef: txnRef } : {}),
+          ...(txnNumber ? { paymentTxnNumber: txnNumber } : {}),
+        },
+      });
+    } catch {
+      memoryDb.updateTrip(tripId, {
+        paymentStatus: status as any,
         paymentMethod: "vnpay",
-        ...(txnRef ? { paymentTxnRef: txnRef } : {}),
-        ...(txnNumber ? { paymentTxnNumber: txnNumber } : {}),
-      },
-    });
+        paymentTxnRef: txnRef || null,
+        paymentTxnNumber: txnNumber || null,
+      });
+    }
   },
 
   async getTripPaymentStatus(tripId: string) {
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      select: { paymentStatus: true, paymentMethod: true, paymentTxnRef: true, paymentTxnNumber: true, status: true },
-    });
-    return trip;
+    try {
+      const trip = await prisma.trip.findUnique({
+        where: { id: tripId },
+        select: { paymentStatus: true, paymentMethod: true, paymentTxnRef: true, paymentTxnNumber: true, status: true },
+      });
+      return trip;
+    } catch {
+      const trip = memoryDb.findTripById(tripId);
+      if (!trip) return null;
+      return {
+        paymentStatus: trip.paymentStatus,
+        paymentMethod: trip.paymentMethod,
+        paymentTxnRef: trip.paymentTxnRef,
+        paymentTxnNumber: trip.paymentTxnNumber,
+        status: trip.status,
+      };
+    }
   },
 };

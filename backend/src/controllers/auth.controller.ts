@@ -4,22 +4,51 @@ import prisma from "../config/prisma.js";
 import { passwordService } from "../services/password.service.js";
 import { tokenService } from "../services/token.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { memoryDb } from "../store/memory-db.js";
 
-async function buildAuthResponse(user: { id: string; name: string; email: string; role: Role; password: string; createdAt: Date; updatedAt: Date }) {
-  const { password: _, ...userWithoutPassword } = user;
+type SafeUser = { id: string; name: string; email: string; role: Role; createdAt: Date; updatedAt: Date };
+
+async function buildAuthResponse(user: SafeUser) {
   const tokens = await tokenService.issueTokenPair({ id: user.id, role: user.role });
 
   return {
-    user: userWithoutPassword,
+    user,
     token: tokens.accessToken,
     refreshToken: tokens.refreshToken,
     expiresIn: tokens.expiresIn,
   };
 }
 
+async function dbAvailable(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const authController = {
   login: asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body;
+
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      const user = memoryDb.findUserByEmail(email);
+      if (!user) {
+        res.status(401).json({ message: "Invalid email or password" });
+        return;
+      }
+      const passwordValid = await passwordService.verify(password, user.password);
+      if (!passwordValid) {
+        res.status(401).json({ message: "Invalid email or password" });
+        return;
+      }
+      const { password: _, ...safeUser } = user;
+      res.json(await buildAuthResponse(safeUser as SafeUser));
+      return;
+    }
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -41,11 +70,27 @@ export const authController = {
       });
     }
 
-    res.json(await buildAuthResponse(user));
+    const { password: _, ...safeUser } = user;
+    res.json(await buildAuthResponse(safeUser as SafeUser));
   }),
 
   register: asyncHandler(async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
+
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      const existing = memoryDb.findUserByEmail(email);
+      if (existing) {
+        res.status(409).json({ message: "Email already exists" });
+        return;
+      }
+      const hashedPassword = await passwordService.hash(password);
+      const user = memoryDb.createUser({ name, email, password: hashedPassword });
+      const { password: _, ...safeUser } = user;
+      res.status(201).json(await buildAuthResponse(safeUser as SafeUser));
+      return;
+    }
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -58,7 +103,8 @@ export const authController = {
       data: { name, email, password: hashedPassword },
     });
 
-    res.status(201).json(await buildAuthResponse(user));
+    const { password: _, ...safeUser } = user;
+    res.status(201).json(await buildAuthResponse(safeUser as SafeUser));
   }),
 
   refresh: asyncHandler(async (req: Request, res: Response) => {
@@ -105,11 +151,25 @@ export const authController = {
       return;
     }
 
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      const user = memoryDb.updateUser(userId, { role: "PARTNER" });
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      const { password: _, ...safeUser } = user;
+      res.json(await buildAuthResponse(safeUser as SafeUser));
+      return;
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
       data: { role: "PARTNER" },
     });
 
-    res.json(await buildAuthResponse(user));
+    const { password: _, ...safeUser } = user;
+    res.json(await buildAuthResponse(safeUser as SafeUser));
   }),
 };

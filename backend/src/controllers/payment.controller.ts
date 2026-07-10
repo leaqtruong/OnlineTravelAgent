@@ -4,6 +4,7 @@ import prisma from "../config/prisma.js";
 import { vnpayService } from "../services/vnpay.service.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { PaymentStatus, TripStatus } from "@prisma/client";
+import { memoryDb } from "../store/memory-db.js";
 
 const MOMO_PARTNER_CODE = process.env.MOMO_PARTNER_CODE ?? "MOMO";
 const MOMO_ACCESS_KEY = process.env.MOMO_ACCESS_KEY ?? "";
@@ -29,15 +30,16 @@ function amountMatches(expected: number | null | undefined, actual: number): boo
 }
 
 async function loadPaymentTrip(tripId: string): Promise<PaymentTrip | null> {
-  return prisma.trip.findUnique({
-    where: { id: tripId },
-    select: {
-      id: true,
-      userId: true,
-      totalPrice: true,
-      paymentTxnRef: true,
-    },
-  });
+  try {
+    return await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { id: true, userId: true, totalPrice: true, paymentTxnRef: true },
+    });
+  } catch {
+    const trip = memoryDb.findTripById(tripId);
+    if (!trip) return null;
+    return { id: trip.id, userId: trip.userId || null, totalPrice: trip.totalPrice || null, paymentTxnRef: trip.paymentTxnRef || null };
+  }
 }
 
 async function validateClientPaymentRequest(
@@ -77,27 +79,24 @@ async function markVnpayResult(result: {
     return false;
   }
 
+  const updateData = {
+    paymentMethod: "vnpay" as const,
+    paymentTxnRef: result.txnRef,
+    paymentTxnNumber: result.transactionNo,
+  };
+
   if (result.responseCode === "00") {
-    await prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        paymentStatus: PaymentStatus.SUCCESS,
-        paymentMethod: "vnpay",
-        paymentTxnRef: result.txnRef,
-        paymentTxnNumber: result.transactionNo,
-        status: TripStatus.ONGOING,
-        isUpcoming: true,
-      },
-    });
+    try {
+      await prisma.trip.update({ where: { id: tripId }, data: { ...updateData, paymentStatus: PaymentStatus.SUCCESS, status: TripStatus.ONGOING, isUpcoming: true } });
+    } catch {
+      memoryDb.updateTrip(tripId, { ...updateData, paymentStatus: "SUCCESS" as const, status: "ONGOING" as const, isUpcoming: true });
+    }
   } else {
-    await prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        paymentStatus: PaymentStatus.FAILED,
-        paymentMethod: "vnpay",
-        paymentTxnRef: result.txnRef,
-      },
-    });
+    try {
+      await prisma.trip.update({ where: { id: tripId }, data: { ...updateData, paymentStatus: PaymentStatus.FAILED } });
+    } catch {
+      memoryDb.updateTrip(tripId, { ...updateData, paymentStatus: "FAILED" as const });
+    }
   }
   return true;
 }
@@ -148,27 +147,24 @@ async function markMomoResult(query: Record<string, string>): Promise<boolean> {
     return false;
   }
 
+  const updateData = {
+    paymentMethod: "momo" as const,
+    paymentTxnRef: orderId,
+    paymentTxnNumber: query["transId"] ?? null,
+  };
+
   if (query["resultCode"] === "0") {
-    await prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        paymentStatus: PaymentStatus.SUCCESS,
-        paymentMethod: "momo",
-        paymentTxnRef: orderId,
-        paymentTxnNumber: query["transId"] ?? null,
-        status: TripStatus.ONGOING,
-        isUpcoming: true,
-      },
-    });
+    try {
+      await prisma.trip.update({ where: { id: tripId }, data: { ...updateData, paymentStatus: PaymentStatus.SUCCESS, status: TripStatus.ONGOING, isUpcoming: true } });
+    } catch {
+      memoryDb.updateTrip(tripId, { ...updateData, paymentStatus: "SUCCESS" as const, status: "ONGOING" as const, isUpcoming: true });
+    }
   } else {
-    await prisma.trip.update({
-      where: { id: tripId },
-      data: {
-        paymentStatus: PaymentStatus.FAILED,
-        paymentMethod: "momo",
-        paymentTxnRef: orderId,
-      },
-    });
+    try {
+      await prisma.trip.update({ where: { id: tripId }, data: { ...updateData, paymentStatus: PaymentStatus.FAILED } });
+    } catch {
+      memoryDb.updateTrip(tripId, { ...updateData, paymentStatus: "FAILED" as const });
+    }
   }
   return true;
 }
@@ -269,17 +265,33 @@ export const paymentController = {
       return;
     }
 
-    const trip = await prisma.trip.findUnique({
-      where: { id: tripId },
-      select: {
-        userId: true,
-        paymentStatus: true,
-        paymentMethod: true,
-        paymentTxnRef: true,
-        paymentTxnNumber: true,
-        status: true,
-      },
-    });
+    let trip: any = null;
+    try {
+      trip = await prisma.trip.findUnique({
+        where: { id: tripId },
+        select: {
+          userId: true,
+          paymentStatus: true,
+          paymentMethod: true,
+          paymentTxnRef: true,
+          paymentTxnNumber: true,
+          status: true,
+        },
+      });
+    } catch {
+      const memTrip = memoryDb.findTripById(tripId);
+      if (memTrip) {
+        trip = {
+          userId: memTrip.userId,
+          paymentStatus: memTrip.paymentStatus,
+          paymentMethod: memTrip.paymentMethod,
+          paymentTxnRef: memTrip.paymentTxnRef,
+          paymentTxnNumber: memTrip.paymentTxnNumber,
+          status: memTrip.status,
+        };
+      }
+    }
+
     if (!trip) {
       res.status(404).json({ message: "Trip not found" });
       return;
@@ -350,10 +362,11 @@ export const paymentController = {
       const result = await response.json() as Record<string, string>;
 
       if (result.resultCode === "0" || result.payUrl) {
-        await prisma.trip.update({
-          where: { id: tripId },
-          data: { paymentStatus: PaymentStatus.PENDING, paymentMethod: "momo", paymentTxnRef: orderId },
-        });
+        try {
+          await prisma.trip.update({ where: { id: tripId }, data: { paymentStatus: PaymentStatus.PENDING, paymentMethod: "momo", paymentTxnRef: orderId } });
+        } catch {
+          memoryDb.updateTrip(tripId, { paymentStatus: "PENDING" as any, paymentMethod: "momo", paymentTxnRef: orderId });
+        }
         res.json({
           payUrl: result.payUrl,
           orderId,

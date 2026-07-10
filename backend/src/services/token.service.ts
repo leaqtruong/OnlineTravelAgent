@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Role } from "@prisma/client";
 import prisma from "../config/prisma.js";
 import { env } from "../config/env.js";
+import { memoryDb } from "../store/memory-db.js";
 
 const ACCESS_TOKEN_TTL = "15m";
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -27,6 +28,15 @@ function signAccessToken(user: AuthUser): string {
   });
 }
 
+async function dbAvailable(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export const tokenService = {
   accessTokenExpiresInSeconds: ACCESS_TOKEN_EXPIRES_IN_SECONDS,
 
@@ -34,14 +44,20 @@ export const tokenService = {
     const accessToken = signAccessToken(user);
     const refreshToken = createRefreshTokenValue();
     const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+    const tokenHash = hashToken(refreshToken);
 
-    await prisma.refreshToken.create({
-      data: {
-        userId: user.id,
-        tokenHash: hashToken(refreshToken),
-        expiresAt,
-      },
-    });
+    const useMem = !(await dbAvailable());
+    if (useMem) {
+      memoryDb.createRefreshToken(user.id, tokenHash, expiresAt);
+    } else {
+      await prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt,
+        },
+      });
+    }
 
     return {
       accessToken,
@@ -51,8 +67,22 @@ export const tokenService = {
   },
 
   async rotateRefreshToken(refreshToken: string) {
+    const tokenHash = hashToken(refreshToken);
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      const stored = memoryDb.findRefreshToken(tokenHash);
+      if (!stored || stored.revokedAt || stored.expiresAt < new Date()) {
+        return null;
+      }
+      memoryDb.revokeRefreshToken(tokenHash);
+      const user = memoryDb.findUserById(stored.userId);
+      if (!user) return null;
+      return this.issueTokenPair({ id: user.id, role: user.role as Role });
+    }
+
     const stored = await prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(refreshToken) },
+      where: { tokenHash },
       include: { user: true },
     });
 
@@ -69,8 +99,15 @@ export const tokenService = {
   },
 
   async revokeRefreshToken(refreshToken: string) {
+    const tokenHash = hashToken(refreshToken);
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      return memoryDb.revokeRefreshToken(tokenHash);
+    }
+
     const stored = await prisma.refreshToken.findUnique({
-      where: { tokenHash: hashToken(refreshToken) },
+      where: { tokenHash },
     });
     if (!stored || stored.revokedAt) return false;
 
@@ -82,6 +119,13 @@ export const tokenService = {
   },
 
   async revokeAllForUser(userId: string) {
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      memoryDb.revokeAllRefreshTokens(userId);
+      return;
+    }
+
     await prisma.refreshToken.updateMany({
       where: { userId, revokedAt: null },
       data: { revokedAt: new Date() },

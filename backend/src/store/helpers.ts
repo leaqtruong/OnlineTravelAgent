@@ -113,13 +113,18 @@ export async function attachRealReviews<T extends { id: string }>(
 ) {
   if (!items.length) return items;
 
-  const ids = items.map((i) => i.id);
-  const stats = await prisma.review.groupBy({
-    by: ["targetId"],
-    where: { targetType, targetId: { in: ids } },
-    _avg: { rating: true },
-    _count: { id: true },
-  });
+  let stats: Array<{ targetId: string; _avg: { rating: number | null }; _count: { id: number } }> = [];
+  try {
+    const ids = items.map((i) => i.id);
+    stats = await prisma.review.groupBy({
+      by: ["targetId"],
+      where: { targetType, targetId: { in: ids } },
+      _avg: { rating: true },
+      _count: { id: true },
+    });
+  } catch {
+    // DB unavailable — return items with their existing rating/reviewsCount or defaults
+  }
 
   return items.map((item) => {
     const stat = stats.find((s) => s.targetId === item.id);

@@ -3,6 +3,9 @@ import jwt from "jsonwebtoken";
 import prisma from "./config/prisma.js";
 import { env } from "./config/env.js";
 import { app } from "./app.js";
+import { memoryDb } from "./store/memory-db.js";
+
+memoryDb.init();
 
 const server = app.listen(env.port, () => {
   console.log(`\n==============================================`);

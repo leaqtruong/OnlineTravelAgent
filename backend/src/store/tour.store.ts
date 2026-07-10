@@ -2,30 +2,43 @@ import prisma from "../config/prisma.js";
 import { scheduleService } from "../services/schedule.service.js";
 import { attachRealReviews, generateId } from "./helpers.js";
 import { TripStatus } from "@prisma/client";
+import { mockTourPackages } from "../data/mock-data.js";
 
 export const tourStore = {
   async getTours() {
-    const tours = await prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } });
-    return attachRealReviews(tours, "tour");
+    try {
+      const tours = await prisma.tourPackage.findMany({ orderBy: { createdAt: "desc" } });
+      return attachRealReviews(tours, "tour");
+    } catch {
+      return mockTourPackages;
+    }
   },
 
   async getTourById(id: string) {
-    const tour = await prisma.tourPackage.findUnique({ where: { id } });
-    if (!tour) return null;
-    const items = await attachRealReviews([tour], "tour");
-    return items[0];
+    try {
+      const tour = await prisma.tourPackage.findUnique({ where: { id } });
+      if (!tour) return null;
+      const items = await attachRealReviews([tour], "tour");
+      return items[0];
+    } catch {
+      return mockTourPackages.find((t) => t.id === id) || null;
+    }
   },
 
   async getTourSchedule(tourId: string) {
-    return prisma.scheduleTemplate.findFirst({
-      where: { tourPackageId: tourId },
-      include: {
-        days: {
-          include: { items: { orderBy: { sortOrder: "asc" } } },
-          orderBy: { dayNumber: "asc" },
+    try {
+      return await prisma.scheduleTemplate.findFirst({
+        where: { tourPackageId: tourId },
+        include: {
+          days: {
+            include: { items: { orderBy: { sortOrder: "asc" } } },
+            orderBy: { dayNumber: "asc" },
+          },
         },
-      },
-    });
+      });
+    } catch {
+      return null;
+    }
   },
 
   async bookTour(

@@ -16,6 +16,7 @@ import {
   mockTourPackages,
   mockDocuments,
 } from "../data/mock-data.js";
+import { memoryDb } from "./memory-db.js";
 
 type ReviewedDestination = Awaited<
   ReturnType<typeof attachRealReviews<{
@@ -92,10 +93,11 @@ export const bootstrapStore = {
     }
 
     let favoriteDestinationIds = new Set<string>();
-    let trips: Awaited<ReturnType<typeof prisma.trip.findMany>> = [];
-    let documents: Awaited<ReturnType<typeof prisma.documentItem.findMany>> = [];
+    let trips: any[] = [];
+    let documents: any[] = [];
 
     if (userId) {
+      // Try real DB first, fall back to memory DB
       try {
         [favoriteDestinationIds, trips, documents] = await Promise.all([
           getFavoriteDestinationIds(userId),
@@ -103,9 +105,10 @@ export const bootstrapStore = {
           prisma.documentItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
         ]);
       } catch {
-        favoriteDestinationIds = new Set<string>();
-        trips = [];
-        documents = mockDocuments as unknown as typeof documents;
+        favoriteDestinationIds = memoryDb.getFavoriteDestinationIds(userId);
+        trips = memoryDb.findTripsByUserId(userId);
+        documents = memoryDb.findDocumentsByUserId(userId);
+        if (!documents.length) documents = mockDocuments as any;
       }
     }
 
@@ -139,43 +142,64 @@ export const bootstrapStore = {
       }));
       return attachRealReviews(destinations, "destination");
     } catch {
-      return [];
+      // Memory DB fallback
+      const favIds = memoryDb.getFavoriteDestinationIds(userId);
+      const allDests = mockDestinations as any[];
+      const destinations = allDests
+        .filter((d: any) => favIds.has(d.id))
+        .map((d: any) => ({ ...d, isFavorite: true }));
+      return destinations;
     }
   },
 
   async updateFavorite(userId: string | undefined, destinationId: string, isFavorite?: boolean) {
     if (!userId) return null;
 
+    const destinations = mockDestinations as any[];
+    const destination = destinations.find((d: any) => d.id === destinationId);
+    if (!destination) return null;
+
+    // Try real DB first
     try {
-      const destination = await prisma.destination.findUnique({ where: { id: destinationId } });
-      if (!destination) {
-        return null;
-      }
-
-      const existing = await prisma.userFavoriteDestination.findUnique({
-        where: { userId_destinationId: { userId, destinationId } },
-      });
-      const newFavorite = typeof isFavorite === "boolean" ? isFavorite : !existing;
-
-      if (newFavorite) {
-        await prisma.userFavoriteDestination.upsert({
+      const dbDest = await prisma.destination.findUnique({ where: { id: destinationId } });
+      if (dbDest) {
+        const existing = await prisma.userFavoriteDestination.findUnique({
           where: { userId_destinationId: { userId, destinationId } },
-          update: {},
-          create: { userId, destinationId },
         });
-      } else {
-        await prisma.userFavoriteDestination.deleteMany({
-          where: { userId, destinationId },
-        });
-      }
+        const newFavorite = typeof isFavorite === "boolean" ? isFavorite : !existing;
 
-      const [withReviews] = await attachRealReviews(
-        [{ ...destination, isFavorite: newFavorite }],
-        "destination",
-      );
-      return withReviews;
+        if (newFavorite) {
+          await prisma.userFavoriteDestination.upsert({
+            where: { userId_destinationId: { userId, destinationId } },
+            update: {},
+            create: { userId, destinationId },
+          });
+        } else {
+          await prisma.userFavoriteDestination.deleteMany({
+            where: { userId, destinationId },
+          });
+        }
+
+        const [withReviews] = await attachRealReviews(
+          [{ ...dbDest, isFavorite: newFavorite }],
+          "destination",
+        );
+        return withReviews;
+      }
     } catch {
-      return null;
+      // Fall through to memory DB
     }
+
+    // Memory DB fallback
+    const existing = memoryDb.findFavorite(userId, destinationId);
+    const newFavorite = typeof isFavorite === "boolean" ? isFavorite : !existing;
+
+    if (newFavorite) {
+      memoryDb.addFavorite(userId, destinationId);
+    } else {
+      memoryDb.removeFavorite(userId, destinationId);
+    }
+
+    return { ...destination, isFavorite: newFavorite, rating: destination.rating || "0.0", reviewsCount: destination.reviewsCount || "0" };
   },
 };

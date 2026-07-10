@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../providers/api_provider.dart';
 import '../../utils/api_exception.dart';
 import '../../utils/app_utils.dart';
+import 'bank_transfer_screen.dart';
 import 'vnpay_payment_screen.dart';
 
 class PaymentMethod {
@@ -312,56 +313,149 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
         (m) => m.id == _selectedMethodId,
       );
 
-      if (selectedMethod.type == 'vnpay' || selectedMethod.type == 'momo') {
-        await _handleDigitalPayment(selectedMethod.type);
+      if (selectedMethod.type == 'vnpay') {
+        await _handleVnpayPayment();
         return;
       }
 
+      if (selectedMethod.type == 'momo') {
+        await _handleDigitalPayment('momo');
+        return;
+      }
+
+      if (selectedMethod.type == 'bank_transfer') {
+        await _handleBankTransfer();
+        return;
+      }
+
+      // Other methods (card, cash, etc.)
       final tripId = await widget.onPaymentSuccess();
       setState(() => _isProcessing = false);
       if (tripId != null && mounted) {
         _showSuccessDialog(tripId);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Thanh toán thất bại, vui lòng thử lại'),
-          ),
+          const SnackBar(content: Text('Thanh toán thất bại, vui lòng thử lại')),
         );
       }
     } on AuthException catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } on ApiException catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } on NetworkException catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } on TimeoutApiException catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.message)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isProcessing = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(getErrorMessage(e))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(getErrorMessage(e))),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleVnpayPayment() async {
+    try {
+      final tripId = await widget.onPaymentSuccess();
+      if (tripId == null) {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể tạo đơn hàng')),
+          );
+        }
+        return;
+      }
+
+      final api = ref.read(apiProvider);
+      final result = await api.createVnpayPayment(
+        tripId: tripId,
+        amount: widget.totalPrice,
+      );
+
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      final paymentUrl = result['paymentUrl'] as String;
+
+      // Open VNPAY gateway in browser directly
+      final uri = Uri.parse(paymentUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Vui lòng hoàn tất thanh toán trên cổng VNPAY, sau đó quay lại kiểm tra'),
+              duration: Duration(seconds: 4),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể mở cổng VNPAY')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleBankTransfer() async {
+    try {
+      final tripId = await widget.onPaymentSuccess();
+      if (tripId == null) {
+        if (mounted) {
+          setState(() => _isProcessing = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Không thể tạo đơn hàng')),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+
+      final confirmed = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BankTransferScreen(
+            amount: widget.totalPrice,
+            tripId: tripId,
+          ),
+        ),
+      );
+
+      if (confirmed == true && mounted) {
+        _showSuccessDialog(tripId);
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: $e')),
+        );
       }
     }
   }

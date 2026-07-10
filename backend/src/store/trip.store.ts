@@ -1,8 +1,17 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, TripStatus } from "@prisma/client";
 import prisma from "../config/prisma.js";
-import { scheduleService } from "../services/schedule.service.js";
 import { generateId, processTripStatus } from "./helpers.js";
-import { TripStatus } from "@prisma/client";
+import { mockFlights, mockDestinations } from "../data/mock-data.js";
+import { memoryDb } from "./memory-db.js";
+
+async function dbAvailable(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const tripStore = {
   async createTrip(
@@ -13,6 +22,31 @@ export const tripStore = {
     totalPrice?: number,
     requestId?: string,
   ) {
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      if (requestId) {
+        const existing = memoryDb.findTripByRequestId(requestId);
+        if (existing) return existing;
+      }
+      const destination = mockDestinations.find((d) => d.id === destinationId);
+      if (!destination) return null;
+      return memoryDb.createTrip({
+        id: generateId("trip-dest"),
+        userId: userId || null,
+        destination: destination.name,
+        location: destination.location,
+        date,
+        guests,
+        status: "ONGOING",
+        imagePath: destination.imagePath,
+        isUpcoming: true,
+        isCustom: false,
+        totalPrice: totalPrice || null,
+        requestId: requestId || null,
+      });
+    }
+
     if (requestId) {
       const existing = await prisma.trip.findUnique({ where: { requestId } });
       if (existing) return existing;
@@ -21,10 +55,9 @@ export const tripStore = {
     const destination = await prisma.destination.findUnique({ where: { id: destinationId } });
     if (!destination) return null;
 
-    const tripId = generateId("trip-dest");
-    const trip = await prisma.trip.create({
+    return prisma.trip.create({
       data: {
-        id: tripId,
+        id: generateId("trip-dest"),
         userId,
         destination: destination.name,
         location: destination.location,
@@ -33,23 +66,10 @@ export const tripStore = {
         status: TripStatus.ONGOING,
         imagePath: destination.imagePath,
         isUpcoming: true,
-        totalPrice: totalPrice,
+        totalPrice,
         requestId,
       },
     });
-
-    try {
-      await scheduleService.copyTemplateToTrip({
-        tripId: trip.id,
-        sourceType: "destination",
-        sourceId: destination.id,
-        tripDate: date,
-      });
-    } catch (e) {
-      console.error("Failed to copy schedule template to trip", e);
-    }
-
-    return trip;
   },
 
   async bookFlightTrip(
@@ -59,20 +79,41 @@ export const tripStore = {
     guests: string,
     requestId?: string,
   ) {
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      if (requestId) {
+        const existing = memoryDb.findTripByRequestId(requestId);
+        if (existing) return existing;
+      }
+      const flight = mockFlights.find((f) => f.id === flightId);
+      if (!flight) return null;
+      return memoryDb.createTrip({
+        id: generateId("trip-flight"),
+        userId: userId || null,
+        destination: `${flight.departure} ✈ ${flight.arrival}`,
+        location: flight.airline,
+        date,
+        guests,
+        status: "ONGOING",
+        imagePath: flight.airlineLogo,
+        isUpcoming: true,
+        isCustom: false,
+        requestId: requestId || null,
+      });
+    }
+
     if (requestId) {
       const existing = await prisma.trip.findUnique({ where: { requestId } });
       if (existing) return existing;
     }
 
     const flight = await prisma.flight.findUnique({ where: { id: flightId } });
-    if (!flight) {
-      return null;
-    }
+    if (!flight) return null;
 
-    const tripId = generateId("trip-flight");
     return prisma.trip.create({
       data: {
-        id: tripId,
+        id: generateId("trip-flight"),
         userId,
         destination: `${flight.departure} ✈ ${flight.arrival}`,
         location: flight.airline,
@@ -98,15 +139,37 @@ export const tripStore = {
       requestId?: string;
     },
   ) {
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      if (data.requestId) {
+        const existing = memoryDb.findTripByRequestId(data.requestId);
+        if (existing) return existing;
+      }
+      return memoryDb.createTrip({
+        id: generateId("trip-custom"),
+        userId: userId || null,
+        destination: "Tour thiết kế riêng",
+        location: data.location,
+        date: data.date,
+        guests: data.guests,
+        status: "ONGOING",
+        imagePath: data.imagePath,
+        isUpcoming: true,
+        isCustom: true,
+        totalPrice: data.totalPrice || null,
+        requestId: data.requestId || null,
+      });
+    }
+
     if (data.requestId) {
       const existing = await prisma.trip.findUnique({ where: { requestId: data.requestId } });
       if (existing) return existing;
     }
 
-    const tripId = generateId("trip-custom");
     return prisma.trip.create({
       data: {
-        id: tripId,
+        id: generateId("trip-custom"),
         userId,
         destination: "Tour thiết kế riêng",
         location: data.location,
@@ -123,21 +186,31 @@ export const tripStore = {
   },
 
   async cancelTrip(userId: string | undefined, tripId: string) {
-    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
-    if (!trip || (userId && trip.userId !== userId)) {
-      return null;
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      const trip = memoryDb.findTripById(tripId);
+      if (!trip || (userId && trip.userId !== userId)) return null;
+      return memoryDb.updateTrip(tripId, { status: "CANCELLED", isUpcoming: false });
     }
+
+    const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+    if (!trip || (userId && trip.userId !== userId)) return null;
 
     return prisma.trip.update({
       where: { id: tripId },
-      data: {
-        status: TripStatus.CANCELLED,
-        isUpcoming: false,
-      },
+      data: { status: TripStatus.CANCELLED, isUpcoming: false },
     });
   },
 
   async getTrips(userId: string | undefined, type?: string) {
+    const useMem = !(await dbAvailable());
+
+    if (useMem) {
+      if (!userId) return [];
+      return memoryDb.findTripsByUserId(userId, type).map(processTripStatus as any);
+    }
+
     const where: Prisma.TripWhereInput = userId ? { userId } : {};
     if (type === "upcoming") where.isUpcoming = true;
     if (type === "past") where.isUpcoming = false;
@@ -146,15 +219,16 @@ export const tripStore = {
   },
 
   async searchFlights(departure?: string, arrival?: string) {
-    const where: Prisma.FlightWhereInput = {};
-
-    if (departure) {
-      where.departure = { equals: departure, mode: "insensitive" };
+    try {
+      const where: Prisma.FlightWhereInput = {};
+      if (departure) where.departure = { equals: departure, mode: "insensitive" };
+      if (arrival) where.arrival = { equals: arrival, mode: "insensitive" };
+      return await prisma.flight.findMany({ where });
+    } catch {
+      let results = mockFlights;
+      if (departure) results = results.filter((f) => f.departure.toLowerCase() === departure.toLowerCase());
+      if (arrival) results = results.filter((f) => f.arrival.toLowerCase() === arrival.toLowerCase());
+      return results;
     }
-    if (arrival) {
-      where.arrival = { equals: arrival, mode: "insensitive" };
-    }
-
-    return prisma.flight.findMany({ where });
   },
 };

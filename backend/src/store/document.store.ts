@@ -1,10 +1,32 @@
 import prisma from "../config/prisma.js";
 import { generateId } from "./helpers.js";
+import { mockDocuments } from "../data/mock-data.js";
+import { memoryDb } from "./memory-db.js";
+
+async function dbAvailable(): Promise<boolean> {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export const documentStore = {
   async getDocuments(userId?: string) {
     if (!userId) return [];
-    return prisma.documentItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+
+    const useMem = !(await dbAvailable());
+    if (useMem) {
+      const docs = memoryDb.findDocumentsByUserId(userId);
+      return docs.length > 0 ? docs : mockDocuments;
+    }
+
+    try {
+      return await prisma.documentItem.findMany({ where: { userId }, orderBy: { createdAt: "desc" } });
+    } catch {
+      return mockDocuments;
+    }
   },
 
   async createDocument(
@@ -14,24 +36,24 @@ export const documentStore = {
     icon: string,
     color: string,
   ) {
-    if (!userId) {
-      throw new Error("Authentication required to create a document");
+    if (!userId) throw new Error("Authentication required to create a document");
+
+    const useMem = !(await dbAvailable());
+    if (useMem) {
+      return memoryDb.createDocument({ id: generateId("doc"), title, description, icon, color, userId });
     }
 
     return prisma.documentItem.create({
-      data: {
-        id: generateId("doc"),
-        title,
-        description,
-        icon,
-        color,
-        userId,
-      },
+      data: { id: generateId("doc"), title, description, icon, color, userId },
     });
   },
 
   async deleteDocument(userId: string | undefined, id: string) {
     if (!userId) return false;
+
+    const useMem = !(await dbAvailable());
+    if (useMem) return memoryDb.deleteDocument(userId, id);
+
     const result = await prisma.documentItem.deleteMany({ where: { id, userId } });
     return result.count > 0;
   },
